@@ -1,0 +1,64 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Core;
+
+class Config
+{
+    // Use readonly properties to prevent accidental modification
+    private readonly array $config;
+
+    public function __construct()
+    {
+        $this->config = require Folder\Path::CONFIG . 'Config.php' ?? [];
+    }
+
+    /**
+     * Get config data
+     *
+     * @param array $data optional data to merge with config
+     * @return object config object
+     */
+    public function get(array $data = []): object
+    {
+        $newConfig = [];
+
+        if (!$data) {
+            $config = require Folder\Path::CONFIG.'Config.php';
+			
+			if(!empty($this->config))
+			{
+				$config = array_merge($config,$this->config);
+			}
+			
+            foreach ($config as $key => $val) {
+                if (is_array($val)) {
+                    $newConfig[$key] = $this->get($val);
+                } else {
+                    $newConfig[$key] = is_string($val) ? $val : (object) $val;
+                }
+            }
+        } else {
+            foreach ($data as $key => $val) {
+                $newConfig[$key] = is_string($val) ? $val : (object) $val;
+            }
+        }
+
+        return (object) $newConfig;
+    }
+
+    /**
+     * Set config data
+     *
+     * @param string $key config key
+     * @param string $val config value
+     * @return self config object
+     */
+    public function set(string $key, string $val): self
+    {
+        $this->config[$key] = $val;
+
+        return $this;
+    }
+}
