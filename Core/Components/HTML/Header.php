@@ -1,0 +1,31 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Core\Components\HTML;
+
+// Define a class for HTML header component
+class Header implements ComponentInterface
+{
+    // Use the ComponentTrait
+    use ComponentTrait;
+
+    // A property to store the content of the header
+    protected string $content;
+
+    // A constructor to initialize the content of the header
+    public function __construct(string $content = '')
+    {
+        $this->content = $content;
+    }
+
+    // A method to render the header as a string
+    public function render(): string
+    {
+        // Generate the attribute string
+        $attributeString = $this->generateAttributeString();
+
+        // Return the header element
+        return "<header {$attributeString}>{$this->content}</header>";
+    }
+}
