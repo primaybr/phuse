@@ -9,7 +9,7 @@ use DateTime;
 // Use final class to prevent inheritance
 final class Str
 {
-    public const SEED = 'bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ';
+    public const SEED = 'bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ123456789';
 
     public function randomString(int $length = 6): string
     {

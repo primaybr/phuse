@@ -14,16 +14,10 @@ class Connection
 
     public function __construct($driver, $host, $port, $dbname, $user, $password, $options = [])
     {
-		try{
-			$connection = "Core\Database\Drivers\\".$this->getDrivers($driver);
-			$connect	= new $connection($host, $port, $dbname, $user, $password, $options);
-			$this->handler = $connect->getDB();
-		}
-		catch( Exception $e)
-		{
-			echo $e->getMessage();
-		}
-	}
+		$connection = "Core\Database\Drivers\\".$this->getDrivers($driver);
+		$connect	= new $connection($host, $port, $dbname, $user, $password, $options);
+		$this->handler = $connect->getDB();
+    }
 
     public function __destruct()
     {
