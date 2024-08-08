@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Core\Http;
 
 use Core\Config as Config;
+use Core\Http\Session;
 
 class Request
 {
@@ -17,20 +18,29 @@ class Request
     private mixed $stream;
     private $config;
     private string $baseUrl;
+    private string $adminUrl;
+    private string $apiExternalUrl;
     private string $env;
+    private bool $useRefresh;
     public int|string $httpResponseCode = 200;
-	public string $httpResponseStatus;
+    public string $httpResponseStatus;
+    public Session $session;
+    private object $token;
 
     public function __construct(string $wrapper = 'http')
     {
         $this->setWrapper($wrapper);
         $this->config = (new Config())->get();
         $this->baseUrl = $this->config->site->baseUrl;
+        $this->apiExternalUrl = $this->config->apiExternal->baseUrl;
+        $this->useRefresh = isset($this->config->apiExternal->useRefresh) ? ($this->config->apiExternal->useRefresh === 'true') ? true : false : false;
         $this->env = $this->config->env;
+        $this->session = new Session;
+        $this->adminUrl = $this->config->site->adminUrl;
     }
 
     // Use union types for parameters and return types
-    public function request(string $method, string $url, array|string $data = []): self
+    public function request(string $method, string $url, array|string $data = [], bool $refresh = true): self
     {
         if ($data) {
             $this->data = $this->setContent($data);
@@ -41,7 +51,7 @@ class Request
         $this->getContextOptions();
 
         $context = stream_context_create($this->finalOptions);
-		
+
         // Use nullsafe operator to avoid nested null checks
         if ($this->env !== 'local') {
             $url = str_replace($this->baseUrl, "http://localhost/", $url);
@@ -49,6 +59,10 @@ class Request
 
         $this->stream = fopen($url, 'r', false, $context);
         $this->httpResponseCode = isset($http_response_header[0]) ? substr($http_response_header[0], 9, 3) : 200;
+
+        if ($refresh && $this->useRefresh && $this->httpResponseCode == 401) {
+            return $this->refreshRequest($method, $url, $data);
+        }
         return $this;
     }
 
@@ -56,8 +70,81 @@ class Request
     {
         $content = stream_get_contents($this->stream);
         fclose($this->stream);
-
         return $content;
+    }
+
+    private function refreshRequest(string $method, string $url, array|string $data = []): self
+    {
+        $token = $this->session->get('sesstoken');
+        if (!$token) {
+            return $this;
+        }
+        $this->token = json_decode($token);
+
+        // refresh token
+        // $newToken = $this->setContentType('application/json')
+        //     ->setHeader("Authorization: bearer " . $this->token->access_token)
+        //     ->request('POST', $this->apiExternalUrl . '/auth/refresh', ['json' => $token], false)
+        //     ->getContent();
+        // if ($this->httpResponseCode == 401) {
+        //     return $this;
+        // }
+        $curl = curl_init();
+
+        curl_setopt_array(
+            $curl,
+            array(
+                CURLOPT_URL => $this->apiExternalUrl . '/auth/refresh',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'POST',
+                CURLOPT_POSTFIELDS => $token,
+                CURLOPT_HTTPHEADER => array(
+                    'Content-Type: application/json',
+                    'Authorization: bearer ' . $this->token->access_token
+                ),
+            )
+        );
+
+        $newToken = curl_exec($curl);
+        $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        curl_close($curl);
+
+        if ($httpcode == 401) {
+            return $this;
+        }
+
+        $token = json_decode($newToken);
+        $this->setHeader("Authorization: bearer " . $token->access_token);
+        list($header, $payload, $signature) = explode('.', $token->id_token);
+
+        $jsonToken = base64_decode($payload);
+        $arrayToken = json_decode($jsonToken, true);
+
+        $this->session->set('sessdata', $arrayToken['dat']);
+        $this->session->set('sesstoken', $newToken);
+
+        // resend request
+        if ($data) {
+            $this->data = $this->setContent($data);
+        }
+        $this->method = strtoupper($method);
+
+        $this->getContextOptions();
+        $context = stream_context_create($this->finalOptions);
+        // Use nullsafe operator to avoid nested null checks
+        if ($this->env !== 'local') {
+            $url = str_replace($this->baseUrl, "http://localhost/", $url);
+        }
+
+        $this->stream = fopen($url, 'r', false, $context);
+        $this->httpResponseCode = isset($http_response_header[0]) ? substr($http_response_header[0], 9, 3) : 200;
+
+        return $this;
     }
 
     public function setHeader(string $header): self
@@ -69,9 +156,9 @@ class Request
 
     public function setContent(array|string $content): self
     {
-		// Use match expression instead of if-else
+        // Use match expression instead of if-else
         $this->options['content'] = match (true) {
-			array_key_exists('json',$content) => $content['json'],
+            array_key_exists('json', $content) => $content['json'],
             is_array($content) => http_build_query($content),
             is_string($content) => $content,
             default => throw new \InvalidArgumentException('Invalid content type'),
@@ -132,23 +219,22 @@ class Request
 
             $this->setContentType();
 
-            $this->setHeader("Content-type: ".$this->options['content_type']." \r\n" .
-							 "Content-Length: " . strlen($this->options['content']) . "\r\n" .
-							 (isset($this->options['header']) ? $this->options['header']."\r\n" : "").
-							 (isset($this->options['referer']) ? "Referer: ".$this->options['referer']."\r\n" : "").
-							 (isset($this->options['uid']) ? "uid: ".$this->options['uid']."\r\n" : "").
-							 (isset($this->options['token']) ? "token: ".$this->options['token']."\r\n" : "").
-							 (isset($this->options['Auth']) ? "Auth: ".$this->options['Auth']."\r\n" : "")
-							 );
+            $this->setHeader(
+                "Content-type: " . $this->options['content_type'] . " \r\n" .
+                "Content-Length: " . strlen($this->options['content']) . "\r\n" .
+                (isset($this->options['header']) ? $this->options['header'] . "\r\n" : "") .
+                (isset($this->options['referer']) ? "Referer: " . $this->options['referer'] . "\r\n" : "") .
+                (isset($this->options['uid']) ? "uid: " . $this->options['uid'] . "\r\n" : "") .
+                (isset($this->options['token']) ? "token: " . $this->options['token'] . "\r\n" : "") .
+                (isset($this->options['Auth']) ? "Auth: " . $this->options['Auth'] . "\r\n" : "")
+            );
+        } else {
+            $this->setHeader(
+                (isset($this->options['content_type']) ? "Content-type: " . $this->options['content_type'] . " \r\n" : "") .
+                (isset($this->options['header']) ? $this->options['header'] . "\r\n" : "")
+            );
         }
-		else
-		{
-			$this->setHeader(
-				(isset($this->options['content_type']) ? "Content-type: ".$this->options['content_type']." \r\n" : "").
-				(isset($this->options['header']) ? $this->options['header']."\r\n" : "")
-			);
-		}
-		
+
 
         foreach ($this->options as $key => $val) {
             $this->finalOptions[$this->wrapper][$key] = $val;
@@ -246,7 +332,7 @@ class Request
         return $this;
     }
 
-    public function getHttpResponseCode(): int
+    public function getHttpResponseCode(): mixed
     {
         return $this->httpResponseCode;
     }
@@ -254,7 +340,7 @@ class Request
     public function setHttpResponseCode(int $httpResponseCode): self
     {
         $this->httpResponseCode = $httpResponseCode;
-		$this->httpResponseStatus = (new Response($httpResponseCode))->statusName;
+        $this->httpResponseStatus = (new Response($httpResponseCode))->statusName;
         return $this;
     }
 }

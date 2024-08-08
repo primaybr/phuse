@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace Core;
 
+use Core\Http\URI;
+
 class Config
 {
     // Use readonly properties to prevent accidental modification
     private readonly array $config;
+	private URI $uri;
 
     public function __construct()
     {
         $this->config = require Folder\Path::CONFIG . 'Config.php' ?? [];
+		$this->uri = new URI;
     }
 
     /**
@@ -40,11 +44,18 @@ class Config
                 }
             }
         } else {
+			
             foreach ($data as $key => $val) {
                 $newConfig[$key] = is_string($val) ? $val : (object) $val;
             }
         }
-
+		
+		if(isset($newConfig['site']))
+		{
+			$newConfig['site']->baseUrl = $this->uri->getProtocol().$this->uri->getHost().'/'.((isset($newConfig['site']->baseUrl) && !empty($newConfig['site']->baseUrl)) ? $newConfig['site']->baseUrl.'/' : '');
+			
+		}
+		
         return (object) $newConfig;
     }
 
@@ -61,4 +72,5 @@ class Config
 
         return $this;
     }
+	
 }

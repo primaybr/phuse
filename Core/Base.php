@@ -41,6 +41,8 @@ class Base
         error_reporting($this->config->env === 'production' ? E_ALL & ~E_NOTICE & ~E_STRICT & ~E_USER_NOTICE : -1);
 
         set_error_handler([new Handler(), 'errorHandler']);
+		ini_set(option: 'session.sid_length', value: 250);
+		ini_set(option: 'session.sid_bits_per_character', value: 5);
         ini_set(option: 'session.save_path', value: realpath("../Session"));
         session_start();
 

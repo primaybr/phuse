@@ -36,7 +36,7 @@ class Log
         // define script name
         $scriptName = pathinfo($_SERVER['PHP_SELF'], PATHINFO_FILENAME);
 
-        fwrite($this->pointer, "{$this->time} ({$script_name}) {$message}" . PHP_EOL);
+        fwrite($this->pointer, "{$this->time} ({$scriptName}) {$message}" . PHP_EOL);
 
         if (!$this->fileExists) {
             chmod($this->logFile, 0644);

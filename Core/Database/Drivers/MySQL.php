@@ -9,7 +9,12 @@ class MySQL implements DriversInterface {
 	
 	public function __construct($host, $port, $dbname, $user, $password, $options = [])
     {
-        if (empty($options)) {
+        $this->connect($host, $port, $dbname, $user, $password, $options = []);
+    }
+	
+	public function connect($host, $port, $dbname, $user, $password, $options = [])
+	{
+		if (empty($options)) {
             $options = [
                 //PDO::ATTR_PERSISTENT => true,
                 PDO::MYSQL_ATTR_FOUND_ROWS => true,
@@ -22,11 +27,6 @@ class MySQL implements DriversInterface {
         } catch (PDOException $e) {
             echo $e->getMessage();
         }
-    }
-	
-	public function connect($host, $port, $dbname, $user, $password, $options = [])
-	{
-		
 	}
 	
 	public function getDB() {

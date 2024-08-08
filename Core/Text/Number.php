@@ -20,10 +20,10 @@ class Number
         return ($nFormat . $suffix) ?? '0';
     }
 
-    public function formatCurrency(int|float $value, string $format = ''): string
+    public function formatCurrency(mixed $value, string $format = '', int $decimals = 0, string $decimalPoints = ',', string $separator = '.'): string
     {
-        return is_string($value) && is_numeric($value)
-            ? $format . number_format(num: $value, decimals: 0, thousands_separator: '.')
+        return (is_string($value) && is_numeric($value)) || is_numeric($value)
+            ? $format . number_format(num: $value, decimals: $decimals, decimal_separator: $decimalPoints, thousands_separator: $separator )
             : (string) $value;
     }
 
@@ -35,6 +35,6 @@ class Number
             default => $prefix,
         };
 
-        return preg_replace('/[^0-9+]/', '', str_replace('0', $countryCode, $phoneNumber));
+        return preg_replace('/[^0-9+]/', '', $countryCode.ltrim($phoneNumber,"0"));
     }
 }
