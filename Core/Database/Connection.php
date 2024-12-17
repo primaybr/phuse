@@ -30,7 +30,7 @@ class Connection
 		$drivers = ['mysql' => 'MySQL', 'pgsql' => 'PgSQL'];
 		$driver = strtolower($driver);
 		
-		return $drivers[$driver];
+		return $drivers[$driver] ?? '';
 	}
 
     public function query(string $query): void

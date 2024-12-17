@@ -39,21 +39,27 @@ class Model
 		}
 		catch(\Exception $e)
 		{
-			exit($e->getMessage());
+			exit('Database connection couldn\'t be estabilished.');
         }
 		finally{
 			error_reporting(-1);
 			$this->table = $this->dbconfig->prefix . $table;
-		
-			$builder = "Core\Database\Builders\\" . $this->db->getDrivers($this->dbconfig->driver);
 			
-			$this->builder = new $builder($this->table);
-			
-			$this->str = new Text\Str;
-			
-			//set default primaryKey
-			$this->setPrimaryKey();
-		
+			if(isset($this->db)) // make sure the object exists
+			{
+				$builder = "Core\Database\Builders\\" . $this->db->getDrivers($this->dbconfig->driver);
+				
+				$this->builder = new $builder($this->table);
+				
+				$this->str = new Text\Str;
+				
+				//set default primaryKey
+				$this->setPrimaryKey();
+			}
+			else
+			{
+				return '';
+			}
 		}		
     }
     
