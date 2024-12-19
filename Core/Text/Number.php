@@ -28,13 +28,25 @@ class Number
     }
 
     public function formatPhoneNumber(string|int $phoneNumber, string $prefix = '', string $country = 'id'): string
-    {
-        $countryCode = match ($country) {
-            'id' => $prefix . '62',
-            'us' => $prefix . '1',
-            default => $prefix,
-        };
+	{
+		$phoneNumber = (string) $phoneNumber;
+		
+		// Remove non-numeric characters
+		$cleanedNumber = preg_replace('/[^0-9]/', '', $phoneNumber);
 
-        return preg_replace('/[^0-9+]/', '', $countryCode.ltrim($phoneNumber,"0"));
-    }
+		// Check if the cleaned number already starts with the country code
+		$countryCode = match ($country) {
+			'id' => $prefix . '62',
+			'us' => $prefix . '1',
+			default => $prefix,
+		};
+
+		if (strpos($cleanedNumber, $countryCode) === 0) {
+			return $cleanedNumber;
+		}
+
+		// Remove leading zeroes and prepend the country code
+		$cleanedNumber = ltrim($cleanedNumber, '0');
+		return $countryCode . $cleanedNumber;
+	}
 }
