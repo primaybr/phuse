@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Core;
 use Core\Database as Database;
 use Core\Config as Config;
-use Core\Database\Builders\Builder;
+use Core\Database\Builders\Builders;
 
 class Model
 {
@@ -24,7 +24,7 @@ class Model
     public function __construct(string $table, string $database = 'default')
     {
         $this->dbconfig = $this->setDatabase($database);
-        $this->builder = new Builder($this->dbconfig->driver, $table);
+        $this->builder = new Builders($this->dbconfig->driver, $table);
 		
 		try{
 			// set error_reporting off to prevent leaked database information regardless of environment
@@ -344,7 +344,7 @@ class Model
      *
      * @return Database\Builder
      */
-    public function builder() : Builder
+    public function builder() : Builders
     {
         return $this->builder;
     }
