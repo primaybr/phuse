@@ -10,5 +10,6 @@ $router = new Router();
  */
 
 $router->add('GET', '/', 'Web\Welcome', 'index');
+$router->get('/items', 'Web\ItemController', 'index');
 
 return $router;

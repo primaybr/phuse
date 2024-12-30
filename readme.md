@@ -8,17 +8,72 @@ Some of the main features of Phuse are:
 
 - **MVC Pattern**: Phuse implements the Model-View-Controller pattern, which separates the application logic from the presentation layer. This makes the code more organized, maintainable, and testable.
 - **Active Record ORM**: Phuse uses the Active Record pattern, which maps database tables to PHP classes and objects. This makes the database operations easier, faster, and more secure.
-- **Routing**: Phuse handles the routing of requests to the appropriate controllers and actions. It supports both static and dynamic routes, as well as RESTful routes for APIs.
-- **Validation**: Phuse provides a validation class that allows you to validate the input data from forms, files, or other sources. It supports various rules, filters, and custom messages.
-- **Pagination**: Phuse provides a pagination class that allows you to paginate the results from queries or arrays. It supports both simple and advanced pagination, as well as custom templates.
+- **Routing**: Phuse handles routing efficiently, allowing developers to define clean and understandable URLs for their applications.
 - **Formatting**: Phuse provides a formatting class that allows you to format the output data in various ways. It supports date and time, number, currency, and string formatting.
 - **And more**: Phuse also offers other features such as logging, sessions, security, email, and more.
+
+## Installation
+To install Phuse, follow these steps:
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/primaybr/phuse.git
+   ```
+2. Navigate to the project directory:
+   ```bash
+   cd phuse
+   ```
+3. Set up your web server to point to the `Public` directory.
+
+## Basic Usage
+To create a new controller, create a new PHP file in the `App/Controllers/Web` directory. For example, to create a `UserController`, create a file named `User.php` and define your controller class.
+
+### Example:
+```php
+<?php
+
+namespace App\Controllers\Web;
+
+use Core\Controller;
+
+class User extends Controller
+{
+    public function index()
+    {
+        // Your logic here
+    }
+}
+```
+
+## Directory Structure
+The Phuse framework follows a standard directory structure:
+- **App**: Contains controllers, models, and views.
+- **Core**: Contains the core framework classes.
+- **Config**: Configuration files for the application.
+- **Public**: Publicly accessible files (entry point).
+- **Logs**: Log files for debugging and error tracking.
+- **Cache**: Caching files to improve performance.
+
+## Controllers
+Controllers handle incoming requests and contain the business logic for your application. They extend the base `Controller` class found in the `Core` directory.
+
+## Models
+Models interact with the database and handle data-related logic. Ensure to create model classes in the `App/Models` directory to manage your data effectively.
+
+## Views
+Views are responsible for rendering the user interface. They are located in the `App/Views` directory and can use dynamic data passed from controllers.
+
+## Routing
+Routing is managed by the `Router.php` class in the `Core` directory. Define your routes and link them to the appropriate controllers.
+
+## Configuration
+Configuration settings are stored in the `Config` directory. Modify these files to customize your application settings.
+
+## Logging
+Phuse provides a logging mechanism to track application errors and events. Log files are stored in the `Logs` directory.
 
 ## Minimum Requirement
 
 To install Phuse, you need to have PHP 8.2 or higher.
-
-You can then configure your web server to point to the `public` folder inside the project folder.
 
 ## License
 
@@ -32,10 +87,91 @@ If you have any questions, issues, or feedback regarding Phuse, you can contact 
 
 ## Contributing
 
-Phuse is an open source project, and you are welcome to contribute to its development. You can fork the repository, make your changes, and submit a pull request. Please follow the coding standards and guidelines before submitting your code.
+Phuse is an open-source project, and you are welcome to contribute to its development. You can fork the repository, make your changes, and submit a pull request. Please follow the coding standards and guidelines before submitting your code.
 
 ## Credits
 
 Phuse is developed and maintained by Prima Yoga, a passionate web developer and PHP enthusiast.
+
+## Example Usage
+
+### Overview
+In this example, we will create a simple web application that allows users to view a list of items. We will set up a controller to handle requests, a model to interact with the data, and a view to display the information.
+
+### Step 1: Create the Model
+First, we will create a model class that represents the items. Create a new file named `Item.php` in the `App/Models` directory.
+
+```php
+<?php
+
+namespace App\Models;
+
+class Item
+{
+    private $items = [
+        ['id' => 1, 'name' => 'Item 1'],
+        ['id' => 2, 'name' => 'Item 2'],
+        ['id' => 3, 'name' => 'Item 3'],
+    ];
+
+    public function getAllItems()
+    {
+        return $this->items;
+    }
+}
+```
+
+### Step 2: Create the Controller
+Next, we will create a controller that handles the request and uses the model to fetch data. Create a new file named `ItemController.php` in the `App/Controllers/Web` directory.
+
+```php
+<?php
+
+namespace App\Controllers\Web;
+
+use Core\Controller;
+use App\Models\Item;
+
+class ItemController extends Controller
+{
+    public function index()
+    {
+        $itemModel = new Item();
+        $data['items'] = $itemModel->getAllItems();
+        $this->render('items/index', $data);
+    }
+}
+```
+
+### Step 3: Create the View
+Now, we will create a view to display the list of items. Create a new directory named `items` in the `App/Views` directory, and then create a file named `index.php` inside the `items` directory.
+
+```php
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Item List</title>
+</head>
+<body>
+    <h1>Item List</h1>
+    <ul>
+        {% foreach items as item %}
+            <li>{item.name}</li>
+        {% endforeach %}
+    </ul>
+</body>
+</html>
+```
+
+### Step 4: Define the Route
+Open the `routes.php` file in the `Config` directory and add the following route:
+
+```php
+$router->add('GET', '/items', 'Web\ItemController', 'index');
+```
+
+### Step 5: Access the Application
+Now you can access your application by navigating to `http://your-domain/items` in your web browser. You should see a list of items displayed on the page.
 
 Thank you for using Phuse, and happy coding! 😊
