@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Core;
 use Core\Database as Database;
 use Core\Config as Config;
-use Core\Database\Builders\Builders;
+use Core\Database\Builders\Builders as Builders;
 
 class Model
 {
@@ -24,8 +24,7 @@ class Model
     public function __construct(string $table, string $database = 'default')
     {
         $this->dbconfig = $this->setDatabase($database);
-        $this->builder = new Builders($this->dbconfig->driver, $table);
-		
+        
 		try{
 			// set error_reporting off to prevent leaked database information regardless of environment
 			error_reporting(0);
@@ -49,6 +48,9 @@ class Model
 			
 			if(isset($this->db)) // make sure the object exists
 			{
+                $builders = new Builders($this->dbconfig->driver, $table);
+                $this->builder = $builders->builders;
+                unset($builders);
 				$this->str = new Text\Str;
 				
 				//set default primaryKey

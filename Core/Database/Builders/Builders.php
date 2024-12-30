@@ -6,16 +6,16 @@ namespace Core\Database\Builders;
 
 class Builders
 {
-    protected $builder;
+    public $builders;
 
     public function __construct(string $databaseType, string $table)
     {
         switch (strtolower($databaseType)) {
             case 'mysql':
-                $this->builder = new MySQL($table);
+                $this->builders = new MySQL($table);
                 break;
             case 'pgsql':
-                $this->builder = new PgSQL($table);
+                $this->builders = new PgSQL($table);
                 break;
             default:
                 throw new \InvalidArgumentException('Unsupported database type: ' . $databaseType);
@@ -25,8 +25,8 @@ class Builders
     public function __call(string $method, array $args)
     {
         // Delegate method calls to the specific builder instance
-        if (method_exists($this->builder, $method)) {
-            return $this->builder->$method(...$args);
+        if (method_exists($this->builders, $method)) {
+            return $this->builders->$method(...$args);
         }
         throw new \BadMethodCallException('Method ' . $method . ' does not exist on builder.');
     }
