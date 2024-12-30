@@ -225,6 +225,7 @@ trait BuildersTrait {
 		{
 			$this->where($key,$operator,$value);
 		}
+		return $this;
     }
 	
 	public function whereQuery(string $query): self

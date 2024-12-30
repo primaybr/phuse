@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Core\Template;
 
+use Traversable;
+
 trait ParserTrait
 {
-	/**
+    /**
      * Parses a single value and returns an array with the template key and value.
      *
      * @param string $key The key in the template to be replaced.
@@ -23,11 +25,11 @@ trait ParserTrait
      * Parses an array of data and replaces the corresponding keys in the template.
      *
      * @param string $template The template string containing placeholders.
-     * @param string $var The variable name in the template to be replaced.
-     * @param array $data The data array used for replacement.
+     * @param string|array $var The variable name in the template to be replaced.
+     * @param string|array $data The data array used for replacement.
      * @return array An associative array with the original strings to be replaced and their new values.
      */
-    protected function parseArray(string $template, string $var, array $data): array
+    protected function parseArray(string $template, string|array $var, string|array $data): array
 	{
 		$replace = [];
 
@@ -52,7 +54,7 @@ trait ParserTrait
 						continue; 
 					}
 
-					$arr[$key] = $val;
+					$arr[$key] = is_array($val) ? implode(', ', $val) : (string)$val;
 				}
 
 				$str .= strtr($match[1], $arr); 
