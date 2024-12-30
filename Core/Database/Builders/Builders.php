@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Core\Database\Builders;
 
-class Builder
+class Builders
 {
     protected $builder;
 
