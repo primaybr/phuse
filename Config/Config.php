@@ -4,11 +4,11 @@ return [
     'env' => 'development',
 	'https' => false, // only use it for development on local machine
     'site' => [
-        'baseUrl' => 'http://localhost/phuse/',
+        'baseUrl' => 'phuse',
         'adminUrl' => 'admin',
         'assetsUrl' => 'assets',
 		'title' => 'Phuse',
-		'imgUrl'  => 'http://localhost/phuse/',
+		'imgUrl'  => 'phuse/',
 		'metaTitle' => 'Phuse - PHP Framework',
 		'metaDescription' => 'Phuse - PHP Framework',
 		'metaKeywords' => 'phuse'

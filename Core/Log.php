@@ -51,7 +51,7 @@ class Log
         // define log file from path method or use previously set default
         $this->logFile ??= $logFileDefault;
 
-        if (!fileExists($this->logFile)) {
+        if (!file_exists($this->logFile)) {
             $this->fileExists = false;
         }
 

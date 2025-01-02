@@ -1,6 +1,11 @@
 <?php
 namespace Core\Database\Builders;
 	
+/**
+ * Trait BuildersTrait
+ *
+ * This trait provides methods for building SQL queries in a fluent interface style.
+ */
 trait BuildersTrait {
 	
 	//SQL default operators
@@ -23,7 +28,25 @@ trait BuildersTrait {
     public string $queryOrderBy = '';
     public string $queryGroupBy = '';
     protected string $table = '';
+    protected array $queryCache = []; // Array to store cached queries
 
+    /**
+     * Generates a unique cache key based on the query and parameters.
+     *
+     * @param string $query The SQL query.
+     * @param array $params The query parameters.
+     * @return string The cache key.
+     */
+    protected function generateCacheKey(string $query, array $params): string {
+        return md5($query . serialize($params)); // Create a unique key based on the query and parameters
+    }
+
+    /**
+     * Sets the SELECT clause for the query.
+     *
+     * @param string|array $fields The fields to select.
+     * @return self
+     */
     public function select(string|array $fields = '*'): self
     {
         if (is_string($fields)) {
@@ -33,9 +56,23 @@ trait BuildersTrait {
             $this->querySelect = 'SELECT '.implode(',', $fields);
         }
 
+        // Generate cache key
+        $cacheKey = $this->generateCacheKey($this->querySelect, $this->binds);
+
+        // Check if result is cached
+        if (isset($this->queryCache[$cacheKey])) {
+            return $this->queryCache[$cacheKey]; // Return cached result
+        }
+
         return $this;
     }
 
+    /**
+     * Sets the INSERT clause for the query.
+     *
+     * @param array $data The data to insert.
+     * @return self
+     */
     public function insert(array $data): self
     {
         if ($data) {
@@ -57,6 +94,12 @@ trait BuildersTrait {
         return $this;
     }
     
+    /**
+     * Sets the INSERT IGNORE clause for the query.
+     *
+     * @param array $data The data to insert.
+     * @return self
+     */
     public function insertIgnore(array $data): self
     {
         $this->insert($data);
@@ -69,6 +112,12 @@ trait BuildersTrait {
         return $this;
     }
 
+    /**
+     * Sets the UPDATE clause for the query.
+     *
+     * @param array $data The data to update.
+     * @return self
+     */
     public function update(array $data): self
     {
         if ($data) {
@@ -88,6 +137,11 @@ trait BuildersTrait {
         return $this;
     }
 
+    /**
+     * Sets the DELETE clause for the query.
+     *
+     * @return self
+     */
     public function delete(): self
     {		
 		// Prioritize 'WHERE IN' sql statement if found
@@ -98,6 +152,13 @@ trait BuildersTrait {
         return $this;
     }
 	
+	/**
+     * Sets the MONTH condition for the query.
+     *
+     * @param string $field The field to apply the condition to.
+     * @param int $value The value to compare with.
+     * @return self
+     */
 	public function month(string $field, int $value): self
 	{
 
@@ -111,6 +172,13 @@ trait BuildersTrait {
         return $this;
 	}
 	
+	/**
+     * Sets the YEAR condition for the query.
+     *
+     * @param string $field The field to apply the condition to.
+     * @param int $value The value to compare with.
+     * @return self
+     */
 	public function year(string $field, int $value): self
 	{
 		if (!empty($this->queryWhere)) {
@@ -123,6 +191,13 @@ trait BuildersTrait {
         return $this;
 	}
 	
+	/**
+     * Sets the DAY condition for the query.
+     *
+     * @param string $field The field to apply the condition to.
+     * @param int $value The value to compare with.
+     * @return self
+     */
 	public function day(string $field, int $value): self
 	{
 		if (!empty($this->queryWhere)) {
@@ -135,6 +210,13 @@ trait BuildersTrait {
         return $this;
 	}
 
+    /**
+     * Sets the MAX aggregation for the query.
+     *
+     * @param string $field The field to apply the aggregation to.
+     * @param string $alias The alias for the aggregated field.
+     * @return self
+     */
     public function max(string $field, string $alias = ''): self
     {
         if (!empty($alias)) {
@@ -148,6 +230,13 @@ trait BuildersTrait {
         return $this;
     }
 
+    /**
+     * Sets the MIN aggregation for the query.
+     *
+     * @param string $field The field to apply the aggregation to.
+     * @param string $alias The alias for the aggregated field.
+     * @return self
+     */
     public function min(string $field, string $alias = ''): self
     {
         if (!empty($alias)) {
@@ -161,6 +250,12 @@ trait BuildersTrait {
         return $this;
     }
 
+    /**
+     * Sets the COUNT aggregation for the query.
+     *
+     * @param string $field The field to apply the aggregation to.
+     * @return self
+     */
     public function count(string $field = '*'): self
     {
         $this->querySelect .= " COUNT({$field})";
@@ -168,6 +263,12 @@ trait BuildersTrait {
         return $this;
     }
 
+    /**
+     * Sets the FROM clause for the query.
+     *
+     * @param string|array $table The table(s) to select from.
+     * @return self
+     */
     public function from(string|array $table = ''): self
     {
         $from = ' FROM ';
@@ -184,6 +285,15 @@ trait BuildersTrait {
         return $this;
     }
 
+    /**
+     * Sets the WHERE clause for the query.
+     *
+     * @param string $key The field to apply the condition to.
+     * @param string|int $value The value to compare with.
+     * @param string $operator The operator to use for the condition.
+     * @param string $clause The clause to use for the condition (AND or OR).
+     * @return self
+     */
     public function where(string $key = '', string|int $value = '', string $operator = '=', string $clause = 'AND'): self
     {
 		if(in_array($value,$this->operators))
@@ -216,6 +326,14 @@ trait BuildersTrait {
         return $this;
     }
 	
+	/**
+     * Sets the OR WHERE clause for the query.
+     *
+     * @param string $key The field to apply the condition to.
+     * @param string $operator The operator to use for the condition.
+     * @param string|int $value The value to compare with.
+     * @return self
+     */
 	public function orWhere(string $key, string $operator, string|int $value): self
     {
 		if (!empty($this->queryWhere)) {
@@ -228,6 +346,12 @@ trait BuildersTrait {
 		return $this;
     }
 	
+	/**
+     * Sets the WHERE clause for the query using a raw query.
+     *
+     * @param string $query The raw query to use.
+     * @return self
+     */
 	public function whereQuery(string $query): self
 	{
 		$where = ' WHERE ';
@@ -242,6 +366,13 @@ trait BuildersTrait {
 		return $this;
 	}
 
+    /**
+     * Sets the WHERE IN clause for the query.
+     *
+     * @param array $data The data to use for the IN condition.
+     * @param bool $not Indicates whether to use NOT IN instead of IN.
+     * @return self
+     */
     public function whereIn(array $data = [], bool $not = false): self
     {
         $whereIn = ' WHERE ';
@@ -283,6 +414,12 @@ trait BuildersTrait {
         return $this;
     }
 
+    /**
+     * Sets the OFFSET clause for the query.
+     *
+     * @param int $offset The number of records to skip before starting to return records.
+     * @return self
+     */
     public function offset(int $offset = 0): self
     {
         $this->queryOffset = " OFFSET $offset";
@@ -290,13 +427,26 @@ trait BuildersTrait {
         return $this;
     }
 
+    /**
+     * Sets the LIMIT clause for the query.
+     *
+     * @param int|string $limit The maximum number of records to return.
+     * @return self
+     */
     public function limit(int|string $limit = 0): self
     {
-        $this->queryLimit = " LIMIT $limit";
-        
+        $this->queryLimit = ' LIMIT ' . (int)$limit; // Ensure limit is an integer
         return $this;
     }
 
+    /**
+     * Sets the JOIN clause for the query.
+     *
+     * @param string $table The table to join with.
+     * @param string $cond The condition for the join.
+     * @param string $type The type of join (e.g. INNER, LEFT, RIGHT).
+     * @return self
+     */
     public function join(string $table, string $cond, string $type): self
     {
         if ('' !== $type) {
@@ -319,6 +469,13 @@ trait BuildersTrait {
         return $this;
     }
 
+    /**
+     * Sets the ORDER BY clause for the query.
+     *
+     * @param string $order_by The field to order by.
+     * @param string $order The order direction (ASC or DESC).
+     * @return self
+     */
     public function orderBy(string $order_by, string $order): self
     {
         $this->queryOrderBy = " ORDER BY $order_by $order";
@@ -326,6 +483,12 @@ trait BuildersTrait {
         return $this;
     }
     
+    /**
+     * Sets the GROUP BY clause for the query.
+     *
+     * @param string $groupby The field to group by.
+     * @return self
+     */
     public function groupBy(string $groupby): self
     {
         $this->queryGroupBy = " GROUP BY $groupby";
@@ -333,8 +496,120 @@ trait BuildersTrait {
         return $this;
     }
 
-    public function compile(bool $reset = true): string
+    /**
+     * Sets the SUM aggregation for the query.
+     *
+     * @param string $field The field to apply the aggregation to.
+     * @param string $alias The alias for the aggregated field.
+     * @return self
+     */
+    public function sum(string $field, string $alias = ''): self
     {
+        if (!empty($alias)) {
+            $alias = " AS {$alias}";
+        } else {
+            $alias = " AS {$field}";
+        }
+
+        $this->querySelect .= ", SUM({$field}) {$alias}";
+
+        return $this;
+    }
+
+    /**
+     * Sets the AVG aggregation for the query.
+     *
+     * @param string $field The field to apply the aggregation to.
+     * @param string $alias The alias for the aggregated field.
+     * @return self
+     */
+    public function avg(string $field, string $alias = ''): self
+    {
+        if (!empty($alias)) {
+            $alias = " AS {$alias}";
+        } else {
+            $alias = " AS {$field}";
+        }
+
+        $this->querySelect .= ", AVG({$field}) {$alias}";
+
+        return $this;
+    }
+
+    /**
+     * Sets the HAVING clause for the query.
+     *
+     * @param string $condition The condition for the HAVING clause.
+     * @return self
+     */
+    public function having(string $condition): self
+    {
+        $this->queryWhere .= " HAVING $condition";
+
+        return $this;
+    }
+
+    /**
+     * Sets a subquery for the query.
+     *
+     * @param string $query The subquery to use.
+     * @param string $alias The alias for the subquery.
+     * @return self
+     */
+    public function subquery(string $query, string $alias): self
+    {
+        $this->querySelect .= ", ($query) AS $alias";
+
+        return $this;
+    }
+
+    /**
+     * Resets the query parameters based on the specified part.
+     *
+     * @param string $part The part of the query to reset. Options include 'select', 'where', 'insert', etc.
+     * @return self
+     */
+    public function resetQuery(string $part = ''): self {
+        match ($part) {
+            'select' => $this->querySelect = '',
+            'where' => $this->queryWhere = '',
+            'wherein' => $this->queryWhereIn = '',
+            'from' => $this->queryFrom = '',
+            'join' => $this->queryJoin = '',
+            'insert' => $this->queryInsert = '',
+            'update' => $this->queryUpdate = '',
+            'delete' => $this->queryDelete = '',
+            'orderby' => $this->queryOrderBy = '',
+            'groupby' => $this->queryGroupBy = '',
+            'limit' => $this->queryLimit = '',
+            'offset' => $this->queryOffset = '',
+            default => 
+                // Reset all
+                $this->querySelect = 
+                $this->queryWhere = 
+                $this->queryInsert = 
+                $this->queryUpdate = 
+                $this->queryDelete = 
+                $this->queryOrderBy = 
+                $this->queryGroupBy = 
+                $this->queryLimit = 
+                $this->queryOffset = 
+                $this->queryJoin = 
+                $this->queryWhereIn = ''
+            
+        };
+
+        return $this;
+    }
+
+    /**
+     * Compiles the SQL query based on the set parameters.
+     *
+     * @param bool $reset Indicates whether to reset the query after compilation.
+     * @return string The compiled SQL query.
+     */
+    public function compile(bool $reset = true): string
+	{
         if (!empty($this->querySelect)) {
 			if(!empty($this->queryWhere) && !empty($this->queryWhereIn))
 			{
@@ -359,13 +634,111 @@ trait BuildersTrait {
         }
         
         return str_replace("''", "'", $sql);
-    }
-	
-	public function resetQuery(): self
-	{
-		$this->querySelect = $this->queryInsert = $this->queryUpdate = $this->queryWhere = $this->queryWhereIn = $this->queryGroupBy = $this->queryDelete = $this->queryOffset = $this->queryLimit = $this->queryJoin = $this->queryOrderBy = "";
-		
-		return $this;
 	}
+
+    /**
+     * Inserts multiple records into the database.
+     *
+     * @param array $data The data to insert.
+     * @return self
+     */
+    public function insertBatch(array $data): self 
+    {
+        if (!empty($data)) {
+            $columns = implode(',', array_keys($data[0]));
+            $values = array_map(function($item) {
+                return '('.implode(',', array_map('quote', $item)).')';
+            }, $data);
+            $this->queryInsert = "INSERT INTO {$this->table} ({$columns}) VALUES " . implode(',', $values);
+        }
+        return $this;
+    }
+
+    /**
+     * Sets multiple WHERE conditions for the query.
+     *
+     * @param array $conditions The conditions to apply.
+     * @return self
+     */
+    public function whereArray(array $conditions): self {
+        foreach ($conditions as $key => $value) {
+            $this->where($key, $value);
+        }
+        return $this;
+    }
+
+    /**
+     * Sets the DISTINCT keyword for the query.
+     *
+     * @return self
+     */
+    public function distinct(): self {
+        $this->querySelect = str_replace('SELECT ', 'SELECT DISTINCT ', $this->querySelect);
+        return $this;
+    }
+
+    /**
+     * Sets a JSON_CONTAINS condition for the query.
+     *
+     * @param string $field The field to apply the condition to.
+     * @param mixed $value The value to compare with.
+     * @return self
+     */
+    public function whereJsonContains(string $field, $value): self {
+        $this->queryWhere .= " JSON_CONTAINS($field, '" . json_encode($value) . "')";
+        return $this;
+    }
+
+    /**
+     * Logs the query.
+     *
+     * @return void
+     */
+    public function logQuery(): void {
+        $query = $this->compile(); // Get the compiled query
+        $timestamp = date('Y-m-d H:i:s'); // Current timestamp
+        $operation = ''; // Determine the operation type based on the query
+
+        // Basic operation detection based on the query
+        if (stripos($query, 'SELECT') === 0) {
+            $operation = 'SELECT';
+        } elseif (stripos($query, 'INSERT') === 0) {
+            $operation = 'INSERT';
+        } elseif (stripos($query, 'UPDATE') === 0) {
+            $operation = 'UPDATE';
+        } elseif (stripos($query, 'DELETE') === 0) {
+            $operation = 'DELETE';
+        }
+
+        // Log message
+        $logMessage = "[$timestamp] $operation Query: $query";
+
+        // Use the Log class to write the log message
+        $log = new \Core\Log();
+        $log->setLogName('database_queries')->write($logMessage);
+    }
+
+    /**
+     * Sets multiple conditions for the query.
+     *
+     * @param array $conditions The conditions to apply.
+     * @param string $clause The clause to use for the conditions (AND or OR).
+     * @return self
+     */
+    public function whereMultiple(array $conditions, string $clause = 'AND'): self {
+        foreach ($conditions as $condition) {
+            $this->queryWhere .= " $clause " . $condition;
+        }
+        return $this;
+    }
+
+    /**
+     * Clears the query cache.
+     *
+     * @return void
+     */
+    public function clearCache(): void {
+        $this->queryCache = []; // Clear the cache
+    }
 	
 }
