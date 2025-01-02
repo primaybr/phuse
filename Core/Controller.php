@@ -18,79 +18,115 @@ use Core\Text\Number;
 use Core\Cache\Cache;
 use Core\Model;
 
-class Controller extends \StdClass
+/**
+ * The Controller class is the base class for all controllers in the application.
+ * It provides common functionality and services for controllers.
+ */
+class Controller extends \stdClass
 {
-    public $config;
-    public Model $model;
-    public Log $log;
-    public Session $session;
-    public Parser $template;
-	public URI $uri;
-	public Debug $debug;
-	public Input $input;
-	public Str $str;
-	public Folder $folder;
-	public Error $error;
-	public Number $textNumber;
-	public Cache $cache;
-	public string $baseUrl;
-    public string $imgUrl;
-	public string $assetsUrl;
+    /** @var object The configuration object. */
+    public object $config;
 
+    /** @var Log The log object. */
+    public Log $log;
+
+    /** @var Session The session object. */
+    public Session $session;
+
+    /** @var Parser The template parser object. */
+    public Parser $template;
+
+    /** @var URI The URI object. */
+    public URI $uri;
+
+    /** @var Debug The debug object. */
+    public Debug $debug;
+
+    /** @var Input The input object. */
+    public Input $input;
+
+    /** @var Str The string utility object. */
+    public Str $str;
+
+    /** @var Folder The folder utility object. */
+    public Folder $folder;
+
+    /** @var Error The error object. */
+    public Error $error;
+
+    /** @var Number The number utility object. */
+    public Number $textNumber;
+
+    /** @var Cache The cache object. */
+    public Cache $cache;
+
+    /** @var string The base URL of the application. */
+    public string $baseUrl;
+
+    /** @var string The image URL of the application. */
+    public string $imgUrl;
+
+    /** @var string The assets URL of the application. */
+    public string $assetsUrl;
+
+    /**
+     * Initializes the controller with the necessary dependencies.
+     */
     public function __construct()
     {
-		$this->config = (new Config)->get();
-		$this->uri = new URI;
-		$this->session = new Session;
-        $this->template = new Parser;
-        $this->log = new Log;
-		$this->debug = new Debug;
-		$this->input = new Input;
-		$this->str = new Str;
-		$this->folder = new Folder;
-		$this->error = new Error;
-		$this->textNumber = new Number;
-		$this->cache = new Cache;
-		
+        // check for php version required to run the framework
+		if (version_compare(phpversion(), '8.2.0', '<='))
+		{
+			die('Minimum of PHP 8.2 is needed to run the framework, your php version is '.phpversion().' please upgrade your system!');
+		}
+        
+        $this->config = (new Config)->get();
+        $this->log = new Log();
+        $this->session = new Session();
+        $this->template = new Parser();
+        $this->uri = new URI();
+        $this->debug = new Debug();
+        $this->input = new Input();
+        $this->str = new Str();
+        $this->folder = new Folder();
+        $this->error = new Error();
+        $this->textNumber = new Number();
+        $this->cache = new Cache();
+
         $this->baseUrl = $this->config->site->baseUrl;
         $this->imgUrl = $this->config->site->imgUrl;
-		
-		$this->assetsUrl = $this->baseUrl . $this->config->site->assetsUrl . '/';
+        $this->assetsUrl = $this->baseUrl . $this->config->site->assetsUrl . '/';
     }
-	
-	/**
-     * The "render" method.
-	 * Assign html template with object data
+
+    /**
+     * Renders an HTML template with the provided data.
      *
-     * @param string	$template    path of template
-     * @param array		$data data to render
-	 * @param bool	$return flag to display data processed by template
-     *
-     * @return ?string
+     * @param string $template Path of the template.
+     * @param array $data Data to render.
+     * @param bool $return Flag to display data processed by template.
+     * @return ?string Rendered template content or null.
      */
     public function render(string $template, array $data = [], bool $return = false): ?string
     {
         $data = array_merge($data, [
             'baseUrl' => $this->baseUrl,
-            'imgUrl'	=> $this->imgUrl,
-			'assetsUrl' => $this->assetsUrl
+            'imgUrl' => $this->imgUrl,
+            'assetsUrl' => $this->assetsUrl,
         ]);
 
         return $this->template->render($template, $data, $return);
     }
 
     /**
-     * The "model" method.
-	 * Create model object based on the declaration of $table
+     * Creates a model object based on the provided table name.
      *
-     * @param array|string $table    table name, or an array of table
-     * @param string       $database database name
-     *
+     * @param array|string $table Table name or an array of tables.
+     * @param string $database Database name.
      * @return Controller
      */
-    public function model(array|string $table, string $database = "default"): self
+    public function model(array|string $table, string $database = 'default'): self
     {
-        if ('default' === $database) {
+        if ($database === 'default') {
             if (is_array($table)) {
                 foreach ($table as $val) {
                     $this->{$val} = new Model($val, $database);
@@ -100,7 +136,6 @@ class Controller extends \StdClass
             }
         } else {
             $this->{$database} = new \stdClass();
-
             if (is_array($table)) {
                 foreach ($table as $val) {
                     $this->{$database}->{$val} = new Model($val, $database);
@@ -112,29 +147,24 @@ class Controller extends \StdClass
 
         return $this;
     }
-	
-	
-	/**
-     * The "modelAlias" method.	
-     * Give new object alias to model, and remove the old model object
-	 * 
-     * @param string 	   $table    table name
-	 * @param string 	   $alias    alias name
-     * @param string       $database database name
+
+    /**
+     * Assigns a new object alias to the model and removes the old model object.
      *
+     * @param string $table Table name.
+     * @param string $alias Alias name.
+     * @param string $database Database name.
      * @return Controller
      */
-	public function modelAlias(string $table, string $alias, string $database = 'default'): self
-	{
-		//check if there are no declaration of the table before
-		if (!isset($this->{$table})) {
-			$this->model($table, $database);
-		}
-		
-		$this->{$alias} = $this->{$table};
-		unset($this->{$table});
-		
-		return $this;
-	}
-}
+    public function modelAlias(string $table, string $alias, string $database = 'default'): self
+    {
+        if (!isset($this->{$table})) {
+            $this->model($table, $database);
+        }
 
+        $this->{$alias} = $this->{$table};
+        unset($this->{$table});
+
+        return $this;
+    }
+}
