@@ -55,7 +55,6 @@ class Router
     public function run(): void
 	{
 		$url = $this->getUrl();
-		$serverName = $_SERVER['SERVER_NAME'] ?? 'localhost'; // Fallback to 'localhost'
 		$requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 		$this->redirectIfNeeded();
@@ -104,21 +103,26 @@ class Router
 
     private function handleRequest(callable|string $controller, array $matches, string $pattern): void
     {
-        if (is_string($controller) && is_string($this->action[$pattern]) && !empty($this->action[$pattern])) {
-            $controller = str_replace('/', '\\', Folder\Path::CONTROLLERS . $controller);
-            $controller = new $controller();
-            $handler = [$controller, $this->action[$pattern]];
-
-            if (method_exists($controller, $this->action[$pattern]) && is_callable($handler)) {
-                $this->logger->write("Calling controller method: " . $this->action[$pattern]);
-                $handler(...$matches);
-            } else {
-                $this->error->show(404);
-            }
-        } else {
-            $this->logger->write("Calling controller function");
-            $controller(...array_values($matches));
-        }
+        // If the controller and the action are both strings and not empty
+		if (is_string($controller) && is_string($this->action[$pattern]) && !empty($this->action[$pattern])) {
+			// Replace the slashes in the controller name with backslashes and prepend the namespace
+			$controller = str_replace('/', '\\', Folder\Path::CONTROLLERS . $controller);
+			// Create a new instance of the controller class
+			$controller = new $controller();
+			// Create a handler array with the controller object and the action name
+			$handler = [$controller, $this->action[$pattern]];
+			// If the controller has the action method and it is callable
+			if (method_exists($controller, $this->action[$pattern]) && is_callable($handler)) {
+				// Call the handler with the matches array as arguments
+				$handler(...$matches);
+			} else {
+				// If the controller does not have the action method or it is not callable, show a 404 error
+				$this->error->show(404);
+			}
+		} else {
+			// If the controller is not a string, assume it is a callable function and call it with the matches array as arguments
+			$controller(...array_values($matches));
+		}
     }
 
     private function preparePattern(string $pattern): string
@@ -131,19 +135,32 @@ class Router
 
     private function getUrl(): string
     {
-        return parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+        $url = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+
+        // Split the URL into segments by the slash character
+		$segments = explode('/', $url);
+
+		// If the second segment is not set, use the basename of the root directory as the default
+		$segments[1] ??= basename(strtolower(ROOT));
+
+		// If the second segment is not the same as the basename of the root directory, prepend it to the URL
+		$url = ($segments[1] !== basename(strtolower(ROOT))) ? DS . basename(strtolower(ROOT)) . $url : $url;
+		
+
+        return $url;
     }
 
     private function redirectIfNeeded(): void
     {
         $config = (new Config())->get();
-        $serverName = $_SERVER['SERVER_NAME'] ?? 'localhost'; // Fallback to 'localhost'
-        $httpHost = $_SERVER['HTTP_HOST'] ?? 'localhost'; // Fallback to 'localhost'
-        $redirect = match (true) {
-            (bool)ip2long($serverName) != 1 && $serverName != 'localhost' && !empty($serverName) && (isset($config->https) && $config->https === false)
-                && !(isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1) || isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') => 'https://' . $httpHost . $_SERVER['REQUEST_URI'],
-            default => null,
-        };
+        // Check if the request needs to be redirected to HTTPS
+		$redirect = match (true) {
+			// If the server name is not an IP address, not localhost, and not empty, and the request is not HTTPS
+			(bool)ip2long($_SERVER['SERVER_NAME']) != 1 && $_SERVER['SERVER_NAME'] != 'localhost' && !empty($_SERVER['SERVER_NAME']) && (isset($config->https) && $config->https === false)
+				&& !(isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1) || isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') => 'https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
+			// Otherwise, no redirection is needed
+			default => null,
+		};
 
         if ($redirect) {
             header('HTTP/1.1 301 Moved Permanently');
