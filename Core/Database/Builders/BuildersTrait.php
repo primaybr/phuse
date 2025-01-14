@@ -122,11 +122,20 @@ trait BuildersTrait {
     {
         if ($data) {
             $field_data = '';
-            $bind = [];
-
+            $count = 1;
             foreach ($data as $k => $v) {
-                $field_data .= "{$k}=:{$k}".',';
-                $this->binds[$k] = $v;
+                if(isset($this->binds[$k]))
+                {
+                    $field_data .= "{$k}=:{$k}{$count}".',';
+                    $this->binds[$k.$count] = $v;
+                    $count++;
+                }
+                else
+                {
+                    $field_data .= "{$k}=:{$k}".',';
+                    $this->binds[$k] = $v;
+                }
+               
             }
 
             $field_data = rtrim($field_data, ',');
