@@ -57,13 +57,16 @@ class Base
         error_reporting($this->config->getEnv() === 'production' ? self::ERROR_REPORTING_LEVEL_PRODUCTION : self::ERROR_REPORTING_LEVEL_DEVELOPMENT);
 
         set_error_handler([$this->handler, 'errorHandler']);
-        ini_set('session.sid_length', '250');
+        ini_set('session.sid_length', '64');
         ini_set('session.sid_bits_per_character', '5');
         ini_set('session.save_path', realpath("../Session"));
-        session_start();
 
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        
         if (isset($_COOKIE[session_name()])) {
-            setcookie(name: session_name(), value: $_COOKIE[session_name()]);
+            //setcookie(name: session_name(), value: $_COOKIE[session_name()]);
         }
     }
 }
