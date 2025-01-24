@@ -68,9 +68,14 @@ class Request
 
     public function getContent(): string|false
     {
-        $content = stream_get_contents($this->stream);
-        fclose($this->stream);
-        return $content;
+        
+        if (is_resource($this->stream)) {
+            $content = stream_get_contents($this->stream);
+            fclose($this->stream);
+            return $content;
+        } else {
+            return false;
+        }
     }
 
     private function refreshRequest(string $method, string $url, array|string $data = []): self
@@ -82,44 +87,18 @@ class Request
         $this->token = json_decode($token);
 
         // refresh token
-        // $newToken = $this->setContentType('application/json')
-        //     ->setHeader("Authorization: bearer " . $this->token->access_token)
-        //     ->request('POST', $this->apiExternalUrl . '/auth/refresh', ['json' => $token], false)
-        //     ->getContent();
-        // if ($this->httpResponseCode == 401) {
-        //     return $this;
-        // }
-        $curl = curl_init();
-
-        curl_setopt_array(
-            $curl,
-            array(
-                CURLOPT_URL => $this->apiExternalUrl . '/auth/refresh',
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_ENCODING => '',
-                CURLOPT_MAXREDIRS => 10,
-                CURLOPT_TIMEOUT => 0,
-                CURLOPT_FOLLOWLOCATION => true,
-                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                CURLOPT_CUSTOMREQUEST => 'POST',
-                CURLOPT_POSTFIELDS => $token,
-                CURLOPT_HTTPHEADER => array(
-                    'Content-Type: application/json',
-                    'Authorization: bearer ' . $this->token->access_token
-                ),
-            )
-        );
-
-        $newToken = curl_exec($curl);
-        $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
-
-        if ($httpcode == 401) {
+        $newToken = $this->setContentType('application/json')
+            ->setHeader("Authorization: Bearer " . $this->token->access_token)
+            ->request('POST', $this->apiExternalUrl . '/auth/refresh', ['json' => json_encode(['refresh_token' => $this->token->refresh_token])], false)
+            ->getContent();
+            
+        if ($this->httpResponseCode == 401) {
             return $this;
         }
-
+        
         $token = json_decode($newToken);
-        $this->setHeader("Authorization: bearer " . $token->access_token);
+        
+        $this->setHeader("Authorization: Bearer " . $token->access_token);
         list($header, $payload, $signature) = explode('.', $token->id_token);
 
         $jsonToken = base64_decode($payload);
