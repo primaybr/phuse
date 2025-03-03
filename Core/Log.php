@@ -6,6 +6,15 @@ namespace Core;
 
 use Core\Folder\Path as Path;
 
+/**
+ * Class Log
+ *
+ * Handles logging functionality for the application, including writing messages to log files.
+ *
+ * @package Core
+ * @author  Prima Yoga
+ * @version 1.0.1
+ */
 class Log
 {
     private string $logFile;
@@ -13,12 +22,23 @@ class Log
     private string $time;
     private bool $fileExists = true;
 
+    /**
+     * Log constructor.
+     * Initializes the log instance and sets the current timestamp.
+     *
+     * @throws Exception If the log file cannot be opened.
+     */
     public function __construct()
     {
         $this->time = date('[Y-m-d H:i:s]');
     }
 
-    // set log file name
+    /**
+     * Sets the log file name.
+     *
+     * @param string $name The name of the log file (without extension).
+     * @return self
+     */
     public function setLogName(string $name): self
     {
         $this->logFile = Path::LOGS . $name . '.log';
@@ -26,7 +46,12 @@ class Log
         return $this;
     }
 
-    // write message to the log file
+    /**
+     * Writes a message to the log file.
+     *
+     * @param string $message The message to be logged.
+     * @return void
+     */
     public function write(string $message): void
     {
         // if file pointer doesn't exist, then open log file
@@ -45,6 +70,11 @@ class Log
         fclose($this->pointer);
     }
 
+    /**
+     * Opens the log file for writing.
+     *
+     * @return void
+     */
     private function open(): void
     {
         $logFileDefault = Path::LOGS . 'log_' . date('Ymd') . '.log';

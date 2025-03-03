@@ -89,6 +89,20 @@ If you have any questions, issues, or feedback regarding Phuse, you can contact 
 
 Phuse is an open-source project, and you are welcome to contribute to its development. You can fork the repository, make your changes, and submit a pull request. Please follow the coding standards and guidelines before submitting your code.
 
+## Latest Changes
+
+### v1.0.1 (2025-11-28)
+- Added support for multiple HTTP methods in Router class
+- Added Route Caching in Router class
+- Added DocBlock to Core files
+- Fixed namespace resolution issues in Router class
+- Improved session system for better security and performance
+- Improved Router class for better performance and flexibility
+- Improved Base class for better performance and flexibility
+
+### v1.0.0 (2023-11-21)
+- Initial release of Phuse 1, based on collective and collaborative framework named 'Orceztra'(discontinued personal project).
+
 ## Credits
 
 Phuse is developed and maintained by Prima Yoga, a passionate web developer and PHP enthusiast.

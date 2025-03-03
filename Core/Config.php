@@ -11,13 +11,16 @@ use Throwable;
 /**
  * Class Config
  * Manages application configuration settings, loading them from a configuration file and providing access to them.
+ * 
+ * @author Prima Yoga
+ * @version 1.0.1
  */
 class Config
 {
     // Use readonly properties to prevent accidental modification
     private readonly array $config;
-    private URI $uri;
-    private string $env;
+    private readonly URI $uri;
+    private readonly string $env;
 
     /**
      * Config constructor.
@@ -45,53 +48,74 @@ class Config
      * 
      * @param array $data optional data to merge with config
      * @return object config object
+     * @throws Exception if there's an error loading the configuration file
      */
     public function get(array $data = []): object
     {
-        $newConfig = [];
-
-        if (!$data) {
+        if (empty($data)) {
             try {
-                $config = require Folder\Path::CONFIG.'Config.php';
+                $config = $this->config;
             } catch (Throwable $e) {
-                throw new Exception("Error loading configuration file: " . $e->getMessage());
-            }
-            if(!empty($this->config))
-            {
-                $config = array_merge($config,$this->config);
-            }
-            foreach ($config as $key => $val) {
-                if (is_array($val)) {
-                    $newConfig[$key] = $this->get($val);
-                } else {
-                    $newConfig[$key] = is_string($val) ? $val : (object) $val;
-                }
+                throw new Exception("Error accessing configuration data: " . $e->getMessage());
             }
         } else {
-            foreach ($data as $key => $val) {
-                $newConfig[$key] = is_string($val) ? $val : (object) $val;
-            }
+            $config = $data;
         }
-
-        if(isset($newConfig['site']))
-        {
-            $newConfig['site']->baseUrl = $this->uri->getProtocol().$this->uri->getHost().'/'.((isset($newConfig['site']->baseUrl) && !empty($newConfig['site']->baseUrl)) ? $newConfig['site']->baseUrl.'/' : '');
+        
+        $newConfig = $this->processConfigArray($config);
+        
+        // Add baseUrl to site configuration if it exists
+        if (isset($newConfig['site'])) {
+            $newConfig['site']->baseUrl = $this->buildBaseUrl($newConfig);
         }
 
         return (object) $newConfig;
+    }
+    
+    /**
+     * Process a configuration array recursively
+     * 
+     * @param array $config The configuration array to process
+     * @return array The processed configuration array
+     */
+    private function processConfigArray(array $config): array
+    {
+        $result = [];
+        
+        foreach ($config as $key => $val) {
+            if (is_array($val)) {
+                $result[$key] = (object) $this->processConfigArray($val);
+            } else {
+                $result[$key] = $val;
+            }
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Build the base URL from configuration
+     * 
+     * @param array $config The configuration array
+     * @return string The base URL
+     */
+    private function buildBaseUrl(array $config): string
+    {
+        $baseUrl = $config['site']->baseUrl ?? '';
+        return $this->uri->getProtocol() . $this->uri->getHost() . '/' . 
+               (!empty($baseUrl) ? $baseUrl . '/' : '');
     }
 
     /**
      * Set config data
      * 
      * @param string $key config key
-     * @param string $val config value
+     * @param mixed $val config value
      * @return self config object
      */
-    public function set(string $key, string $val): self
+    public function set(string $key, mixed $val): self
     {
         $this->config[$key] = $val;
-
         return $this;
     }
     

@@ -2,6 +2,7 @@
 namespace Core\Database\Drivers;
 
 use PDO;
+use PDOException;
 
 class PgSQL implements DriversInterface {
 	

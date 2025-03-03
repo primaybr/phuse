@@ -9,9 +9,5 @@ class Path{
     const CONTROLLERS = 'App'.DS.'Controllers'.DS;
     const MODELS = ROOT.'App'.DS.'Models'.DS;
     const VIEWS  = ROOT.'App'.DS.'Views'.DS;
-	
-	public static function session() : string 
-	{
-		return realpath("../Session");
-	}
+    const SESSION = ROOT.'Session'.DS;
 }
