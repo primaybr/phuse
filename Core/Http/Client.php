@@ -22,9 +22,8 @@ class Client
                         return $ip;
                     }
                 }
-            } else {
-                return 'UNKNOWN';
             }
         }
+        return 'UNKNOWN'; // Ensure a return value is always provided
     }
 }

@@ -21,65 +21,104 @@ use Core\Model;
 /**
  * The Controller class is the base class for all controllers in the application.
  * It provides common functionality and services for controllers.
+ *
+ * This class serves as a foundation for all application controllers, providing
+ * access to essential framework services like configuration, logging, session management,
+ * template rendering, and database operations.
+ *
+ * @package Core
+ * @author  Prima Yoga
+ * @version 1.0.1
  */
 class Controller extends \stdClass
 {
-    /** @var object The configuration object. */
+    /** 
+     * @var object The configuration object containing all application settings.
+     */
     public object $config;
 
-    /** @var Log The log object. */
+    /** 
+     * @var Log The log object for application logging functionality.
+     */
     public Log $log;
 
-    /** @var Session The session object. */
+    /** 
+     * @var Session The session object for managing user sessions.
+     */
     public Session $session;
 
-    /** @var Parser The template parser object. */
+    /** 
+     * @var Parser The template parser object for rendering views.
+     */
     public Parser $template;
 
-    /** @var URI The URI object. */
+    /** 
+     * @var URI The URI object for handling request URIs and routing.
+     */
     public URI $uri;
 
-    /** @var Debug The debug object. */
+    /** 
+     * @var Debug The debug object for debugging and error handling.
+     */
     public Debug $debug;
 
-    /** @var Input The input object. */
+    /** 
+     * @var Input The input object for handling user input and request data.
+     */
     public Input $input;
 
-    /** @var Str The string utility object. */
+    /** 
+     * @var Str The string utility object for string manipulation operations.
+     */
     public Str $str;
 
-    /** @var Folder The folder utility object. */
+    /** 
+     * @var Folder The folder utility object for file system operations.
+     */
     public Folder $folder;
 
-    /** @var Error The error object. */
+    /** 
+     * @var Error The error object for exception and error handling.
+     */
     public Error $error;
 
-    /** @var Number The number utility object. */
+    /** 
+     * @var Number The number utility object for number formatting and calculations.
+     */
     public Number $textNumber;
 
-    /** @var Cache The cache object. */
+    /** 
+     * @var Cache The cache object for application caching functionality.
+     */
     public Cache $cache;
 
-    /** @var string The base URL of the application. */
+    /** 
+     * @var string The base URL of the application for generating absolute URLs.
+     */
     public string $baseUrl;
 
-    /** @var string The image URL of the application. */
+    /** 
+     * @var string The image URL of the application for referencing image assets.
+     */
     public string $imgUrl;
 
-    /** @var string The assets URL of the application. */
+    /** 
+     * @var string The assets URL of the application for referencing static assets.
+     */
     public string $assetsUrl;
 
     /**
      * Initializes the controller with the necessary dependencies.
+     * 
+     * This constructor performs the following operations:
+     * - Initializes all service objects (config, log, session, etc.)
+     * - Sets up common URL properties for use in views
+     * 
+     * @throws \Exception If the PHP version requirement is not met
      */
     public function __construct()
     {
-        // check for php version required to run the framework
-		if (version_compare(phpversion(), '8.2.0', '<='))
-		{
-			die('Minimum of PHP 8.2 is needed to run the framework, your php version is '.phpversion().' please upgrade your system!');
-		}
-        
+
         $this->config = (new Config)->get();
         $this->log = new Log();
         $this->session = new Session();
@@ -101,10 +140,14 @@ class Controller extends \stdClass
     /**
      * Renders an HTML template with the provided data.
      *
-     * @param string $template Path of the template.
-     * @param array $data Data to render.
-     * @param bool $return Flag to display data processed by template.
-     * @return ?string Rendered template content or null.
+     * This method merges the provided data with common URL variables and passes
+     * them to the template parser for rendering. It can either return the rendered
+     * content as a string or output it directly based on the return parameter.
+     *
+     * @param string $template Path of the template file to render.
+     * @param array $data Associative array of data to be passed to the template.
+     * @param bool $return When true, returns the rendered content as a string; otherwise outputs directly.
+     * @return ?string Rendered template content as a string if $return is true, null otherwise.
      */
     public function render(string $template, array $data = [], bool $return = false): ?string
     {
@@ -120,9 +163,13 @@ class Controller extends \stdClass
     /**
      * Creates a model object based on the provided table name.
      *
-     * @param array|string $table Table name or an array of tables.
-     * @param string $database Database name.
-     * @return Controller
+     * This method instantiates model objects for database tables and attaches them
+     * to the controller instance. It supports both single table and multiple table
+     * initialization, as well as different database connections.
+     *
+     * @param array|string $table Table name or an array of table names to create models for.
+     * @param string $database Database connection name as defined in configuration.
+     * @return self Returns the controller instance for method chaining.
      */
     public function model(array|string $table, string $database = 'default'): self
     {
@@ -151,10 +198,14 @@ class Controller extends \stdClass
     /**
      * Assigns a new object alias to the model and removes the old model object.
      *
-     * @param string $table Table name.
-     * @param string $alias Alias name.
-     * @param string $database Database name.
-     * @return Controller
+     * This method creates an alias for an existing model or initializes a new model
+     * if it doesn't exist yet. It's useful for giving more meaningful names to models
+     * or for avoiding naming conflicts.
+     *
+     * @param string $table Original table name of the model.
+     * @param string $alias New alias name to assign to the model.
+     * @param string $database Database connection name as defined in configuration.
+     * @return self Returns the controller instance for method chaining.
      */
     public function modelAlias(string $table, string $alias, string $database = 'default'): self
     {

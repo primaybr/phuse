@@ -7,6 +7,15 @@ use Core\Database as Database;
 use Core\Config as Config;
 use Core\Database\Builders\Builders as Builders;
 
+/**
+ * Class Model
+ *
+ * Represents a database model for interacting with a specific database table.
+ *
+ * @package Core
+ * @author  Prima Yoga
+ * @version 1.0.1
+ */
 class Model
 {
     public Database\Connection $db;

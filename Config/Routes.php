@@ -11,5 +11,7 @@ $router = new Router();
 
 $router->add('GET', '/', 'Web\Welcome', 'index');
 $router->get('/items', 'Web\ItemController', 'index');
+$router->post('/items', 'Web\ItemController', 'postData');
+
 
 return $router;
