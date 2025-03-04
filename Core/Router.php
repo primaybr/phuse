@@ -6,7 +6,7 @@ namespace Core;
 
 use Core\Exception\Error as Error;
 use Core\Folder as Folder;
-use Core\Log as Logger;
+use Core\Log as Log;
 use Core\Cache\Cache as Cache;
 
 /**
@@ -45,9 +45,9 @@ class Router
      */
     private Error $error;
     /**
-     * @var Logger $logger The logger instance.
+     * @var Log $log The log instance.
      */
-    private Logger $logger; // Logger instance
+    private Log $log; // Log instance
     /**
      * @var array $cachedRoutes The cached routes.
      */
@@ -61,7 +61,7 @@ class Router
     public function __construct()
     {
         $this->error = new Error();
-        $this->logger = new Logger(); // Initialize the logger
+        $this->log = new Log(); // Initialize the log
         $this->loadRoutes(); // Load cached routes if available
     }
 
@@ -76,6 +76,7 @@ class Router
         $cache = new Cache();
         $cachedRoutes = $cache->get(Folder\Path::CACHE . 'routes.cache');
 
+        // If cached routes exist, unserialize and set them
         if ($cachedRoutes) {
             $this->cachedRoutes = unserialize($cachedRoutes);
             $this->routes = $this->cachedRoutes['routes'];
@@ -209,7 +210,7 @@ class Router
         $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
         $this->redirectIfNeeded();
-
+        
         $this->match($url, $requestMethod);
     }
 
@@ -226,10 +227,9 @@ class Router
 
         // Iterate through registered routes to find a match
         foreach ($this->routes as $routeKey => $controller) {
-            $pattern = explode('|', $routeKey)[0]; // Get the pattern from the route key
+            $pattern = explode('@', $routeKey)[0]; // Get the pattern from the route key
             if (preg_match($pattern, $requestUri, $matches)) {
-
-                if ($this->methods[$routeKey] !== $requestMethod) {
+                if (stripos($this->methods[$routeKey], $requestMethod) === false) {
                     continue; // Try next route if method doesn't match
                 }
 
@@ -247,9 +247,9 @@ class Router
                     return;
                 }
 
-                $this->logger->write("Accessing route: $requestUri with method: $requestMethod");
+                $this->log->write("Accessing route: $requestUri with method: $requestMethod");
                 $endTime = microtime(true); // End profiling
-                $this->logger->write('Route matching took: ' . ($endTime - $startTime) . ' seconds');
+                $this->log->write('Route matching took: ' . ($endTime - $startTime) . ' seconds');
 
                 // Dispatch the request to the appropriate controller and action
                 $this->handleRequest($controller, $matches, $routeKey);
@@ -257,9 +257,9 @@ class Router
             }
         }
 
-        $this->logger->write("No matching route found for URL: $requestUri");
+        $this->log->write("No matching route found for URL: $requestUri");
         $endTime = microtime(true); // End profiling
-        $this->logger->write('No matching route took: ' . ($endTime - $startTime) . ' seconds');
+        $this->log->write('No matching route took: ' . ($endTime - $startTime) . ' seconds');
         
 
         // Handle the case where no route matches
@@ -391,6 +391,6 @@ class Router
      */
     private function getRouteKey(string $pattern, string $method): string
     {
-        return $pattern . '|' . $method;
+        return $pattern . '@' . $method;
     }
 }

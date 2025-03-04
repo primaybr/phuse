@@ -90,7 +90,7 @@ trait ParserTrait
         $template = strtr($template, $replace);
 
         $template = $this->parseConditionals($template);
-
+		
         return $template;
     }
 	
@@ -102,23 +102,19 @@ trait ParserTrait
      */
     protected function parseConditionals(string $template): string
     {
+        // Use a single regex pattern to match all conditional statements
+        $pattern = '~{%\s*(if|elseif|else|foreach|for|while)\s+(.*?)\s+as\s+(.*?)\s*%}(.*?){%\s*(endif|endforeach|endfor|endwhile)\s*%}~s';
 
-        $foreachPattern = '~{%\\s*foreach\\s+(\\w+)\\s+as\\s+(\\w+)\\s*%}(.+?){%\\s*endforeach\\s*%}~s';
-        $ifPattern = '~{%\\s*if\\s+(.+?)\\s*%}(.+?){%\\s*endif\\s*%}~s';
-        $elsePattern = '~{%\\s*else\\s*%}(.+?)({%\\s*endif\\s*%}|{%\\s*elseif\\s+.+?\\s*%})~s';
-        $elseifPattern = '~{%\\s*elseif\\s+(.+?)\\s*%}(.+?)({%\\s*endif\\s*%}|{%\\s*else\\s*%}|{%\\s*elseif\\s+.+?\\s*%})~s';
-        $whilePattern = '~{%\\s*while\\s+(.+?)\\s*%}(.+?){%\\s*endwhile\\s*%}~s';
-        $forPattern = '~{%\\s*for\\s+(\\w+)\\s*=\\s*(\\d+)\\s*to\\s*(\\d+)\\s*%}(.+?){%\\s*endfor\\s*%}~s';
-
-        $template = preg_replace_callback($foreachPattern, [$this, 'parseForeach'], $template);
-		
-        $template = preg_replace_callback($ifPattern, [$this, 'parseIf'], $template);
-        $template = preg_replace_callback($elsePattern, [$this, 'parseElse'], $template);
-        $template = preg_replace_callback($elseifPattern, [$this, 'parseElseif'], $template);
-        $template = preg_replace_callback($whilePattern, [$this, 'parseWhile'], $template);
-        $template = preg_replace_callback($forPattern, [$this, 'parseFor'], $template);
-
-        return $template;
+        return preg_replace_callback($pattern, function($matches) {
+            return match ($matches[1]) {
+                'if' => $this->parseIf($matches),
+                'elseif' => $this->parseElseif($matches),
+                'else' => $this->parseElse($matches),
+                'foreach' => $this->parseForeach($matches),
+                'for' => $this->parseFor($matches),
+                'while' => $this->parseWhile($matches),
+            };
+        }, $template);
     }
 	
 	/**
@@ -131,9 +127,9 @@ trait ParserTrait
 	protected function parseForeach(array $match): string
 	{
 		
-		$iterableVar = $match[1];
-		$loopVar = $match[2];
-		$content = $match[3];
+		$iterableVar = $match[2];
+		$loopVar = $match[3];
+		$content = $match[4];
 
 		if (!isset($this->data[$iterableVar])) {
 
@@ -185,8 +181,8 @@ trait ParserTrait
     protected function parseIf(array $match): string
     {
 
-        $condition = $match[1];
-        $content = $match[2];
+        $condition = $match[2];
+        $content = $match[4];
 
         if ($this->evaluateCondition($condition)) {
 
@@ -207,8 +203,8 @@ trait ParserTrait
     protected function parseElse(array $match): string
     {
 
-        $content = $match[1];
-        $end = $match[2];
+        $content = $match[4];
+        $end = $match[5];
 
         return $content . $end;
     }
@@ -223,9 +219,9 @@ trait ParserTrait
     protected function parseElseif(array $match): string
     {
 
-        $condition = $match[1];
-        $content = $match[2];
-        $end = $match[3];
+        $condition = $match[2];
+        $content = $match[4];
+        $end = $match[5];
 
         if ($this->evaluateCondition($condition)) {
 
@@ -246,8 +242,8 @@ trait ParserTrait
     protected function parseWhile(array $match): string
     {
 
-        $condition = $match[1];
-        $content = $match[2];
+        $condition = $match[2];
+        $content = $match[4];
 
         $result = '';
 
@@ -269,10 +265,10 @@ trait ParserTrait
     protected function parseFor(array $match): string
     {
 
-        $loopVar = $match[1];
-        $start = (int) $match[2];
-        $end = (int) $match[3];
-        $content = $match[4];
+        $loopVar = $match[2];
+        $start = (int) $match[3];
+        $end = (int) $match[4];
+        $content = $match[5];
 
         $result = '';
 

@@ -7,6 +7,7 @@ namespace Core\Template;
 use Core\Folder\Path as Path;
 use Core\Exception\Error as Error;
 use Core\Text\HTML;
+use Core\Log as Log;
 
 class Parser implements ParserInterface
 {
@@ -16,6 +17,8 @@ class Parser implements ParserInterface
 	protected string $template;
 	// The data to be passed to the template
 	protected array $data;
+    // The log object
+    protected Log $log;
 
     /**
      * The "setTemplate" method.
@@ -51,13 +54,20 @@ class Parser implements ParserInterface
      *
      * @param array $data An associative array of key-value pairs
      * @return self The template object
+     * @throws Error If the data is not an array
      */
     public function setData(array $data): self
     {
+        // Check if the data is an array
+        if (!is_array($data)) {
+            $this->exception("The data must be an array.");
+        }
+
         // Merge the data with the existing data
-        if (!empty($this->data)) {
+        if (!empty($this->data) && is_array($this->data)) {
             $this->data = array_merge($this->data, $data);
-        } else {
+        } 
+        else {
             $this->data = $data;
         }
 
@@ -124,9 +134,16 @@ class Parser implements ParserInterface
      * @param string $message The error message to display
      * @param string $template Optional. The name of the error template file, relative to the views folder
      * @return void
+     * @throws Error If the message is empty
      */
     public function exception(string $message, string $template = "error/default"): void
     {
+        // Check if the message is empty
+        if (empty($message)) {
+            $this->exception("The error message is empty.");
+        }
+
+        $this->log->write($message);
         // Render the error template with the message and the date
         $this->render($template, ['message' => $message, 'date' => date('Y')]);
         // Exit the script
