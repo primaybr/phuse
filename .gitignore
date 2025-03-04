@@ -1,4 +1,5 @@
 Cache/
+Session/
 Config/Config.php
 Logs/
 !Core/Cache/
