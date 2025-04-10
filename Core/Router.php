@@ -344,7 +344,8 @@ class Router
     private function getUrl(): string
     {
         $url = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
-
+        $url = ($url != '/') ? rtrim($url, '/') : $url;
+        
         // Split the URL into segments by the slash character
 		$segments = explode('/', $url);
 
