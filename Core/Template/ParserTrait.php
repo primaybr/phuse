@@ -141,35 +141,40 @@ trait ParserTrait
 		if (is_array($iterable) || $iterable instanceof Traversable) {
 
 			$result = '';
-			
-			preg_match_all("/\{$loopVar\\.([^\\}]*)\}/",$content,$matched);
-			
-			if(isset($matched[1]))
-			{
-				$replaceable = $matched[1];
-				
-				foreach ($iterable as $key => $value) {
-					
-					//remove unused array
-					foreach($value as $k => $v)
-					{
-						if(!in_array($k,$replaceable))
-							unset($value[$k]);
-					}
-					
-					$result .= strtr($content,$value);
-				}
-				
-				$result = preg_replace("/\{$loopVar\\.([^\\}]*)\}/",'$1',$result);
-				
-			}
-			
-			return $result;
-		} else {
+            
+            // Find all array key references
+            preg_match_all("/\{$loopVar\.([^\}]*)\}/", $content, $matched);
+            
+            if (isset($matched[1])) {
+                $replaceable = $matched[1];
+                
+                foreach ($iterable as $key => $value) {
+                    // Create a temporary array for replacements
+                    $tempArr = [];
+                    
+                    foreach ($value as $k => $v) {
+                        // Only replace if the key exists in the template
+                        if (in_array($k, $replaceable)) {
+                            $tempArr[$k] = is_array($v) ? implode(', ', $v) : (string)$v;
+                        }
+                    }
+                    
+                    // Replace only the exact matches
+                    $result .= preg_replace_callback("/\{$loopVar\.([^\}]*)\}/", function($m) use ($tempArr) {
+                        return isset($tempArr[$m[1]]) ? $tempArr[$m[1]] : $m[0];
+                    }, $content);
+                }
+                
+                // Remove the loop variable prefix after replacements
+                $result = preg_replace("/\{$loopVar\.([^\}]*)\}/", '$1', $result);
+            }
+            
+            return $result;
+        } else {
 
 			return '';
-		}
-	}
+        }
+    }
 
 	/**
 	 * Evaluates `if` conditions in the template.
