@@ -28,9 +28,9 @@ class Pager implements PagerInterface
     protected function generatePaginationLinks(): string
     {
         $links = [];
-
+        
         // If the current Page isn't first
-        if ($this->currentPage != 1) {
+        if ($this->currentPage != 1 && $this->currentPage != 0) {
             // First link
             $links[] = $this->getPageLink(1, $this->firstText);
 
@@ -45,8 +45,10 @@ class Pager implements PagerInterface
         $end = min($start + $this->numLinks - 1, $this->getTotalPages());
 
         for ($i = $start; $i <= $end; $i++) {
-            $links[] = $this->getPageLink($i, $i, $i == $this->currentPage);
+            $links[] = $this->getPageLink($i, $i, $i == $this->currentPage || ($this->currentPage == 0 && $i == 1));
         }
+
+        $this->currentPage = $this->currentPage < 1 ? 1 : $this->currentPage;
 
         // If the current page isn't last page
         if ($this->currentPage != $this->getTotalPages()) {
@@ -65,7 +67,17 @@ class Pager implements PagerInterface
     // Generates a single page link
 	protected function getPageLink(mixed $pageNumber, mixed $text, bool $isActive = false): string
     {
-        $url = $this->url . '?page=' . $pageNumber;
+        //check for query string
+        $urlParts = parse_url($this->url);
+        
+        if (isset($urlParts['query'])) {
+            parse_str($urlParts['query'], $queryParams);
+        }
+
+        $queryParams['page'] = $pageNumber;
+        $query = '?'.http_build_query($queryParams);
+
+        $url = $urlParts['path'] . $query;
         $active = $isActive ? $this->activeClass : '';
 
         // Use a ternary operator to simplify the conditional logic

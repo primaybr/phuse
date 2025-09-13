@@ -8,6 +8,7 @@ use Core\Folder\Path as Path;
 use Core\Exception\Error as Error;
 use Core\Text\HTML;
 use Core\Log as Log;
+use Core\Cache\TemplateCache;
 
 class Parser implements ParserInterface
 {
@@ -19,6 +20,15 @@ class Parser implements ParserInterface
 	protected array $data;
     // The log object
     protected Log $log;
+
+    // The template cache instance
+    protected TemplateCache $cache;
+
+    // Whether to use template caching
+    protected bool $useCache;
+    
+    // Configuration instance
+    protected \Config\Template $config;
 
     /**
      * The "setTemplate" method.
@@ -56,6 +66,12 @@ class Parser implements ParserInterface
      * @return self The template object
      * @throws Error If the data is not an array
      */
+    /**
+     * Set template data
+     * 
+     * @param array $data Template data
+     * @return self
+     */
     public function setData(array $data): self
     {
         // Check if the data is an array
@@ -72,6 +88,40 @@ class Parser implements ParserInterface
         }
 
         return $this;
+    }
+
+    /**
+     * Enable or disable template caching
+     * 
+     * @param bool $enabled Whether to enable caching
+     * @return self
+     */
+    public function enableCache(bool $enabled = true): self
+    {
+        $this->useCache = $enabled;
+        return $this;
+    }
+
+    /**
+     * Clear all cached templates
+     * 
+     * @param bool $force Force clear even if auto-clear is disabled
+     * @return bool True on success, false on failure
+     */
+    public function clearCache(bool $force = false): bool
+    {
+        if ($force || $this->config->autoClearInDevelopment) {
+            return $this->cache->clear();
+        }
+        return false;
+    }
+
+    public function __construct()
+    {
+        $this->config = new \Config\Template();
+        $this->log = new Log();
+        $this->cache = new TemplateCache();
+        $this->useCache = $this->config->enableCache;
     }
 
      /**
@@ -97,33 +147,49 @@ class Parser implements ParserInterface
             $this->setData($data);
         }
 
+        // Check for cached version if caching is enabled
+        $cacheKey = null;
+        if ($this->useCache) {
+            $cacheKey = $this->cache->generateKey($this->template, $this->data);
+            
+            if ($this->cache->hasValidCache($cacheKey)) {
+                if ($return) {
+                    return file_get_contents($this->cache->getCachePath($cacheKey));
+                }
+                include $this->cache->getCachePath($cacheKey);
+                return null;
+            }
+        }
+
         // Start output buffering
         ob_start();
+
+        // Extract the data to variables
+        if (!empty($this->data)) {
+            extract($this->data, EXTR_SKIP);
+        }
+
         // Include the template file
         include $this->template;
-        // Get the output buffer contents
-        $output = ob_get_contents();
-        // End output buffering and clean
-        ob_end_clean();
 
-        // Parse the output with the data
-        $parser = $this->parseData($output, $this->data);
+        // Get the buffered content
+        $content = ob_get_clean();
 
-        // Return or output the result
-        if ($return) {
-            return $parser;
+        // Parse the content with the data
+        $content = $this->parseData($content, $this->data);
+
+        // Cache the compiled template if caching is enabled
+        if ($this->useCache && $cacheKey) {
+            $this->cache->store($cacheKey, $content);
         }
-		
-		// Check if the parser is empty
-		if (empty($parser)) {
-			// Show an error template
-			$error = new Error;
-			$error->show();
-		} else {
-			// Output the parser
-			echo $parser;
-		}
-        exit;
+
+        // Output or return the content
+        if ($return) {
+            return $content;
+        }
+
+        echo $content;
+        return null;
     }
 
     /**
