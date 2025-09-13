@@ -4,12 +4,28 @@ Phuse is a PHP framework that simplifies web development with conventions and he
 
 ## Features
 
-Some of the main features of Phuse are:
+### Core Features
 
 - **MVC Pattern**: Phuse implements the Model-View-Controller pattern, which separates the application logic from the presentation layer. This makes the code more organized, maintainable, and testable.
 - **Active Record ORM**: Phuse uses the Active Record pattern, which maps database tables to PHP classes and objects. This makes the database operations easier, faster, and more secure.
 - **Routing**: Phuse handles routing efficiently, allowing developers to define clean and understandable URLs for their applications.
 - **Formatting**: Phuse provides a formatting class that allows you to format the output data in various ways. It supports date and time, number, currency, and string formatting.
+
+### Performance Optimizations
+
+#### Database Query Caching
+
+- **Automatic Caching**: Query results are automatically cached based on configuration
+- **Intelligent Cache Invalidation**: Cache is automatically invalidated when data changes
+- **Selective Caching**: Control which queries and tables are cached
+- **Development Mode**: Automatic cache clearing in development environment
+
+#### Template Caching
+
+- **Compiled Templates**: Templates are compiled and cached for faster rendering
+- **Auto-Refresh**: Cache is automatically cleared when templates are modified
+- **Development Friendly**: Easy to disable in development mode
+- **Configurable**: Control cache lifetime and storage location
 - **And more**: Phuse also offers other features such as logging, sessions, security, email, and more.
 
 ## Installation
@@ -91,7 +107,17 @@ Phuse is an open-source project, and you are welcome to contribute to its develo
 
 ## Latest Changes
 
-### v1.0.1 (2025-11-28)
+### v1.0.2 (2025-09-13)
+- Added Database Query Caching system
+- Added Template Caching for improved performance
+- Enhanced cache configuration options
+- Improved documentation for caching features
+- Optimized template rendering performance
+- Core/Router - Added handle for empty url
+- Core/Template/ParserTrait : Update the parseForEach method to not replace string that is outside the brackets scope
+- Core/Router : Handling local machine routing
+
+### v1.0.1 (2025-2-28)
 - Added support for multiple HTTP methods in Router class
 - Added Route Caching in Router class
 - Added DocBlock to Core files
