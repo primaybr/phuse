@@ -13,7 +13,6 @@ use Core\Folder\Path as Path;
  *
  * @package Core
  * @author  Prima Yoga
- * @version 1.0.1
  */
 class Log
 {

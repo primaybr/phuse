@@ -6,6 +6,8 @@ namespace Core;
 use Core\Database as Database;
 use Core\Config as Config;
 use Core\Database\Builders\Builders as Builders;
+use Config\Database as DatabaseConfig;
+use Core\Text\Str as Str;
 
 /**
  * Class Model
@@ -14,7 +16,6 @@ use Core\Database\Builders\Builders as Builders;
  *
  * @package Core
  * @author  Prima Yoga
- * @version 1.0.1
  */
 class Model
 {
@@ -39,8 +40,7 @@ class Model
     public function __construct(string $table, string $database = 'default')
     {
         $this->dbconfig = $this->setDatabase($database);
-        
-        if (empty($this->dbconfig->driver) || empty($this->dbconfig->host) || empty($this->dbconfig->port) || empty($this->dbconfig->dbname) || empty($this->dbconfig->user) || empty($this->dbconfig->password)) {
+        if (empty($this->dbconfig->driver) || empty($this->dbconfig->host) || empty($this->dbconfig->port) || empty($this->dbconfig->database) || empty($this->dbconfig->username)) {
             return false;
         }
 
@@ -52,8 +52,8 @@ class Model
 				$this->dbconfig->driver,
 				$this->dbconfig->host,
 				$this->dbconfig->port,
-				$this->dbconfig->dbname,
-				$this->dbconfig->user,
+				$this->dbconfig->database,
+				$this->dbconfig->username,
 				$this->dbconfig->password
 			);
 		}
@@ -64,13 +64,12 @@ class Model
 		finally{
 			error_reporting(-1);
 			$this->table = $this->dbconfig->prefix . $table;
-			
 			if(isset($this->db)) // make sure the object exists
 			{
                 $builders = new Builders($this->dbconfig->driver, $table);
                 $this->builder = $builders->builders;
                 unset($builders);
-				$this->str = new Text\Str;
+				$this->str = new Str;
 				
 				//set default primaryKey
 				$this->setPrimaryKey();
@@ -90,10 +89,11 @@ class Model
      */
     public function setDatabase(string $database): object
     {
-		$config = new Config;
-        $config = $config->get()->database;
-
-        return $config->{$database};
+        $config = new DatabaseConfig();
+        if (!isset($config->connections[$database])) {
+            throw new \RuntimeException("Database configuration '{$database}' not found");
+        }
+        return (object)$config->connections[$database];
     }
 
     /**
@@ -157,6 +157,7 @@ class Model
      */
     public function where(string $key = '', string|int $value = '', string $type = '='): self
     {
+
         $this->builder->where($key, $value, $type);
         
         return $this;

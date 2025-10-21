@@ -5,7 +5,6 @@
  * This file configures the autoloading mechanism to dynamically load class files based on their namespace.
  * @package Core
  * @author  Prima Yoga
- * @version 1.0.1
  */
 
 set_include_path(get_include_path().PATH_SEPARATOR.'./');

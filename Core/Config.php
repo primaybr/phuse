@@ -13,7 +13,6 @@ use Throwable;
  * Manages application configuration settings, loading them from a configuration file and providing access to them.
  * 
  * @author Prima Yoga
- * @version 1.0.1
  */
 class Config
 {

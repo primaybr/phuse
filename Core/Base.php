@@ -14,7 +14,6 @@ use Exception;
  * Handles the core functionality of the application, including routing and environment configuration.
  * 
  * @author Prima Yoga
- * @version 1.0.1
  */
 class Base
 {
@@ -149,7 +148,7 @@ class Base
         }
         
         ini_set('session.save_path', $sessionPath);
-        ini_set('session.use_strict_mode', '1');
+        //ini_set('session.use_strict_mode', '1');
         ini_set('session.use_only_cookies', '1');
         ini_set('session.cookie_httponly', '1');
         ini_set('session.cookie_secure', $isSecure ? '1' : '0');
@@ -168,6 +167,7 @@ class Base
         }
         
         // Regenerate session ID periodically to prevent session fixation attacks
+        
         if (isset($_SESSION['last_regeneration'])) {
             $regenerationTime = 30 * 60; // 30 minutes
             if (time() - $_SESSION['last_regeneration'] > $regenerationTime) {
@@ -177,6 +177,7 @@ class Base
         } else {
             $_SESSION['last_regeneration'] = time();
         }
+        
     }
     
     /**

@@ -32,8 +32,8 @@ class Request
         $this->setWrapper($wrapper);
         $this->config = (new Config())->get();
         $this->baseUrl = $this->config->site->baseUrl;
-        $this->apiExternalUrl = $this->config->apiExternal->baseUrl;
-        $this->useRefresh = isset($this->config->apiExternal->useRefresh) ? ($this->config->apiExternal->useRefresh === 'true') ? true : false : false;
+        $this->apiExternalUrl = isset($this->config->apiExternal->baseUrl) ? $this->config->apiExternal->baseUrl : '';
+        $this->useRefresh = isset($this->config->apiExternal->useRefresh) ? (bool)($this->config->apiExternal->useRefresh === 'true') : false;
         $this->env = $this->config->env;
         $this->session = new Session;
         $this->adminUrl = $this->config->site->adminUrl;
