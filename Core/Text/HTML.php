@@ -4,82 +4,272 @@ declare(strict_types=1);
 
 namespace Core\Text;
 
-class HTML{
-	
-	protected $css;
-	protected $js;
-	
-	public function __construct()
-	{
-		$this->css = new CSS;
-		$this->js = new JS;
-	}
-	
-    private function setHeaders(){
+/**
+ * HTML Minifier and Processor
+ *
+ * A comprehensive HTML minifier that removes unnecessary characters, whitespace,
+ * and optimizes inline content while preserving functionality. Features modular
+ * design for easy maintenance and extensibility.
+ *
+ * Key features:
+ * - Minifies HTML attributes and whitespace
+ * - Processes inline CSS in style attributes
+ * - Processes CSS in <style> blocks
+ * - Processes JavaScript in <script> blocks
+ * - Removes unnecessary HTML comments
+ * - Preserves important content and structure
+ *
+ * @author Prima Yoga
+ */
+class HTML
+{
+    /**
+     * CSS minifier instance for processing styles
+     */
+    protected $css;
+
+    /**
+     * JavaScript minifier instance for processing scripts
+     */
+    protected $js;
+
+    /**
+     * Constructor - Initialize HTML processor
+     */
+    public function __construct()
+    {
+        // Initialize without dependencies for now
+    }
+
+    /**
+     * Set HTTP headers for HTML output
+     */
+    private function setHeaders(): void
+    {
         header('Content-Type: text/html; charset=UTF-8');
     }
 
-    public function minify($input,$js=true,$css=true){
-		$this->setHeaders();
-		
-		if(trim($input) === "") return $input;
-		// Remove extra white-space(s) between HTML attribute(s)
-		$input = preg_replace_callback('#<([^\/\s<>!]+)(?:\s+([^<>]*?)\s*|\s*)(\/?)>#s', function($matches) {
-			return '<' . $matches[1] . preg_replace('#([^\s=]+)(\=([\'"]?)(.*?)\3)?(\s+|$)#s', ' $1$2', $matches[2]) . $matches[3] . '>';
-		}, str_replace("\r", "", $input));
-		// Minify inline CSS declaration(s)
-		if(strpos($input, ' style=') !== false) {
-			$input = preg_replace_callback('#<([^<]+?)\s+style=([\'"])(.*?)\2(?=[\/\s>])#s', function($matches) {
-				return '<' . $matches[1] . ' style=' . $matches[2] . $this->css->minifyCSS($matches[3]) . $matches[2];
-			}, $input);
-		}
-		if(strpos($input, '</style>') !== false) {
-		  $input = preg_replace_callback('#<style(.*?)>(.*?)</style>#is', function($matches) {
-			return '<style' . $matches[1] .'>'. $this->css->minifyCSS($matches[2]) . '</style>';
-		  }, $input);
-		}
-		// under development
-		
-		if(strpos($input, '</script>') !== false) {
-		  $input = preg_replace_callback('#<script(.*?)>(.*?)</script>#is', function($matches) {
-			return '<script' . $matches[1] .'>'. $this->js->minify($matches[2]) . '</script>';
-		  }, $input);
-		}
-		
+    /**
+     * Minify HTML content with optional CSS and JS processing
+     *
+     * @param string $input HTML content to minify
+     * @param bool $processJS Whether to minify JavaScript blocks
+     * @param bool $processCSS Whether to minify CSS blocks and inline styles
+     * @return string Minified HTML content
+     */
+    public function minify(string $input, bool $processJS = true, bool $processCSS = true): string
+    {
+        $this->setHeaders();
 
-		return preg_replace(
-			array(
-				// t = text
-				// o = tag open
-				// c = tag close
-				// Keep important white-space(s) after self-closing HTML tag(s)
-				'#<(img|input)(>| .*?>)#s',
-				// Remove a line break and two or more white-space(s) between tag(s)
-				'#(<!--.*?-->)|(>)(?:\n*|\s{2,})(<)|^\s*|\s*$#s',
-				'#(<!--.*?-->)|(?<!\>)\s+(<\/.*?>)|(<[^\/]*?>)\s+(?!\<)#s', // t+c || o+t
-				'#(<!--.*?-->)|(<[^\/]*?>)\s+(<[^\/]*?>)|(<\/.*?>)\s+(<\/.*?>)#s', // o+o || c+c
-				'#(<!--.*?-->)|(<\/.*?>)\s+(\s)(?!\<)|(?<!\>)\s+(\s)(<[^\/]*?\/?>)|(<[^\/]*?\/?>)\s+(\s)(?!\<)#s', // c+t || t+o || o+t -- separated by long white-space(s)
-				'#(<!--.*?-->)|(<[^\/]*?>)\s+(<\/.*?>)#s', // empty tag
-				'#<(img|input)(>| .*?>)<\/\1>#s', // reset previous fix
-				'#(&nbsp;)&nbsp;(?![<\s])#', // clean up ...
-				'#(?<=\>)(&nbsp;)(?=\<)#', // --ibid
-				// Remove HTML comment(s) except IE comment(s)
-				'#\s*<!--(?!\[if\s).*?-->\s*|(?<!\>)\n+(?=\<[^!])#s'
-			),
-			array(
-				'<$1$2</$1>',
-				'$1$2$3',
-				'$1$2$3',
-				'$1$2$3$4$5',
-				'$1$2$3$4$5$6$7',
-				'$1$2$3',
-				'<$1$2',
-				'$1 ',
-				'$1',
-				""
-			),
-		$input);
-		
+        if (trim($input) === "") {
+            return $input;
+        }
+
+        // Apply minification steps in logical order
+        $output = $this->normalizeLineEndings($input);
+        $output = $this->minifyAttributes($output);
+        $output = $this->minifyComments($output);
+
+        if ($processCSS) {
+            $output = $this->minifyInlineCSS($output);
+            $output = $this->minifyCSSBlocks($output);
+        }
+
+        if ($processJS) {
+            $output = $this->minifyJSBlocks($output);
+        }
+
+        $output = $this->minifyWhitespace($output);
+
+        return $output;
     }
 
+    /**
+     * Normalize line endings to Unix standard
+     */
+    private function normalizeLineEndings(string $html): string
+    {
+        return str_replace("\r\n", "\n", $html);
+    }
+
+    /**
+     * Minify HTML tag attributes
+     *
+     * Removes extra whitespace between attributes and normalizes
+     * attribute formatting while preserving functionality.
+     */
+    private function minifyAttributes(string $html): string
+    {
+        return preg_replace_callback(
+            '#<([^\/\s<>!]+)(?:\s+([^<>]*?)\s*|\s*)(\/?)>#s',
+            function ($matches) {
+                $tagName = $matches[1];
+                $attributes = $matches[2] ?? '';
+                $selfClosing = $matches[3];
+
+                if (empty($attributes)) {
+                    return "<{$tagName}{$selfClosing}>";
+                }
+
+                // Normalize attribute spacing
+                $attributes = preg_replace('#([^\s=]+)(\=([\'"]?)(.*?)\3)?(\s+|$)#s', ' $1$2', $attributes);
+                $attributes = trim($attributes);
+
+                return "<{$tagName} {$attributes}{$selfClosing}>";
+            },
+            $html
+        );
+    }
+
+    /**
+     * Minify HTML comments while preserving IE conditional comments
+     */
+    private function minifyComments(string $html): string
+    {
+        // Remove standard HTML comments but preserve IE conditional comments
+        $html = preg_replace('/<!--(?!\[if\s).*?-->/s', '', $html);
+
+        // Clean up whitespace left by removed comments
+        $html = preg_replace('/^\s*?\n\s*/m', '', $html);
+
+        return $html;
+    }
+
+    /**
+     * Minify inline CSS within style attributes
+     */
+    private function minifyInlineCSS(string $html): string
+    {
+        if (strpos($html, ' style=') === false) {
+            return $html;
+        }
+
+        return preg_replace_callback(
+            '#<([^<]+?)\s+style=([\'"])(.*?)\2(?=[\/\s>])#s',
+            function ($matches) {
+                $beforeTag = $matches[1];
+                $quote = $matches[2];
+                $css = $matches[3];
+
+                // Simple CSS minification for inline styles
+                $minifiedCSS = $this->minifySimpleCSS($css);
+
+                return "<{$beforeTag} style={$quote}{$minifiedCSS}{$quote}";
+            },
+            $html
+        );
+    }
+
+    /**
+     * Minify CSS within <style> blocks
+     */
+    private function minifyCSSBlocks(string $html): string
+    {
+        if (strpos($html, '</style>') === false) {
+            return $html;
+        }
+
+        return preg_replace_callback(
+            '#<style(.*?)>(.*?)</style>#is',
+            function ($matches) {
+                $attributes = $matches[1];
+                $css = $matches[2];
+
+                // Simple CSS minification for style blocks
+                $minifiedCSS = $this->minifySimpleCSS($css);
+
+                return "<style{$attributes}>{$minifiedCSS}</style>";
+            },
+            $html
+        );
+    }
+
+    /**
+     * Minify JavaScript within <script> blocks
+     */
+    private function minifyJSBlocks(string $html): string
+    {
+        if (strpos($html, '</script>') === false) {
+            return $html;
+        }
+
+        return preg_replace_callback(
+            '#<script(.*?)>(.*?)</script>#is',
+            function ($matches) {
+                $attributes = $matches[1];
+                $js = $matches[2];
+
+                // Simple JS minification for script blocks
+                $minifiedJS = $this->minifySimpleJS($js);
+
+                return "<script{$attributes}>{$minifiedJS}</script>";
+            },
+            $html
+        );
+    }
+
+    /**
+     * Simple CSS minification for inline styles
+     */
+    private function minifySimpleCSS(string $css): string
+    {
+        // Basic CSS minification - remove comments and extra whitespace
+        $css = preg_replace('/\/\*[^*]*\*+([^\/*][^*]*\*+)*\//s', '', $css);
+        $css = preg_replace('/\s*([{}:;,>+~])\s*/', '$1', $css);
+        $css = preg_replace('/\s+/', ' ', $css);
+        return trim($css);
+    }
+
+    /**
+     * Simple JavaScript minification for script blocks
+     */
+    private function minifySimpleJS(string $js): string
+    {
+        // Basic JS minification - remove comments and extra whitespace
+        $js = preg_replace('/\/\/.*$/m', '', $js);
+        $js = preg_replace('/\/\*[^*]*\*+([^\/*][^*]*\*+)*\//s', '', $js);
+        $js = preg_replace('/\s*([{}:;,>+~=!])\s*/', '$1', $js);
+        $js = preg_replace('/\s+/', ' ', $js);
+        return trim($js);
+    }
+
+    /**
+     * Minify HTML whitespace while preserving structure
+     *
+     * Intelligently removes unnecessary whitespace between HTML tags
+     * while maintaining proper formatting and readability.
+     */
+    private function minifyWhitespace(string $html): string
+    {
+        // Handle different types of whitespace patterns
+
+        // Pattern 1: Keep space after self-closing tags like <img> and <input>
+        $html = preg_replace('#<(img|input|br|hr|meta|link)(>| .*?>)#s', '<$1$2', $html);
+
+        // Pattern 2: Remove line breaks and multiple spaces between tags
+        $html = preg_replace('#(>)(?:\n*|\s{2,})(<)#s', '$1$2', $html);
+
+        // Pattern 3: Remove spaces before closing tags
+        $html = preg_replace('#\s+(<\/.*?>)#s', '$1', $html);
+
+        // Pattern 4: Handle tag combinations and spacing
+        $html = preg_replace('#(<[^\/]*?>)\s+(<[^\/]*?>)#s', '$1$2', $html);
+        $html = preg_replace('#(<\/.*?>)\s+(<\/.*?>)#s', '$1$2', $html);
+
+        // Pattern 5: Handle spacing around content
+        $html = preg_replace('#(<\/.*?>)\s+(\s)(?!\<)#s', '$1$2', $html);
+        $html = preg_replace('#(?<!\>)\s+(\s)(<[^\/]*?\/?>)#s', '$1$2', $html);
+
+        // Pattern 6: Handle empty tags
+        $html = preg_replace('#(<[^\/]*?>)\s+(<\/.*?>)#s', '$1$2', $html);
+
+        // Pattern 7: Clean up multiple spaces and &nbsp;
+        $html = preg_replace('#(&nbsp;)&nbsp;(?![<\s])#s', '$1 ', $html);
+        $html = preg_replace('#(?<=\>)(&nbsp;)(?=\<)#s', '$1', $html);
+
+        // Final cleanup: remove leading/trailing whitespace
+        $html = trim($html);
+
+        return $html;
+    }
 }

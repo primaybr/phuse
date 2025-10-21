@@ -15,8 +15,9 @@ use Core\Text\Str;
 use Core\Folder\Folder;
 use Core\Exception\Error;
 use Core\Text\Number;
-use Core\Cache\Cache;
+use Core\Cache\CacheManager as Cache;
 use Core\Model;
+use Core\Security\CSRF;
 
 /**
  * The Controller class is the base class for all controllers in the application.
@@ -24,7 +25,7 @@ use Core\Model;
  *
  * This class serves as a foundation for all application controllers, providing
  * access to essential framework services like configuration, logging, session management,
- * template rendering, and database operations.
+ * template rendering, CSRF protection, and database operations.
  *
  * @package Core
  * @author  Prima Yoga
@@ -87,9 +88,14 @@ class Controller extends \stdClass
     public Number $textNumber;
 
     /** 
-     * @var Cache The cache object for application caching functionality.
+     * @var CSRF The CSRF protection object for generating and validating tokens.
      */
-    public Cache $cache;
+    public CSRF $csrf;
+
+    /** 
+     * @var Cache The cache object for caching data.
+     */
+    public $cache;
 
     /** 
      * @var string The base URL of the application for generating absolute URLs.
@@ -129,7 +135,8 @@ class Controller extends \stdClass
         $this->folder = new Folder();
         $this->error = new Error();
         $this->textNumber = new Number();
-        $this->cache = new Cache();
+        $this->cache = Cache::get('controller', 'file');
+        $this->csrf = new CSRF();
 
         $this->baseUrl = $this->config->site->baseUrl;
         $this->imgUrl = $this->config->site->imgUrl;

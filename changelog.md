@@ -1,3 +1,12 @@
+### v1.0.3 (2025-10-21)
+- Added comprehensive Dependency Injection (DI) Container system with automatic dependency resolution
+- Implemented Middleware System with stack-based processing and request/response modification
+- Added unified Cache System with multiple drivers (File, Memory) and advanced features
+- Added support for middleware groups in Router class for better organization
+- Enhanced type safety with PHP 8.2+ type declarations throughout core classes
+- Integrated DI container with middleware system for better dependency management
+- Added comprehensive documentation for both DI container and middleware features
+- Improved code organization and separation of concerns across the framework
 
 ### v1.0.2a (2025-10-21)
 - Removed Versioning information on code files
