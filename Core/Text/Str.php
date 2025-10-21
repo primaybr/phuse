@@ -34,8 +34,8 @@ final class Str
         $ago = new DateTime($datetime);
         $diff = $now->diff($ago);
 
-        $diff->w = intdiv($diff->d, 7);
-        $diff->d -= $diff->w * 7;
+        $weeks = intdiv($diff->d, 7);
+        $diff->d -= $weeks * 7;
 
         $string = [
             'y' => 'year',
@@ -74,7 +74,7 @@ final class Str
 
         [$y, $m, $d] = explode('-', $date);
 
-        $day = $day[date('N', strtotime($d))];
+        $day = $day[date('N', strtotime($date))];
         $month = $month[$m];
 
         return "$day, $d $month $y";
@@ -136,5 +136,8 @@ final class Str
             // Output the 36 character UUID.
             return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
         }
+
+        // For other versions, return a default UUID (this method only supports v4)
+        return '00000000-0000-0000-0000-000000000000';
     }
 }

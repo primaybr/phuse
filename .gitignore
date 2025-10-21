@@ -3,4 +3,8 @@ Session/
 Config/Config.php
 Logs/
 !Core/Cache/
+vendor/
+composer.lock
+composer.json
+.phpunit.cache
 

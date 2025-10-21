@@ -7,6 +7,8 @@ namespace Core;
 use Core\Exception\Handler;
 use Core\Folder\Path;
 use Core\Config;
+use Core\Container;
+use Core\Middleware\MiddlewareStack;
 use Exception;
 
 /**
@@ -21,7 +23,7 @@ class Base
      * Error reporting level for production environment
      * Excludes notices, strict standards, and user notices
      */
-    private const ERROR_REPORTING_LEVEL_PRODUCTION = E_ALL & ~E_NOTICE & ~E_STRICT & ~E_USER_NOTICE;
+    private const ERROR_REPORTING_LEVEL_PRODUCTION = E_ALL & ~E_NOTICE & ~E_USER_NOTICE;
     
     /**
      * Error reporting level for development environment
@@ -45,6 +47,11 @@ class Base
     private Handler $handler;
     
     /**
+     * @var Container Dependency injection container instance
+     */
+    private Container $container;
+    
+    /**
      * Constructor initializes the application
      * 
      * @throws Exception If PHP version requirement is not met
@@ -54,7 +61,8 @@ class Base
         // Check for PHP version required to run the framework
         $this->checkPhpVersion();
         
-        $this->config = new Config();
+        $this->container = new Container();
+        $this->config = $this->container->set('config', Config::class, true)->get('config');
         $this->handler = new Handler();
         $this->init();
     }
@@ -76,9 +84,14 @@ class Base
                 throw new Exception("Invalid environment: {$env}. Expected one of: " . implode(', ', $validEnvironments));
             }
             
-            // Since both environments use the same file, we can simplify this
-            $routes = require_once Path::CONFIG . 'Routes.php';
-            $routes->run();
+            // Create middleware stack with routing as the final handler
+            $middlewareStack = new MiddlewareStack(function() {
+                $routes = require_once Path::CONFIG . 'Routes.php';
+                return $routes->run();
+            });
+            
+            // Process through middleware stack
+            $middlewareStack->process();
         } catch (Exception $e) {
             // Log the exception and display an appropriate error
             error_log("Application Error: " . $e->getMessage());

@@ -12,7 +12,7 @@ final class Session
 	
 	public function __construct()
 	{
-		$this->session = $_SESSION;
+		$this->session = $_SESSION ?? [];
 	}
 	
 	public function check(string $key): bool
