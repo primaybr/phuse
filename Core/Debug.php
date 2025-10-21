@@ -11,7 +11,6 @@ namespace Core;
  *
  * @package Core
  * @author  Prima Yoga
- * @version 1.0.1
  */
 class Debug {
 	

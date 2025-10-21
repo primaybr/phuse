@@ -107,6 +107,10 @@ Phuse is an open-source project, and you are welcome to contribute to its develo
 
 ## Latest Changes
 
+### v1.0.2a (2025-10-21)
+- Removed Versioning information on code files
+- Fixed session issue on local machine
+
 ### v1.0.2 (2025-09-13)
 - Added Database Query Caching system
 - Added Template Caching for improved performance

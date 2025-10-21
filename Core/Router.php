@@ -16,7 +16,6 @@ use Core\Cache\Cache as Cache;
  *
  * @package Core
  * @author  Prima Yoga
- * @version 1.0.1
  */
 class Router
 {
