@@ -1,6 +1,14 @@
 <?php
 namespace Core\Folder;
-	
+
+// Define constants if not already defined
+if (!defined('ROOT')) {
+    define('ROOT', dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR);
+}
+if (!defined('DS')) {
+    define('DS', DIRECTORY_SEPARATOR);
+}
+
 class Path{
 	
 	const CONFIG = ROOT.'Config'.DS;

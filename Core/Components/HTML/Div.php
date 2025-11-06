@@ -35,7 +35,7 @@ class Div implements ComponentInterface
 			}
 		}
 		
-		$div .= "{$this->content}</div>";
+		$div .= "{$this->escape($this->content)}</div>";
 
 
         // Return the div element

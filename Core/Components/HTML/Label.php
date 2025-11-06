@@ -26,6 +26,6 @@ class Label implements ComponentInterface
         $attributeString = $this->generateAttributeString();
 
         // Return the span element
-        return "<label {$attributeString}>{$this->content}</label>";
+        return "<label {$attributeString}>{$this->escape($this->content)}</label>";
     }
 }

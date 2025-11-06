@@ -35,7 +35,7 @@ class Video implements ComponentInterface
 		// Generate the source element
 		foreach($this->src as $src => $type)
 		{
-			$source .= "<source src='{$src}' type='{$type}'>";
+			$source .= "<source src='{$this->escape($src)}' type='{$this->escape($type)}'>";
 		}
 
         // Return the video element

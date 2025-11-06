@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Core\Components\HTML;
 
-use Core\Components\Validator;
+use Core\Utilities\Validator\Validator;
 
 // Define a class for HTML form component with validator
 class Form implements ComponentInterface
@@ -18,9 +18,6 @@ class Form implements ComponentInterface
     // A property to store the method of the form
     protected string $method;
 
-    // A property to store the inputs of the form
-    protected array $inputs = [];
-
     // A property to store the validator of the form
     protected Validator $validator;
 
@@ -32,13 +29,6 @@ class Form implements ComponentInterface
         $this->validator = $validator;
     }
 
-    // A method to add an input to the form
-    public function addInput(Input $input): self
-    {
-        $this->inputs[] = $input;
-        return $this;
-    }
-
     // A method to render the form as a string
     public function render(): string
     {
@@ -46,12 +36,12 @@ class Form implements ComponentInterface
         $attributeString = $this->generateAttributeString();
 
         // Start the form element
-        $form = "<form action=\"{$this->action}\" method=\"{$this->method}\" {$attributeString}>";
+        $form = "<form action=\"{$this->escape($this->action)}\" method=\"{$this->escape($this->method)}\" {$attributeString}>";
 
-        // Loop through the inputs
-        foreach ($this->inputs as $input) {
-            // Add the input element
-            $form .= $input->render();
+        // Loop through the components
+        foreach ($this->components as $component) {
+            // Add the component element
+            $form .= $component->render();
         }
 
         // End the form element

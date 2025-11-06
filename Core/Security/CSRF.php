@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Core\Security;
 
 use Core\Http\Session;
+use Core\Log;
+use Core\Exception\RuntimeException;
+use Core\Exception\ValidationException;
 
 /**
  * CSRF Protection Class
@@ -13,30 +16,68 @@ use Core\Http\Session;
  * unique tokens for form submissions. Tokens are stored in the user session and
  * validated against submitted data.
  *
+ * This class integrates with the framework's session management system to provide
+ * secure token-based CSRF protection with automatic expiration and validation.
+ *
+ * Features:
+ * - Secure token generation using cryptographically strong random bytes
+ * - Automatic token expiration after configurable time period
+ * - Timing-safe token comparison using hash_equals()
+ * - Easy integration with HTML forms
+ * - Session-based token storage and retrieval
+ *
  * @package Core\Security
  * @author  Prima Yoga
  */
 class CSRF
 {
+    /**
+     * The name of the session key used to store CSRF tokens.
+     */
     private const TOKEN_NAME = 'csrf_token';
-    private const TOKEN_LENGTH = 32;
-    private const TOKEN_EXPIRY = 3600; // 1 hour in seconds
 
+    /**
+     * The length of generated CSRF tokens in bytes (32 bytes = 64 hex characters).
+     */
+    private const TOKEN_LENGTH = 32;
+
+    /**
+     * Token expiration time in seconds (default: 1 hour).
+     */
+    private const TOKEN_EXPIRY = 3600;
+
+    /**
+     * The session management instance for token storage.
+     */
     private Session $session;
 
     /**
-     * Constructor initializes the session dependency.
+     * Logger instance for framework logging.
      */
-    public function __construct()
+    private Log $logger;
+
+    /**
+     * Initializes the CSRF protection system with session dependency.
+     *
+     * Creates a new Session instance for managing CSRF token storage and retrieval.
+     *
+     * @param Session|null $session Session instance for token storage.
+     * @param Log|null $logger Logger instance for framework logging.
+     */
+    public function __construct(?Session $session = null, ?Log $logger = null)
     {
-        $this->session = new Session();
+        $this->logger = $logger ?? new Log();
+        $this->session = $session ?? new Session($this->logger);
     }
 
     /**
      * Generates a new CSRF token and stores it in the session.
      *
-     * @return string The generated CSRF token.
-     * @throws \Exception If token generation fails.
+     * Creates a cryptographically secure random token, stores it in the session
+     * with an expiration timestamp, and returns the token for use in forms.
+     *
+     * @return string The generated CSRF token in hexadecimal format.
+     * @throws \Exception If random byte generation fails.
      */
     public function generateToken(): string
     {
@@ -52,7 +93,10 @@ class CSRF
     /**
      * Validates the provided CSRF token against the one stored in the session.
      *
-     * @param string $token The token to validate.
+     * Performs timing-safe comparison of the provided token with the stored token
+     * and checks if the token has expired. Removes expired tokens from the session.
+     *
+     * @param string $token The token to validate against the stored token.
      * @return bool True if the token is valid and not expired, false otherwise.
      */
     public function validateToken(string $token): bool
@@ -64,7 +108,7 @@ class CSRF
         }
 
         if (time() > $stored['expires']) {
-            unset($_SESSION[self::TOKEN_NAME]);
+            $this->removeToken();
             return false;
         }
 
@@ -73,6 +117,9 @@ class CSRF
 
     /**
      * Gets the current CSRF token, generating one if it doesn't exist or has expired.
+     *
+     * This is a convenience method that ensures a valid token is always available.
+     * If no token exists or the current token has expired, a new one is generated.
      *
      * @return string The current or newly generated CSRF token.
      */
@@ -94,13 +141,16 @@ class CSRF
      */
     public function removeToken(): void
     {
-        unset($_SESSION[self::TOKEN_NAME]);
+        $this->session->flash(self::TOKEN_NAME);
     }
 
     /**
      * Generates HTML input field for CSRF token to be used in forms.
      *
-     * @return string HTML input element with the CSRF token.
+     * Creates a properly escaped hidden input field containing the current CSRF token.
+     * This method should be called within form tags to include CSRF protection.
+     *
+     * @return string HTML input element with the CSRF token as a string.
      */
     public function getTokenInput(): string
     {

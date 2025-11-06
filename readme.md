@@ -9,7 +9,8 @@ Phuse is a PHP framework that simplifies web development with conventions and he
 - **MVC Pattern**: Phuse implements the Model-View-Controller pattern, which separates the application logic from the presentation layer. This makes the code more organized, maintainable, and testable.
 - **Active Record ORM**: Phuse uses the Active Record pattern, which maps database tables to PHP classes and objects. This makes the database operations easier, faster, and more secure.
 - **Routing**: Phuse handles routing efficiently, allowing developers to define clean and understandable URLs for their applications.
-- **Formatting**: Phuse provides a formatting class that allows you to format the output data in various ways. It supports date and time, number, currency, and string formatting.
+- **HTML Components**: Secure, fluent HTML generation with automatic XSS protection and modern PHP patterns
+- **Pagination Component**: Enterprise-grade pagination system with accessibility support, URL generation, and comprehensive configuration options
 
 ### Performance Optimizations
 
@@ -81,8 +82,21 @@ Views are responsible for rendering the user interface. They are located in the 
 ## Routing
 Routing is managed by the `Router.php` class in the `Core` directory. Define your routes and link them to the appropriate controllers.
 
-## Configuration
-Configuration settings are stored in the `Config` directory. Modify these files to customize your application settings.
+## Documentation
+
+Phuse provides comprehensive documentation for all features:
+
+- **[HTML Components](docs/html-components.md)**: Secure HTML generation with fluent API
+- **[Image Utilities](docs/image-utilities.md)**: Advanced image manipulation with GD library
+- **[Pagination Utilities](docs/pagination-utilities.md)**: Enterprise-grade pagination with accessibility support
+- **[Upload Utilities](docs/upload-utilities.md)**: Secure file upload system with validation and XSS protection
+- **[Cache System](docs/cache-system.md)**: Enhanced caching with multiple drivers
+- **[Database Caching](docs/database-caching.md)**: Query result caching
+- **[Template System](docs/template-system.md)**: Powerful template engine with caching, conditionals, loops, and security features
+- **[Template Caching](docs/template-caching.md)**: Template compilation caching
+- **[CSRF Protection](docs/csrf-protection.md)**: Cross-site request forgery protection
+- **[HTTP Components](docs/http-components.md)**: Comprehensive HTTP utilities including Client, Input, Request, Response, Session, URI, and CSRF protection
+- **[Validator Utilities](docs/validator-utilities.md)**: Data validation with comprehensive rule system
 
 ## Logging
 Phuse provides a logging mechanism to track application errors and events. Log files are stored in the `Logs` directory.
@@ -106,6 +120,42 @@ If you have any questions, issues, or feedback regarding Phuse, you can contact 
 Phuse is an open-source project, and you are welcome to contribute to its development. You can fork the repository, make your changes, and submit a pull request. Please follow the coding standards and guidelines before submitting your code.
 
 ## Latest Changes
+
+### v1.1.0 (2025-10-23)
+- **Refactor Exception System**: Complete overhaul with modern PHP practices and framework integration
+  - New BaseException class with type categorization, severity levels, and context data
+  - Enhanced Handler class with Core\Log integration and improved error categorization
+  - Updated Error class with better template handling and logging integration
+  - Enhanced CommonTrait with comprehensive exception throwing methods and assertion helpers
+  - Updated Base.php with proper exception handling and SystemException usage
+  - Updated Container.php to use new exception types for consistency
+  - Removed deprecated E_STRICT references for PHP 8.0+ compatibility
+  - Comprehensive error context and user-friendly messages throughout
+- **Update HTML Components System**: Complete rebuild with enterprise-grade security
+  - 30 secure HTML components with automatic XSS protection
+  - Factory pattern architecture with fluent API
+  - Enhanced ComponentTrait with bulk operations and CSS utilities
+  - Comprehensive documentation and usage examples
+  - Zero XSS vulnerabilities across all components
+- **Refactor Image Component**: Complete overhaul with modern PHP practices
+  - Enhanced error handling and validation with comprehensive security checks
+  - Integration with framework's Core\Log system for consistent logging
+  - Configuration management with ImageConfig class
+  - Support for JPEG, PNG, GIF, WebP formats with quality control
+  - Advanced operations: resize, crop, rotate, compress, watermark
+  - Comprehensive documentation moved to docs/image-utilities.md
+  - Unit tests and usage examples
+- **Add Pagination Component**: New enterprise-grade pagination system
+  - Comprehensive PagerConfig class with 25+ configuration options
+  - Fluent interface pattern with method chaining support
+  - Full ARIA accessibility support with semantic HTML
+  - Smart URL generation with query parameter preservation
+  - Integration with Core\Log for consistent framework logging
+  - Enhanced error handling and input validation
+  - Responsive design with ellipsis for large page counts
+  - Comprehensive test suite with 31 tests covering all functionality
+  - Complete documentation in docs/pagination-component.md
+  - Professional usage examples demonstrating all features
 
 ### v1.0.3 (2025-10-21)
 - Added comprehensive Dependency Injection (DI) Container system with automatic dependency resolution
@@ -197,26 +247,49 @@ class ItemController extends Controller
 }
 ```
 
-### Step 3: Create the View
-Now, we will create a view to display the list of items. Create a new directory named `items` in the `App/Views` directory, and then create a file named `index.php` inside the `items` directory.
+### Step 2: Add HTML Components (Alternative to Views)
+
+Instead of using template files, you can generate HTML programmatically with the secure HTML Components system:
 
 ```php
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Item List</title>
-</head>
-<body>
-    <h1>Item List</h1>
-    <ul>
-        {% foreach items as item %}
-            <li>{item.name}</li>
-        {% endforeach %}
-    </ul>
-</body>
-</html>
+<?php
+
+namespace App\Controllers\Web;
+
+use Core\Controller;
+use Core\Components\HTML\HTML;
+
+class ItemController extends Controller
+{
+    public function index()
+    {
+        $itemModel = new Item();
+        $data['items'] = $itemModel->getAllItems();
+
+        // Create HTML components instead of using templates
+        $html = new HTML();
+
+        $page = $html->div()
+            ->addClass('container')
+            ->addComponent($html->heading(1, 'Item List'))
+            ->addComponent(
+                $html->lists('ul')
+                    ->addClass('item-list')
+                    ->setAttributes(['id' => 'items', 'data-count' => count($data['items'])])
+            );
+
+        // Add items to the list (automatically escaped for security)
+        foreach ($data['items'] as $item) {
+            $page->components[1]->addItem($item['name']); // Safe from XSS
+        }
+
+        // Send HTML response
+        $this->response->setContent($page->render());
+    }
+}
 ```
+
+This approach provides automatic XSS protection and a fluent API for building HTML structures.
 
 ### Step 4: Define the Route
 Open the `routes.php` file in the `Config` directory and add the following route:
@@ -227,5 +300,21 @@ $router->add('GET', '/items', 'Web\ItemController', 'index');
 
 ### Step 5: Access the Application
 Now you can access your application by navigating to `http://your-domain/items` in your web browser. You should see a list of items displayed on the page.
+
+### Template System Examples
+The Phuse framework includes comprehensive template system examples that demonstrate all features:
+
+**Interactive Examples:**
+- **Basic Templates**: Variable replacement and simple rendering
+- **Conditional Logic**: If/else statements and dynamic content
+- **Loops**: Foreach and for loop constructs
+- **Nested Data**: Complex data structure access
+- **Caching**: Performance optimization techniques
+- **Error Handling**: Robust error management
+
+**Access Examples:**
+- Visit `/examples` for the complete examples index
+- Individual examples: `/examples/basic`, `/examples/conditional`, etc.
+- **Documentation**: See `docs/template-system.md` for comprehensive guide
 
 Thank you for using Phuse, and happy coding! 😊

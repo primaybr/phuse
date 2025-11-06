@@ -26,6 +26,6 @@ class P implements ComponentInterface
         $attributeString = $this->generateAttributeString();
 
         // Return the paragraph element
-        return "<p {$attributeString}>{$this->content}</p>";
+        return "<p {$attributeString}>{$this->escape($this->content)}</p>";
     }
 }

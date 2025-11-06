@@ -29,14 +29,14 @@ class Stylesheet implements ComponentInterface
 		 // Generate the attribute string
         $attributeString = $this->generateAttributeString();
 
-		if($this->src === 'style')
+		if(empty($this->src))
 		{
-			return "<style>{$this->escape($this->content)}</style>";
+			return "<style {$attributeString}>{$this->escape($this->content)}</style>";
 		}
 		else
 		{
 			// Return the stylesheet element
-			return "<link rel=\"stylesheet\" href=\"{$this->src}\" {$attributeString}>";
+			return "<link rel=\"stylesheet\" href=\"{$this->escape($this->src)}\" {$attributeString}>";
 		}
 		
        

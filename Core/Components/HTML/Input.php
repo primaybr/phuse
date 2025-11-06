@@ -34,6 +34,6 @@ class Input implements ComponentInterface
         $attributeString = $this->generateAttributeString();
 
         // Return the input element
-        return "<input type=\"{$this->type}\" name=\"{$this->name}\" value=\"{$this->value}\" {$attributeString}>";
+        return "<input type=\"{$this->escape($this->type)}\" name=\"{$this->escape($this->name)}\" value=\"{$this->escape($this->value)}\" {$attributeString}>";
     }
 }

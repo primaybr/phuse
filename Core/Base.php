@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Core;
 
 use Core\Exception\Handler;
+use Core\Exception\SystemException;
 use Core\Folder\Path;
 use Core\Config;
 use Core\Container;
 use Core\Middleware\MiddlewareStack;
+use Core\Http\Session;
 use Exception;
 
 /**
@@ -37,6 +39,11 @@ class Base
     private const MIN_PHP_VERSION = '8.2.0';
 
     /**
+     * @var Log Logger instance
+     */
+    private Log $logger;
+    
+    /**
      * @var Config Configuration instance
      */
     private Config $config;
@@ -47,6 +54,11 @@ class Base
     private Handler $handler;
     
     /**
+     * @var Session Session management instance
+     */
+    private Session $session;
+    
+    /**
      * @var Container Dependency injection container instance
      */
     private Container $container;
@@ -54,7 +66,7 @@ class Base
     /**
      * Constructor initializes the application
      * 
-     * @throws Exception If PHP version requirement is not met
+     * @throws SystemException If PHP version requirement is not met
      */
     public function __construct()
     {
@@ -63,7 +75,9 @@ class Base
         
         $this->container = new Container();
         $this->config = $this->container->set('config', Config::class, true)->get('config');
-        $this->handler = new Handler();
+        $this->logger = new Log();
+        $this->handler = new Handler($this->logger, $this->config);
+        $this->session = new Session($this->logger);
         $this->init();
     }
     
@@ -71,7 +85,7 @@ class Base
      * Runs the application by loading the appropriate routes based on the environment.
      * Throws an exception if the environment is not set correctly.
      * 
-     * @throws \Exception if the application environment is not set correctly.
+     * @throws SystemException if the application environment is not set correctly.
      * @return void
      */
     public function run(): void
@@ -81,7 +95,10 @@ class Base
             $validEnvironments = ['development', 'local', 'production', 'testing'];
             
             if (!in_array($env, $validEnvironments)) {
-                throw new Exception("Invalid environment: {$env}. Expected one of: " . implode(', ', $validEnvironments));
+                throw new SystemException(
+                    "Invalid environment: {$env}. Expected one of: " . implode(', ', $validEnvironments),
+                    ['environment' => $env, 'valid_environments' => $validEnvironments]
+                );
             }
             
             // Create middleware stack with routing as the final handler
@@ -94,15 +111,34 @@ class Base
             $middlewareStack->process();
         } catch (Exception $e) {
             // Log the exception and display an appropriate error
-            error_log("Application Error: " . $e->getMessage());
+            $this->logger->write(
+                "Application Error: " . $e->getMessage(),
+                'error',
+                [
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTraceAsString()
+                ]
+            );
+
             http_response_code(500);
-            
+
             if ($this->config->getEnv() !== 'production') {
-                echo "<h1>Application Error</h1>";
-                echo "<p>{$e->getMessage()}</p>";
+                echo json_encode([
+                    'status' => false,
+                    'error' => 'Application Error',
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'timestamp' => date('Y-m-d H:i:s')
+                ]);
             } else {
-                echo "<h1>Server Error</h1>";
-                echo "<p>The application encountered an error. Please try again later.</p>";
+                echo json_encode([
+                    'status' => false,
+                    'error' => 'Server Error',
+                    'message' => 'The application encountered an error. Please try again later.',
+                    'timestamp' => date('Y-m-d H:i:s')
+                ]);
             }
             exit(1);
         }
@@ -116,8 +152,7 @@ class Base
     private function init(): void
     {
         $this->configureErrorHandling();
-        $this->configureSessionSecurity();
-        $this->startSession();
+        // Session is now handled by the Session class in the constructor
     }
     
     /**
@@ -132,82 +167,39 @@ class Base
         // Configure error display and reporting based on environment
         ini_set('display_errors', $isProduction ? '0' : '1');
         error_reporting($isProduction ? self::ERROR_REPORTING_LEVEL_PRODUCTION : self::ERROR_REPORTING_LEVEL_DEVELOPMENT);
-        
         // Set custom error handler
         set_error_handler([$this->handler, 'errorHandler']);
     }
     
     /**
-     * Configure session security settings
+     * Get the Session instance
      * 
-     * @return void
+     * @return Session The session management instance
      */
-    private function configureSessionSecurity(): void
+    public function getSession(): Session
     {
-        // Increase session ID length for better security
-        ini_set('session.sid_length', '64');
-        ini_set('session.sid_bits_per_character', '5');
-        
-        // Set session cookie parameters for better security
-        $isSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
-        $sessionPath = realpath(Path::SESSION);
-        
-        if (!$sessionPath) {
-            // If the path doesn't exist, create it relative to ROOT
-            $sessionPath = ROOT . 'Session';
-            if (!is_dir($sessionPath)) {
-                mkdir($sessionPath, 0755, true);
-            }
-        }
-        
-        ini_set('session.save_path', $sessionPath);
-        //ini_set('session.use_strict_mode', '1');
-        ini_set('session.use_only_cookies', '1');
-        ini_set('session.cookie_httponly', '1');
-        ini_set('session.cookie_secure', $isSecure ? '1' : '0');
-        ini_set('session.cookie_samesite', 'Lax');
-    }
-    
-    /**
-     * Start the session if not already started
-     * 
-     * @return void
-     */
-    private function startSession(): void
-    {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        
-        // Regenerate session ID periodically to prevent session fixation attacks
-        
-        if (isset($_SESSION['last_regeneration'])) {
-            $regenerationTime = 30 * 60; // 30 minutes
-            if (time() - $_SESSION['last_regeneration'] > $regenerationTime) {
-                session_regenerate_id(true);
-                $_SESSION['last_regeneration'] = time();
-            }
-        } else {
-            $_SESSION['last_regeneration'] = time();
-        }
-        
+        return $this->session;
     }
     
     /**
      * Check if the PHP version meets the minimum requirement
      * 
-     * @throws Exception If PHP version is below minimum requirement
+     * @throws SystemException If PHP version is below minimum requirement
      * @return void
      */
     private function checkPhpVersion(): void
     {
         if (version_compare(phpversion(), self::MIN_PHP_VERSION, '<')) {
-            throw new Exception(
+            throw new SystemException(
                 sprintf(
                     'Minimum PHP %s is required to run the framework. Your PHP version is %s. Please upgrade your system!',
                     self::MIN_PHP_VERSION,
                     phpversion()
-                )
+                ),
+                [
+                    'required_version' => self::MIN_PHP_VERSION,
+                    'current_version' => phpversion()
+                ]
             );
         }
     }

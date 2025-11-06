@@ -35,7 +35,7 @@ class Section implements ComponentInterface
 			}
 		}
 		
-		$section .= "{$this->content}</section>";
+		$section .= "{$this->escape($this->content)}</section>";
 
 
         // Return the section element

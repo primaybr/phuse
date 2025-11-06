@@ -30,6 +30,6 @@ class Iframe implements ComponentInterface
         $attributeString = $this->generateAttributeString();
 
         // Return the iframe element
-        return "<iframe src=\"{$this->src}\" title=\"{$this->title}\" {$attributeString}></iframe>";
+        return "<iframe src=\"{$this->escape($this->src)}\" title=\"{$this->escape($this->title)}\" {$attributeString}></iframe>";
     }
 }

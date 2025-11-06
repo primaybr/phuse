@@ -25,6 +25,6 @@ class Link implements ComponentInterface
 		 // Generate the attribute string
         $attributeString = $this->generateAttributeString();
 		
-		return "<link rel=\"stylesheet\" href=\"{$this->src}\" {$attributeString}>";
+		return "<link rel=\"stylesheet\" href=\"{$this->escape($this->src)}\" {$attributeString}>";
     }
 }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Core\Components\HTML;
 
 // Define a class for HTML a component
-class A implements HTMLComponent
+class A implements ComponentInterface
 {
     // Use the HTMLAttributes trait
     use ComponentTrait;
@@ -30,6 +30,6 @@ class A implements HTMLComponent
         $attributeString = $this->generateAttributeString();
 
         // Return the a element
-        return "<a href=\"{$this->url}\" {$attributeString}>{$this->text}</a>";
+        return "<a href=\"{$this->escape($this->url)}\" {$attributeString}>{$this->escape($this->text)}</a>";
     }
 }

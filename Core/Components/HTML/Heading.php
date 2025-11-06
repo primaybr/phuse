@@ -30,6 +30,6 @@ class Heading implements ComponentInterface
         $attributeString = $this->generateAttributeString();
 
         // Return the heading element
-        return "<h{$this->level} {$attributeString}>{$this->content}</h{$this->level}>";
+        return "<h{$this->level} {$attributeString}>{$this->escape($this->content)}</h{$this->level}>";
     }
 }

@@ -25,6 +25,6 @@ class Style implements ComponentInterface
 		 // Generate the attribute string
         $attributeString = $this->generateAttributeString();
 		
-		return "<style>{$this->escape($this->content)}</style>";       
+		return "<style {$attributeString}>{$this->escape($this->content)}</style>";       
     }
 }

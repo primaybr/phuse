@@ -4,12 +4,28 @@ declare(strict_types=1);
 
 namespace Core\Http;
 
-// Use readonly properties for immutable values
+/**
+ * HTTP Response Class
+ *
+ * Represents an HTTP response with status code and status text. This class provides
+ * a comprehensive collection of HTTP status codes and their corresponding messages.
+ * It uses modern PHP features like readonly properties for immutability.
+ *
+ * @package Core\Http
+ * @author  Prima Yoga
+ */
 class Response
 {
-    // Use const instead of private property for constants
-    // Use upper case for constant names
-    // Use ::class constant for class names
+    /**
+     * Comprehensive collection of HTTP status codes and their corresponding messages.
+     *
+     * This constant array includes all standard HTTP status codes organized by category:
+     * - 1×× Informational responses
+     * - 2×× Successful responses
+     * - 3×× Redirection messages
+     * - 4×× Client error responses
+     * - 5×× Server error responses
+     */
     public const STATUS_CODES = [
         // 1×× Informational
         100 => 'Continue',
@@ -81,17 +97,31 @@ class Response
         599 => 'Network Connect Timeout Error'
     ];
 
-    // Use readonly modifier for immutable properties
+    /**
+     * The HTTP status code for this response.
+     */
     public readonly int $statusCode;
+
+    /**
+     * The human-readable status message for this response.
+     */
     public readonly string $statusName;
+
+    /**
+     * The wrapper/protocol used for this response (http, https, etc.).
+     */
     public readonly string $wrapper;
 
-    // Use constructor property promotion to simplify constructor
+    /**
+     * Creates a new HTTP Response instance.
+     *
+     * @param int $status The HTTP status code (default: 200 OK).
+     * @param string $wrapper The protocol wrapper (default: 'http').
+     */
     public function __construct(int $status = 200, string $wrapper = 'http')
     {
         $this->statusCode = $status;
         $this->statusName = self::STATUS_CODES[$status] ?? 'Unknown Status Code';
         $this->wrapper = $wrapper;
     }
-	
 }

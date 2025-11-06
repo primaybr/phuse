@@ -26,6 +26,6 @@ class Footer implements ComponentInterface
         $attributeString = $this->generateAttributeString();
 
         // Return the footer element
-        return "<footer {$attributeString}>{$this->content}</footer>";
+        return "<footer {$attributeString}>{$this->escape($this->content)}</footer>";
     }
 }
