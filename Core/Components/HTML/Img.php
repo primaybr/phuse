@@ -30,6 +30,6 @@ class Img implements ComponentInterface
         $attributeString = $this->generateAttributeString();
 
         // Return the img element
-        return "<img src=\"{$this->src}\" alt=\"{$this->alt}\" {$attributeString}>";
+        return "<img src=\"{$this->escape($this->src)}\" alt=\"{$this->escape($this->alt)}\" {$attributeString}>";
     }
 }

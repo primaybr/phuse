@@ -45,7 +45,7 @@ class Select implements ComponentInterface
 			$selected = isset($this->selected[$value]) ? 'selected' : '';
 			
             // Add the option element
-            $select .= "<option value=\"{$value}\" $selected>{$text}</option>";
+            $select .= "<option value=\"{$this->escape($value)}\" $selected>{$this->escape($text)}</option>";
         }
 
         // End the select element

@@ -7,6 +7,7 @@ namespace Core;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionParameter;
+use Core\Exception\SystemException;
 
 /**
  * Dependency Injection Container
@@ -51,7 +52,7 @@ class Container
      *
      * @param string $name The service name or interface.
      * @return mixed The service instance.
-     * @throws \Exception If the service cannot be resolved.
+     * @throws SystemException If the service cannot be resolved.
      */
     public function get(string $name): mixed
     {
@@ -61,7 +62,7 @@ class Container
         }
 
         if (!isset($this->services[$name])) {
-            throw new \Exception("Service '{$name}' not registered in container.");
+            throw new SystemException("Service '{$name}' not registered in container.");
         }
 
         $definition = $this->services[$name]['definition'];
@@ -92,7 +93,7 @@ class Container
      *
      * @param mixed $definition The service definition.
      * @return mixed The resolved instance.
-     * @throws \Exception If the definition cannot be resolved.
+     * @throws SystemException If the definition cannot be resolved.
      */
     private function resolve(mixed $definition): mixed
     {
@@ -108,7 +109,7 @@ class Container
             return $this->resolveClass($definition);
         }
 
-        throw new \Exception("Cannot resolve service definition.");
+        throw new SystemException("Cannot resolve service definition.");
     }
 
     /**
@@ -116,7 +117,7 @@ class Container
      *
      * @param string $className The class name to instantiate.
      * @return object The class instance.
-     * @throws \Exception If the class cannot be instantiated.
+     * @throws SystemException If the class cannot be instantiated.
      */
     private function resolveClass(string $className): object
     {
@@ -137,7 +138,7 @@ class Container
 
             return $reflection->newInstanceArgs($dependencies);
         } catch (ReflectionException $e) {
-            throw new \Exception("Failed to instantiate '{$className}': " . $e->getMessage());
+            throw new SystemException("Failed to instantiate '{$className}': " . $e->getMessage());
         }
     }
 
@@ -146,7 +147,7 @@ class Container
      *
      * @param ReflectionParameter $parameter The parameter to resolve.
      * @return mixed The resolved dependency.
-     * @throws \Exception If the dependency cannot be resolved.
+     * @throws SystemException If the dependency cannot be resolved.
      */
     private function resolveDependency(ReflectionParameter $parameter): mixed
     {
@@ -156,7 +157,7 @@ class Container
             if ($parameter->isDefaultValueAvailable()) {
                 return $parameter->getDefaultValue();
             }
-            throw new \Exception("Cannot resolve parameter '{$parameter->getName()}' without type hint or default value.");
+            throw new SystemException("Cannot resolve parameter '{$parameter->getName()}' without type hint or default value.");
         }
 
         $typeName = $type->getName();
@@ -166,7 +167,7 @@ class Container
             if ($parameter->isDefaultValueAvailable()) {
                 return $parameter->getDefaultValue();
             }
-            throw new \Exception("Cannot resolve built-in type '{$typeName}' for parameter '{$parameter->getName()}'.");
+            throw new SystemException("Cannot resolve built-in type '{$typeName}' for parameter '{$parameter->getName()}'.");
         }
 
         // Try to get from container
@@ -181,6 +182,6 @@ class Container
             }
         }
 
-        throw new \Exception("Cannot resolve dependency '{$typeName}' for parameter '{$parameter->getName()}'.");
+        throw new SystemException("Cannot resolve dependency '{$typeName}' for parameter '{$parameter->getName()}'.");
     }
 }

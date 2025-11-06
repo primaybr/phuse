@@ -26,6 +26,6 @@ class Button implements ComponentInterface
         $attributeString = $this->generateAttributeString();
 
         // Return the button element
-        return "<button {$attributeString}>{$this->content}</button>";
+        return "<button {$attributeString}>{$this->escape($this->content)}</button>";
     }
 }

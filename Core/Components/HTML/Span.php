@@ -26,6 +26,6 @@ class Span implements ComponentInterface
         $attributeString = $this->generateAttributeString();
 
         // Return the span element
-        return "<span {$attributeString}>{$this->content}</span>";
+        return "<span {$attributeString}>{$this->escape($this->content)}</span>";
     }
 }

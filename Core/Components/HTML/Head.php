@@ -29,7 +29,7 @@ class Head implements ComponentInterface
         $head = "<head {$attributeString}>";
 
         // Add the title element
-        $head .= "<title>{$this->title}</title>";
+        $head .= "<title>{$this->escape($this->title)}</title>";
 
         // Loop through the components in the head
         foreach ($this->components as $component) {

@@ -4,12 +4,29 @@ declare(strict_types=1);
 
 namespace Core\Exception;
 
+use Core\Log;
 use Core\Folder\Path as Path;
 use Core\Config as Config;
 use Core\Debug as Debug;
+use Core\Exception\Error;
 
 class Handler
 {
+    private readonly Log $logger;
+    private readonly Config $config;
+
+    /**
+     * Constructor
+     *
+     * @param Log|null $logger Logger instance
+     * @param Config|null $config Configuration instance
+     */
+    public function __construct(?Log $logger = null, ?Config $config = null)
+    {
+        $this->logger = $logger ?? new Log();
+        $this->config = $config ?? new Config();
+    }
+
     /**
      * Custom error handler
      *
@@ -21,46 +38,35 @@ class Handler
      */
     public function errorHandler(int $code, string $message, string $file, int $line): void
     {
-        [$error, $log] = $this->codeMap($code);
-        $data = [
-            'message' => '[' . date('Y-m-d H:i:s') . '] ' . "$error ($code): $message on line $line, in file $file",
-            'level' => $log,
-            'code' => $code,
-            'error' => $error,
+        [$error, $logLevel] = $this->codeMap($code);
+
+        // Create error message with context
+        $errorMessage = sprintf(
+            '%s (%d): %s on line %d, in file %s',
+            $error,
+            $code,
+            $message,
+            $line,
+            $file
+        );
+
+        // Prepare context data
+        $context = [
+            'error_code' => $code,
+            'error_type' => $error,
+            'file' => $file,
             'line' => $line,
-            'path' => $file,
-            'timestamp' => time()
+            'memory_usage' => memory_get_usage(true),
+            'php_version' => PHP_VERSION,
+            'request_uri' => $_SERVER['REQUEST_URI'] ?? 'unknown',
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+            'timestamp' => date('Y-m-d H:i:s')
         ];
 
-        $errorMessage = $data['message'];
+        // Log error using framework's logging system
+        $this->logger->write($errorMessage, $logLevel, $context);
 
-        //write log
-        if (file_exists(Path::LOGS . 'php_error.log')) {
-            $handler = fopen(Path::LOGS . 'php_error.log', 'r');
-            $filesize = filesize(Path::LOGS . 'php_error.log');
-
-            if ($filesize) {
-                $content = fread($handler, $filesize);
-                fclose($handler);
-
-                $newContent = json_decode($content, true);
-                array_push($newContent, $data);
-                $data = json_encode($newContent);
-            } else {
-                $data = json_encode([$data]);
-            }
-
-            $handler = fopen(Path::LOGS . 'php_error.log', 'w');
-            $write = fwrite($handler, $data);
-            fclose($handler);
-        } else {
-            $content = json_encode([$data]);
-
-            error_log($content, 3, Path::LOGS . 'php_error.log');
-        }
-
-        $config = new Config();
-        $env = $config->get()->env;
+        $env = $this->config->getEnv();
 
         if ('development' === $env || 'local' === $env) {
             http_response_code(500);
@@ -70,57 +76,32 @@ class Handler
                 'error' => $error,
                 'line' => $line,
                 'path' => $file,
+                'timestamp' => date('Y-m-d H:i:s'),
+                'memory_usage' => memory_get_usage(true),
+                'php_version' => PHP_VERSION
             ]);
         } else {
-            $error = new Error();
-            $error->show('php');
+            $errorDisplay = new Error('', $this->logger, $this->config);
+            $errorDisplay->show('php');
         }
 
         exit;
     }
 
     /**
-     * Map an error code
+     * Map an error code to severity and log level
      *
      * @param int $code Error code
-     * @return array Array of error
+     * @return array Array of [error_type, log_level]
      */
     private function codeMap(int $code): array
     {
-        $error = $log = null;
-        switch ($code) {
-            case E_PARSE:
-            case E_ERROR:
-            case E_CORE_ERROR:
-            case E_COMPILE_ERROR:
-            case E_USER_ERROR:
-                $error = 'Fatal Error';
-                $log = LOG_ERR;
-                break;
-            case E_WARNING:
-            case E_USER_WARNING:
-            case E_COMPILE_WARNING:
-            case E_RECOVERABLE_ERROR:
-                $error = 'Warning';
-                $log = LOG_WARNING;
-                break;
-            case E_NOTICE:
-            case E_USER_NOTICE:
-                $error = 'Notice';
-                $log = LOG_NOTICE;
-                break;
-            case E_STRICT:
-                $error = 'Strict';
-                $log = LOG_NOTICE;
-                break;
-            case E_DEPRECATED:
-            case E_USER_DEPRECATED:
-                $error = 'Deprecated';
-                $log = LOG_NOTICE;
-                break;
-            default:
-                break;
-        }
-        return [$error, $log];
+        return match ($code) {
+            E_PARSE, E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR => ['Fatal Error', LOG_ERR],
+            E_WARNING, E_USER_WARNING, E_COMPILE_WARNING, E_RECOVERABLE_ERROR => ['Warning', LOG_WARNING],
+            E_NOTICE, E_USER_NOTICE => ['Notice', LOG_NOTICE],
+            E_DEPRECATED, E_USER_DEPRECATED => ['Deprecated', LOG_NOTICE],
+            default => ['Unknown Error', LOG_ERR],
+        };
     }
 }

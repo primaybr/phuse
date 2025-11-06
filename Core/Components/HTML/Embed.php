@@ -30,6 +30,6 @@ class Embed implements ComponentInterface
         $attributeString = $this->generateAttributeString();
 
         // Return the embed element
-        return "<embed src=\"{$this->src}\" type=\"{$this->type}\" {$attributeString} />";
+        return "<embed src=\"{$this->escape($this->src)}\" type=\"{$this->escape($this->type)}\" {$attributeString} />";
     }
 }

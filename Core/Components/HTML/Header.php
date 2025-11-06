@@ -26,6 +26,6 @@ class Header implements ComponentInterface
         $attributeString = $this->generateAttributeString();
 
         // Return the header element
-        return "<header {$attributeString}>{$this->content}</header>";
+        return "<header {$attributeString}>{$this->escape($this->content)}</header>";
     }
 }

@@ -35,7 +35,7 @@ class Main implements ComponentInterface
 			}
 		}
 		
-		$main .= "{$this->content}</main>";
+		$main .= "{$this->escape($this->content)}</main>";
 
 
         // Return the main element

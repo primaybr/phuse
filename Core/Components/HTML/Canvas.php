@@ -26,6 +26,6 @@ class Canvas implements ComponentInterface
         $attributeString = $this->generateAttributeString();
 
         // Return the canvas element
-        return "<canvas {$attributeString}></canvas><script>{$this->script}</script>";
+        return "<canvas {$attributeString}></canvas><script>{$this->escape($this->script)}</script>";
     }
 }

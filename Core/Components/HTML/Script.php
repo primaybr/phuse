@@ -29,14 +29,14 @@ class Script implements ComponentInterface
 		 // Generate the attribute string
         $attributeString = $this->generateAttributeString();
 
-		if($this->src === 'script')
+		if(empty($this->src))
 		{
-			return "<script>{$this->escape($this->content)}</script>";
+			return "<script {$attributeString}>{$this->escape($this->content)}</script>";
 		}
 		else
 		{
 			// Return the script element
-			return "<script src=\"{$this->src}\" {$attributeString}></script>";
+			return "<script src=\"{$this->escape($this->src)}\" {$attributeString}></script>";
 		}
 		
        

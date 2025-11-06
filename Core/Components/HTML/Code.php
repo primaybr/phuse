@@ -26,6 +26,6 @@ class Code implements ComponentInterface
         $attributeString = $this->generateAttributeString();
 
         // Return the code element
-        return "<code {$attributeString}>{$this->content}</code>";
+        return "<code {$attributeString}>{$this->escape($this->content)}</code>";
     }
 }
