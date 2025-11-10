@@ -161,11 +161,11 @@
         <div class="features-list mb-4">
           <h6 class="mb-3">🎯 Template Features Demonstrated:</h6>
           <ul class="mb-0" style="color: rgb(205, 205, 205);">
-            <li><span class="highlight">{title}</span> - Variable replacement</li>
-            <li><span class="highlight">{author}</span> and <span class="highlight">{date}</span> - Multiple variables</li>
-            <li><span class="highlight">{% foreach tags as tag %}</span> - Array iteration</li>
-            <li><span class="highlight">{comments|length}</span> - Array length filter</li>
-            <li><span class="highlight">{comment.author}</span> - Nested object access</li>
+            <li><span class="highlight">&lbrace;title&rbrace;</span> - Variable replacement</li>
+            <li><span class="highlight">&lbrace;author&rbrace;</span> and <span class="highlight">&lbrace;date&rbrace;</span> - Multiple variables</li>
+            <li><span class="highlight">&lbrace;% foreach tags as tag %&rbrace;</span> - Array iteration</li>
+            <li><span class="highlight">&lbrace;comments|length&rbrace;</span> - Array length filter</li>
+            <li><span class="highlight">&lbrace;comment.author&rbrace;</span> - Nested object access</li>
           </ul>
         </div>
 
@@ -215,7 +215,7 @@
       </div>
 
       <div class="example-footer">
-        <p class="mb-0">Phuse Framework Template System &copy; 2025</p>
+        <p class="mb-0">Phuse Framework Template System &copy; {year}</p>
       </div>
     </div>
   </div>

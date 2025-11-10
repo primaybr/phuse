@@ -220,16 +220,16 @@
         <div class="conditional-demo mb-4">
           <h6 class="mb-3">🎯 Conditional Features Demonstrated:</h6>
           <ul class="mb-0" style="color: rgb(205, 205, 205);">
-            <li><span class="highlight">{% if user_preferences.show_prices %}</span> - Conditional price display</li>
-            <li><span class="highlight">{product.in_stock ? 'in-stock' : 'out-of-stock'}</span> - Dynamic class assignment</li>
-            <li><span class="highlight">{% if product.in_stock %}</span> - Conditional button display</li>
-            <li><span class="highlight">{product.image}</span> - Image with fallback handling</li>
+            <li><span class="highlight">&lbrace;% if user_preferences.show_prices %&rbrace;</span> - Conditional price display</li>
+            <li><span class="highlight">&lbrace;product.in_stock ? 'in-stock' : 'out-of-stock'&rbrace;</span> - Dynamic class assignment</li>
+            <li><span class="highlight">&lbrace;% if product.in_stock %&rbrace;</span> - Conditional button display</li>
+            <li><span class="highlight">&lbrace;product.image&rbrace;</span> - Image with fallback handling</li>
           </ul>
         </div>
 
         <div class="product-layout">
           <div class="product-image">
-            <img src="{product.image}" alt="{product.name}" onerror="this.src='https://via.placeholder.com/400x300/6f42c1/ffffff?text=No+Image'">
+            <img src="{product.image}" alt="{product.name}" onerror="this.src='https://placehold.co/600x400/EEE/31343C'">
           </div>
 
           <div class="product-details">
@@ -271,7 +271,7 @@
             </div>
 
             <div class="rating-display">
-              <div class="rating-stars">{'★' * (product.rating|round)}{'☆' * (5 - product.rating|round)}</div>
+              <div class="rating-stars">{product.rating|stars}</div>
               <div style="color: #ffc107; font-weight: 600;">{product.rating}/5</div>
               <div style="color: #6c757d; font-size: 0.9rem;">({product.reviews} reviews)</div>
             </div>
@@ -298,7 +298,7 @@
       </div>
 
       <div class="example-footer">
-        <p class="mb-0">Phuse Framework Template System &copy; 2025</p>
+        <p class="mb-0">Phuse Framework Template System &copy; {year}</p>
       </div>
     </div>
   </div>

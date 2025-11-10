@@ -1,42 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <title>Oops! Something is not right</title>
   <style>
-	body {
-		background-color: #131313;
-		margin: 2rem;
-		font: 13px/20px normal Helvetica, Arial, sans-serif;
-		color: #f4f4f4;
-	}
-	.error-template {padding: 4rem 1rem;text-align: center;}
-	.error-actions {margin-top:1rem;margin-bottom:2rem;}
-	.error-actions .btn { margin-right:1rem; }
-	.btn{ 
-		border: 1px solid #7d94b6;
-		background-color: #131313;
-		display: inline-block;
-		padding: 0.5rem 1.5rem;
-		border-radius: 5%;
-		margin: 0.5rem;
-		color: #f4f4f4;
-		text-decoration:none;
-	}
-	</style>
+    body {
+      background-color: #121212;
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    .error-container {
+      background-color: #1e1e1e;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+      text-align: center;
+    }
+    .error-template h1 {
+      font-size: 4rem;
+      font-weight: 300;
+      margin: 0 0 1rem 0;
+      color: #ffffff;
+    }
+    .error-template h2 {
+      font-size: 1.5rem;
+      font-weight: 400;
+      margin: 0 0 1.5rem 0;
+      color: #b0b0b0;
+    }
+    .error-details {
+      margin-bottom: 2rem;
+      color: #b0b0b0;
+    }
+    .btn {
+      background-color: transparent;
+      border: none;
+      color: #ffffff;
+      padding: 0.75rem 1.5rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-decoration: none;
+      display: inline-block;
+      transition: background-color 0.2s ease;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+  </style>
 </head>
 
 <body>
-	<div class="container">
-		<div class="row">
-			<div class="col-md-12">
-				<div class="error-template">
-					<h1> Oops!</h1>
-					<h2> Something is not right.</h2>
-					<div class="error-details">
-						Sorry, an error has occured.<br/>
-						<a href="#" onclick="history.back()" type="button" class="btn">Back</a>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+  <div class="error-container">
+    <div class="error-template">
+      <h1>Oops!</h1>
+      <h2>Something is not right</h2>
+      <div class="error-details">
+        Sorry, an error has occurred.
+      </div>
+      <a href="#" onclick="history.back()" class="btn">Go Back</a>
+    </div>
+  </div>
 </body>
+</html>

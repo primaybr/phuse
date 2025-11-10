@@ -92,7 +92,7 @@ Phuse provides comprehensive documentation for all features:
 - **[Upload Utilities](docs/upload-utilities.md)**: Secure file upload system with validation and XSS protection
 - **[Cache System](docs/cache-system.md)**: Enhanced caching with multiple drivers
 - **[Database Caching](docs/database-caching.md)**: Query result caching
-- **[Template System](docs/template-system.md)**: Powerful template engine with caching, conditionals, loops, and security features
+- **[Template System](docs/template-system.md)**: Powerful template engine with caching, conditionals, loops, filters, and security features
 - **[Template Caching](docs/template-caching.md)**: Template compilation caching
 - **[CSRF Protection](docs/csrf-protection.md)**: Cross-site request forgery protection
 - **[HTTP Components](docs/http-components.md)**: Comprehensive HTTP utilities including Client, Input, Request, Response, Session, URI, and CSRF protection
@@ -121,7 +121,7 @@ Phuse is an open-source project, and you are welcome to contribute to its develo
 
 ## Latest Changes
 
-### v1.1.0 (2025-10-23)
+### v1.1.0 (2025-11-10)
 - **Refactor Exception System**: Complete overhaul with modern PHP practices and framework integration
   - New BaseException class with type categorization, severity levels, and context data
   - Enhanced Handler class with Core\Log integration and improved error categorization
@@ -136,7 +136,7 @@ Phuse is an open-source project, and you are welcome to contribute to its develo
   - Factory pattern architecture with fluent API
   - Enhanced ComponentTrait with bulk operations and CSS utilities
   - Comprehensive documentation and usage examples
-  - Zero XSS vulnerabilities across all components
+  - Zero XSS vulnerabilities
 - **Refactor Image Component**: Complete overhaul with modern PHP practices
   - Enhanced error handling and validation with comprehensive security checks
   - Integration with framework's Core\Log system for consistent logging
@@ -145,17 +145,32 @@ Phuse is an open-source project, and you are welcome to contribute to its develo
   - Advanced operations: resize, crop, rotate, compress, watermark
   - Comprehensive documentation moved to docs/image-utilities.md
   - Unit tests and usage examples
-- **Add Pagination Component**: New enterprise-grade pagination system
-  - Comprehensive PagerConfig class with 25+ configuration options
-  - Fluent interface pattern with method chaining support
-  - Full ARIA accessibility support with semantic HTML
-  - Smart URL generation with query parameter preservation
-  - Integration with Core\Log for consistent framework logging
-  - Enhanced error handling and input validation
-  - Responsive design with ellipsis for large page counts
-  - Comprehensive test suite with 31 tests covering all functionality
-  - Complete documentation in docs/pagination-component.md
-  - Professional usage examples demonstrating all features
+- **Refactor Upload Utility**: Complete security and functionality overhaul
+  - Enhanced security with intelligent XSS protection for text files only
+  - Integration with framework's Core\Log system for consistent logging
+  - UploadConfig class for flexible configuration management with preset profiles
+  - Improved validation with detailed error messages and MIME type checking
+  - Secure filename handling with sanitization and unique naming
+  - Comprehensive documentation moved to docs/upload-utilities.md
+  - Unit tests and professional usage examples
+  - Enhanced error handling and framework integration
+- **Refactor Template System**: Complete overhaul with modern PHP practices and enhanced functionality
+  - Enhanced error handling with proper exception throwing and catching capabilities
+  - Improved security with safe variable extraction and input validation
+  - Fixed condition evaluation logic for better template parsing reliability
+  - Added comprehensive PHPDoc documentation throughout the template system
+  - Updated ParserInterface with better type declarations and documentation
+  - Enhanced template parsing with improved regex patterns for better performance
+  - Added proper backward compatibility for Error class constructor
+  - Integrated template system with framework's exception handling architecture
+- **Add Template System Examples**: Comprehensive demonstration system with web interface
+  - Created ExamplesController with 8 different example types showcasing all template features
+  - Added interactive web interface at `/examples` for easy access to demonstrations
+  - Created 5+ example templates in `App/Views/examples/` covering all use cases
+  - Added routing configuration for all example endpoints
+  - Updated documentation with comprehensive template system guide in `docs/template-system.md`
+  - Enhanced README.md with examples section and access instructions
+  - Provided real-world scenarios including e-commerce, dashboards, and blog templates
 
 ### v1.0.3 (2025-10-21)
 - Added comprehensive Dependency Injection (DI) Container system with automatic dependency resolution
@@ -170,28 +185,6 @@ Phuse is an open-source project, and you are welcome to contribute to its develo
 ### v1.0.2a (2025-10-21)
 - Removed Versioning information on code files
 - Fixed session issue on local machine
-
-### v1.0.2 (2025-09-13)
-- Added Database Query Caching system
-- Added Template Caching for improved performance
-- Enhanced cache configuration options
-- Improved documentation for caching features
-- Optimized template rendering performance
-- Core/Router - Added handle for empty url
-- Core/Template/ParserTrait : Update the parseForEach method to not replace string that is outside the brackets scope
-- Core/Router : Handling local machine routing
-
-### v1.0.1 (2025-2-28)
-- Added support for multiple HTTP methods in Router class
-- Added Route Caching in Router class
-- Added DocBlock to Core files
-- Fixed namespace resolution issues in Router class
-- Improved session system for better security and performance
-- Improved Router class for better performance and flexibility
-- Improved Base class for better performance and flexibility
-
-### v1.0.0 (2023-11-21)
-- Initial release of Phuse 1, based on collective and collaborative framework named 'Orceztra'(discontinued personal project).
 
 ## Credits
 
