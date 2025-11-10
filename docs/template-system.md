@@ -61,9 +61,42 @@ $data = [
 $this->template->render('user/profile', $data, true);
 ```
 
+### Filters
+
+Apply filters to variables using the pipe syntax:
+
+```php
+<!-- Template file -->
+<h1>{title|upper}</h1>
+<p>Length: {items|length}</p>
+<p>Rating: {product.rating|round} stars</p>
+<p>Name: {name|capitalize}</p>
+```
+
+Available filters:
+- `length` / `count`: Get array length or count
+- `upper` / `uppercase`: Convert to uppercase
+- `lower` / `lowercase`: Convert to lowercase
+- `capitalize`: Capitalize first letter of each word
+- `trim`: Remove whitespace
+- `title`: Convert to title case
+- `round`: Round to nearest integer
+- `stars`: Convert rating to star symbols (★☆)
+
+```php
+// PHP code
+$data = [
+    'title' => 'welcome to our site',
+    'items' => ['item1', 'item2', 'item3'],
+    'product' => ['rating' => 4.7],
+    'name' => 'john doe'
+];
+// Output: "WELCOME TO OUR SITE", "Length: 3", "Rating: 5 stars", "Name: John Doe"
+```
+
 ### Conditional Statements
 
-Use `{% if %}...{% endif %}` for conditional logic:
+Use `{% if %}...{% endif %}` for conditional logic. Supports boolean variables, comparisons, and the `not` keyword:
 
 ```php
 <!-- Template file -->
@@ -75,13 +108,18 @@ Use `{% if %}...{% endif %}` for conditional logic:
 {% if not logged_in %}
     <p>Please <a href="/login">login</a> to continue.</p>
 {% endif %}
+
+{% if user.role == 'admin' %}
+    <p>You have admin privileges.</p>
+{% endif %}
 ```
 
 ```php
 // PHP code
 $data = [
     'logged_in' => true,
-    'username' => 'johndoe'
+    'username' => 'johndoe',
+    'user' => ['role' => 'admin']
 ];
 ```
 
@@ -344,6 +382,21 @@ The template system logs errors and warnings:
 ```
 
 ## Examples
+
+### Web-Accessible Examples
+
+Visit the following URLs to see interactive template examples:
+
+- **Examples Index**: `/examples` - Overview of all available examples
+- **Basic Template**: `/examples/basic` - Simple variable replacement
+- **Conditional Logic**: `/examples/conditional` - If/else statements
+- **Foreach Loops**: `/examples/foreach` - Array iteration
+- **Nested Data**: `/examples/nested` - Accessing nested properties
+- **Blog Post**: `/examples/blog` - Complex multi-feature template
+- **Dashboard**: `/examples/dashboard` - Advanced features showcase
+- **Product Page**: `/examples/product` - E-commerce template example
+
+### Code Examples
 
 See `examples/template_examples.php` for comprehensive usage examples including:
 

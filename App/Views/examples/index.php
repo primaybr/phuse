@@ -136,13 +136,10 @@
       <div class="example-content">
         <div class="d-flex justify-content-between align-items-center mb-4">
           <div>
-            <h5 class="text-primary mb-1">🚀 Interactive Examples</h5>
+            <h5 class="text-primary mb-1">Interactive Examples</h5>
             <p class="mb-0" style="color: rgb(205, 205, 205);">
               Explore all features of the Phuse template system through these interactive demonstrations.
             </p>
-          </div>
-          <div class="stats-badge">
-            {examples|length} Examples
           </div>
         </div>
 
@@ -155,9 +152,6 @@
               <a href="{example.url}" class="example-link">
                 View Example
               </a>
-              <a href="/examples/run/{example.template}" class="example-link code-link">
-                Run Code
-              </a>
             </div>
           </div>
           {% endforeach %}
@@ -166,22 +160,15 @@
         <div class="alert alert-info mt-4">
           <h6 class="alert-heading mb-2">💡 Template System Features:</h6>
           <p class="mb-0">
-            These examples showcase all major template features including variable replacement (<span class="highlight">{variable}</span>),
-            conditional logic (<span class="highlight">{% if %}</span>), loops (<span class="highlight">{% foreach %}</span>),
-            nested data access, error handling, and performance optimization.
-          </p>
-        </div>
-
-        <div class="text-center mt-4">
-          <p style="color: rgb(205, 205, 205); margin-bottom: 1rem;">
-            For comprehensive documentation, visit the
-            <a href="/docs/template-system" style="color: #0d6efd;">Template System Documentation</a>
+            These examples showcase all major template features including variable replacement (<span class="highlight">&lbrace;variable&rbrace;</span>),
+            conditional logic (<span class="highlight">&lbrace;% if %&rbrace;</span>), loops (<span class="highlight">&lbrace;% foreach %&rbrace;</span>),
+            and nested data access.
           </p>
         </div>
       </div>
 
       <div class="example-footer">
-        <p class="mb-0">Phuse Framework Template System &copy; 2025</p>
+        <p class="mb-0">Phuse Framework Template System &copy; {year}</p>
       </div>
     </div>
   </div>

@@ -17,7 +17,7 @@ class Template
      * 
      * @var bool
      */
-    public bool $enableCache = false;
+    public bool $enableCache = true;
 
     /**
      * Cache lifetime in seconds

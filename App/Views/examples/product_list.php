@@ -98,7 +98,7 @@
 
       <div class="example-content">
         <p class="mb-3">
-          This example demonstrates <span class="highlight">{&percnt; foreach &percnt;}</span> loops for iterating over arrays and displaying collections.
+          This example demonstrates <span class="highlight">&lbrace;% foreach products as product %&rbrace;</span> loops for iterating over arrays and displaying collections.
         </p>
 
         <div class="row">
@@ -127,7 +127,7 @@
 
             <div class="alert alert-info mt-3">
               <strong>Template Syntax:</strong><br>
-              <span class="highlight">{&percnt; foreach products as product &percnt;}</span><br>
+              <span class="highlight">&lbrace;% foreach products as product %&rbrace;</span><br>
               Iterates through the products array and creates a card for each item.
             </div>
           </div>

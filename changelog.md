@@ -1,4 +1,4 @@
-### v1.1.0 (2025-10-23)
+### v1.1.0 (2025-11-10)
 - **Refactor Exception System**: Complete overhaul with modern PHP practices and framework integration
   - New BaseException class with type categorization, severity levels, and context data
   - Enhanced Handler class with Core\Log integration and improved error categorization
@@ -43,7 +43,7 @@
 - **Add Template System Examples**: Comprehensive demonstration system with web interface
   - Created ExamplesController with 8 different example types showcasing all template features
   - Added interactive web interface at `/examples` for easy access to demonstrations
-  - Created 10+ example templates in `App/Views/examples/` covering all use cases
+  - Created 5+ example templates in `App/Views/examples/` covering all use cases
   - Added routing configuration for all example endpoints
   - Updated documentation with comprehensive template system guide in `docs/template-system.md`
   - Enhanced README.md with examples section and access instructions

@@ -76,7 +76,9 @@ class Examples extends Controller
                     'url' => $this->baseUrl.'examples/product',
                     'template' => 'product_page'
                 ]
-            ]
+            ],
+            'baseUrl' => $this->baseUrl,
+            'year' => date('Y'),
         ];
 
         $this->render('examples/index', $data);
@@ -93,7 +95,8 @@ class Examples extends Controller
             'title' => 'Basic Template Example',
             'name' => 'John Doe',
             'company' => 'Tech Corp',
-            'description' => 'This example demonstrates basic variable replacement in templates.'
+            'description' => 'This example demonstrates basic variable replacement in templates.',
+            'year' => date('Y'),
         ];
 
         $this->render('examples/welcome', $data);
@@ -112,7 +115,8 @@ class Examples extends Controller
             'username' => 'johndoe',
             'role' => 'admin',
             'notifications' => 5,
-            'description' => 'This example demonstrates conditional statements in templates.'
+            'description' => 'This example demonstrates conditional statements in templates.',
+            'year' => date('Y'),
         ];
 
         $this->render('examples/user_dashboard', $data);
@@ -144,7 +148,8 @@ class Examples extends Controller
             'average_price' => $average_price,
             'average_price_rounded' => $average_price_rounded,
             'products_count' => count($products),
-            'description' => 'This example demonstrates foreach loops for iterating over arrays.'
+            'description' => 'This example demonstrates foreach loops for iterating over arrays.',
+            'year' => date('Y'),
         ];
 
         $this->render('examples/product_list', $data);
@@ -202,7 +207,8 @@ class Examples extends Controller
                 ['author' => 'User1', 'text' => 'Great post!'],
                 ['author' => 'User2', 'text' => 'Very helpful, thanks!']
             ],
-            'description' => 'This example demonstrates a complex template with multiple features.'
+            'description' => 'This example demonstrates a complex template with multiple features.',
+            'year' => date('Y'),
         ];
 
         $this->render('examples/blog_post', $data);
@@ -237,7 +243,8 @@ class Examples extends Controller
                 ['type' => 'info', 'message' => 'New version available'],
                 ['type' => 'error', 'message' => 'Database connection failed']
             ],
-            'description' => 'This example demonstrates an advanced dashboard template.'
+            'description' => 'This example demonstrates an advanced dashboard template.',
+            'year' => date('Y'),
         ];
 
         $this->render('examples/dashboard', $data);
@@ -275,42 +282,10 @@ class Examples extends Controller
                 'show_prices' => true,
                 'compact_view' => false
             ],
-            'description' => 'This example demonstrates an e-commerce product page template.'
+            'description' => 'This example demonstrates an e-commerce product page template.',
+            'year' => date('Y'),
         ];
 
         $this->render('examples/product_page', $data);
-    }
-
-    /**
-     * Run all template examples programmatically
-     *
-     * @return void
-     */
-    public function runAll(): void
-    {
-        // This method can be used to run all examples from the command line
-        // or for testing purposes
-
-        $examples = [
-            'basic' => [$this, 'basic'],
-            'conditional' => [$this, 'conditional'],
-            'foreach' => [$this, 'foreach'],
-            'nested' => [$this, 'nested'],
-            'blog' => [$this, 'blog'],
-            'dashboard' => [$this, 'dashboard'],
-            'product' => [$this, 'product']
-        ];
-
-        foreach ($examples as $name => $method) {
-            try {
-                echo "Running {$name} example...\n";
-                // In a real implementation, you might want to capture output
-                // For now, we'll just call the methods
-            } catch (\Exception $e) {
-                echo "Error in {$name} example: " . $e->getMessage() . "\n";
-            }
-        }
-
-        echo "All examples completed.\n";
     }
 }

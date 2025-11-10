@@ -2,73 +2,76 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Welcome to Phuse! PHP Easy to Use</title>
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body {
-      background-color:rgb(25, 25, 25);
-      min-height: 100vh;
+      background-color: #121212;
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      color: #ffffff;
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      line-height: 1.5;
     }
     .welcome-container {
-      max-width: 800px;
-      margin: 2rem auto;
-      background: rgb(75, 75, 75);
+      background-color: #1e1e1e;
       border-radius: 8px;
-      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
-      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+      max-width: 600px;
+      width: 90%;
+      text-align: center;
     }
-    .welcome-header {
-      background: rgb(40, 40, 40);
-      color: white;
-      padding: 2rem 1.5rem;
-      margin-bottom: 1rem;
+    .welcome-container h1 {
+      font-size: 3rem;
+      font-weight: 300;
+      margin: 0 0 1rem 0;
+      color: #ffffff;
+    }
+    .welcome-container h2 {
+      font-size: 1.25rem;
+      font-weight: 400;
+      margin: 0 0 1.5rem 0;
+      color: #b0b0b0;
     }
     .welcome-content {
-      padding: 0 2rem 2rem;
-      line-height: 1.7;
-      color: rgb(205, 205, 205);
+      margin-bottom: 2rem;
+      color: #b0b0b0;
+      text-align: left;
+    }
+    .welcome-content p {
+      margin: 0 0 1rem 0;
+    }
+    .welcome-content p:last-child {
+      margin-bottom: 0;
     }
     .welcome-footer {
-      text-align: center;
-      padding: 1rem;
-      margin-top: auto;
-      color: rgb(205, 205, 205);
+      color: #b0b0b0;
       font-size: 0.9rem;
-      border-top: 1px solid rgb(177, 177, 177);
+      border-top: 1px solid #333333;
+      padding-top: 1rem;
     }
   </style>
 </head>
 
 <body>
-  <div class="container py-2">
-    <div class="welcome-container">
-      <div class="welcome-header">
-        <div class="text-center mb-2">
-          <h1 class="display-5 fw-bold">Welcome to Phuse!</h1>
-          <p class="lead mb-0">PHP Easy to Use</p>
-        </div>
-      </div>
-      
-      <div class="welcome-content">
-        <p class="mb-2">
-          Phuse is a PHP framework that simplifies web development with conventions and helpers. It follows the convention over configuration principle, which means that it has sensible defaults for most settings and features, reducing the need for manual configuration.
-        </p>
-        <p class="mb-0">
-          It provides a variety of helpers that perform common tasks such as formatting, validation, pagination, and more. Phuse aims to make web development more enjoyable and productive with PHP.
-        </p>
-      </div>
-      
-      <div class="welcome-footer">
-        <p class="mb-0">Phuse Framework &copy; {date}</p>
-      </div>
+  <div class="welcome-container">
+    <h1>Welcome to Phuse!</h1>
+    <h2>PHP Easy to Use</h2>
+    <div class="welcome-content">
+      <p>
+        Phuse is a PHP framework that simplifies web development with conventions and helpers. It follows the convention over configuration principle, which means that it has sensible defaults for most settings and features, reducing the need for manual configuration.
+      </p>
+      <p>
+        It provides a variety of helpers that perform common tasks such as formatting, validation, pagination, and more. Phuse aims to make web development more enjoyable and productive with PHP.
+      </p>
+    </div>
+    <div class="welcome-footer">
+      Phuse Framework &copy; {date}
     </div>
   </div>
-
-  <!-- Bootstrap JS Bundle with Popper -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

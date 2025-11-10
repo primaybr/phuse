@@ -91,7 +91,7 @@
 
       <div class="example-content">
         <p class="mb-3">
-          This example demonstrates conditional statements in templates using <span class="highlight">{&percnt; if &percnt;}</span> syntax.
+          This example demonstrates conditional statements in templates using <span class="highlight">&lbrace;% if %&rbrace;</span> syntax.
         </p>
 
         {% if logged_in %}  
@@ -124,7 +124,7 @@
       </div>
 
       <div class="example-footer">
-        <p class="mb-0">Phuse Framework Template System &copy; 2025</p>
+        <p class="mb-0">Phuse Framework Template System &copy; {year}</p>
       </div>
     </div>
   </div>

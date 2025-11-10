@@ -166,10 +166,10 @@
         <div class="features-demo mb-4">
           <h6 class="mb-3">🎯 Advanced Features Demonstrated:</h6>
           <ul class="mb-0" style="color: rgb(205, 205, 205);">
-            <li><code class="highlight">{stats.total_users}</code> - Nested object access</li>
-            <li><code class="highlight">{% foreach recent_activity as activity %}</code> - Complex data iteration</li>
-            <li><code class="highlight">{notification.type}</code> - Conditional styling with dynamic classes</li>
-            <li><code class="highlight">{user.role}</code> - Role-based content display</li>
+            <li><code class="highlight">&lbrace;stats.total_users&rbrace;</code> - Nested object access</li>
+            <li><code class="highlight">&lbrace;% foreach recent_activity as activity %&rbrace;</code> - Complex data iteration</li>
+            <li><code class="highlight">&lbrace;notification.type&rbrace;</code> - Conditional styling with dynamic classes</li>
+            <li><code class="highlight">&lbrace;user.role&rbrace;</code> - Role-based content display</li>
           </ul>
         </div>
 
@@ -192,9 +192,7 @@
             <div class="stat-description">Awaiting Processing</div>
           </div>
 
-          <div class="stats-badge">
-            {examples|length} Examples
-          </div>
+
 
           <div class="stat-card">
             <div class="stat-label">User Profile</div>
@@ -218,9 +216,9 @@
           {% foreach notifications as notification %}
           <div class="notification {notification.type}">
             <span class="notification-icon">
-              {% if notification.type == 'warning' %}⚠️{% endif %}
-              {% if notification.type == 'info' %}ℹ️{% endif %}
-              {% if notification.type == 'error' %}❌{% endif %}
+              {% if notification.type == 'warning' %}WARNING{% endif %}
+              {% if notification.type == 'info' %}INFO{% endif %}
+              {% if notification.type == 'error' %}ERROR{% endif %}
             </span>
             <span class="notification-message">{notification.message}</span>
           </div>
@@ -233,7 +231,7 @@
       </div>
 
       <div class="example-footer">
-        <p class="mb-0">Phuse Framework Template System &copy; 2025</p>
+        <p class="mb-0">Phuse Framework Template System &copy; {year}</p>
       </div>
     </div>
   </div>
