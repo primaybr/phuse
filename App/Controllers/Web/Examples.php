@@ -35,6 +35,12 @@ class Examples extends Controller
             'description' => 'Explore the various features of the Phuse template system through interactive examples.',
             'examples' => [
                 [
+                    'name' => 'CSS Framework',
+                    'description' => 'Modern CSS framework with Bootstrap 5+ compatibility, dark theme optimization, and grid system',
+                    'url' => $this->baseUrl.'examples/css-framework',
+                    'template' => 'css_framework'
+                ],
+                [
                     'name' => 'Basic Template',
                     'description' => 'Simple variable replacement and basic template rendering',
                     'url' => $this->baseUrl.'examples/basic',
@@ -248,6 +254,23 @@ class Examples extends Controller
         ];
 
         $this->render('examples/dashboard', $data);
+    }
+
+    /**
+     * Display CSS framework example
+     *
+     * @return void
+     */
+    public function cssFramework(): void
+    {
+        $data = [
+            'title' => 'CSS Framework Examples',
+            'description' => 'Explore the modern CSS framework features including grid system, components, and utilities optimized for dark themes.',
+            'year' => date('Y'),
+            'assetsUrl' => $this->baseUrl.'assets/',
+        ];
+
+        $this->render('examples/css_framework', $data);
     }
 
     /**

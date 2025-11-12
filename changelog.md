@@ -1,3 +1,49 @@
+### v1.1.3 (2025-11-12)
+- **Complete CSS Framework Modernization**: Bootstrap 5+ compatible framework with dark theme optimization
+  - **Modern Grid System**: Complete Bootstrap 5.3.8 grid implementation with gap-based spacing
+    - **12-Column Responsive Grid**: Full breakpoint support (xs, sm, md, lg, xl, xxl)
+    - **Auto-sizing Columns**: `col-auto` classes for all responsive breakpoints
+    - **Gap-based Spacing**: CSS variables `--ps-gutter-x` and `--ps-gutter-y` for modern spacing
+    - **Row Columns Utilities**: `row-cols-*` classes for automatic column distribution
+    - **Fixed 3-Card Layout**: Proper gap spacing ensures correct 3-card per row display
+  - **Phuse-Specific Variables**: Renamed all CSS variables from `--bs-*` to `--ps-*` for framework branding
+  - **Enhanced Component Library**: Modern components optimized for dark themes
+    - **Dark Theme Alerts**: Highly visible alerts with light text, colored backgrounds, and left accent borders
+    - **Compact Badges**: Content-width badges using `width: fit-content` instead of full width
+    - **Modern Cards**: Enhanced card components with hover effects and proper dark theme styling
+    - **Form Controls**: Dark theme optimized form inputs with proper focus states
+  - **Extended Utility Classes**: Comprehensive spacing, flexbox, and display utilities
+    - **Modern Spacing Scale**: Extended spacing utilities (m-6 through m-8, p-6 through p-8)
+    - **Complete Responsive Display**: All breakpoints with flex, block, inline, and none utilities
+    - **Enhanced Flexbox**: Complete flexbox control with alignment and justification
+    - **Modern Typography**: Extended text utilities and color classes
+  - **Dark Theme Optimization**: All components designed for excellent dark background visibility
+    - **Color Hierarchy**: Primary, secondary, and tertiary background levels
+    - **Text Contrast**: Optimized text colors for readability on dark backgrounds
+    - **Component Visibility**: Enhanced contrast for alerts, buttons, and interactive elements
+    - **Focus States**: Clear focus indicators for accessibility
+  - **Performance Optimized**: Efficient CSS with modern selectors and minimal footprint
+  - **Bootstrap 5.3.8 Compatibility**: Full compatibility while maintaining Phuse-specific enhancements
+- **Interactive CSS Framework Examples**: Comprehensive demonstration system
+  - **CSS Framework Examples Page**: Complete showcase at `/examples/css-framework`
+  - **Grid System Demonstrations**: Basic grid, responsive 3-card layout, auto-sizing columns
+  - **Component Showcases**: Enhanced alerts, compact badges, modern cards
+  - **Utility Examples**: Spacing scales, flexbox utilities, responsive display
+  - **Dark Theme Features**: Color hierarchy and contrast demonstrations
+  - **CSS Variables Showcase**: Phuse-specific variable system explanation
+- **Comprehensive CSS Documentation**: Complete framework guide in `docs/css-framework.md`
+  - **Quick Start Guide**: Basic HTML structure and grid usage
+  - **Component Documentation**: Cards, alerts, badges, buttons with code examples
+  - **Utility Reference**: Spacing, flexbox, display, colors, borders, shadows
+  - **Dark Theme Guide**: Optimization strategies and color system
+  - **Migration Guide**: Converting from Bootstrap with variable name changes
+  - **Browser Support**: Compatibility information and performance notes
+- **Framework Integration**: Seamless integration with existing Phuse features
+  - **Examples Controller Update**: Added CSS framework to examples system
+  - **Routing Integration**: Proper URL routing for CSS framework examples
+  - **Template System Compatibility**: Works with existing template rendering
+  - **Asset Management**: Proper CSS file serving and caching
+
 ### v1.1.2 (2025-11-12)
 - **Text Utilities System Overhaul**: Complete reorganization and enhancement of text processing utilities
   - **Relocated Core Classes**: Moved all text utilities from `Core/Text/` to `Core/Utilities/Text/` for better organization

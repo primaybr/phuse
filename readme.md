@@ -11,6 +11,7 @@ Phuse is a PHP framework that simplifies web development with conventions and he
 - **Database Connection Pooling**: High-performance connection management for concurrent requests with automatic health monitoring
 - **Query Result Caching**: Intelligent caching system with automatic invalidation and configurable storage options
 - **Routing**: Phuse handles routing efficiently, allowing developers to define clean and understandable URLs for their applications.
+- **Modern CSS Framework**: Bootstrap 5.3.8-compatible CSS framework with dark theme optimization, responsive grid system, and comprehensive component library
 - **HTML Components**: Secure, fluent HTML generation with automatic XSS protection and modern PHP patterns
 - **Pagination Component**: Enterprise-grade pagination system with accessibility support, URL generation, and comprehensive configuration options
 - **Text Utilities**: Comprehensive text processing system with string manipulation, number formatting, HTML/CSS/JS minification, and secure UUID generation
@@ -89,6 +90,7 @@ Routing is managed by the `Router.php` class in the `Core` directory. Define you
 
 Phuse provides comprehensive documentation for all features:
 
+- **[CSS Framework](docs/css-framework.md)**: Modern Bootstrap 5.3.8-compatible CSS framework with dark theme optimization, responsive grid system, and comprehensive component library
 - **[ORM Examples Guide](docs/orm-examples.md)**: Complete ORM setup with database schema, model configuration, and advanced usage examples
 - **[HTML Components](docs/html-components.md)**: Secure HTML generation with fluent API
 - **[Image Utilities](docs/image-utilities.md)**: Advanced image manipulation with GD library

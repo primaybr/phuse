@@ -110,14 +110,33 @@ class Error extends \Exception
         }
 
         try {
-            ob_start();
-            require $templatePath;
-            return ob_get_clean();
+            // Read the template file content
+            $templateContent = file_get_contents($templatePath);
+            if ($templateContent === false) {
+                throw new \Exception("Could not read template file: {$templatePath}");
+            }
+
+            // Set assets URL for template usage
+            try {
+                $configData = $this->config->get();
+                $assetsUrl = $configData->site->assetsUrl . '/' ?? '/assets/';
+            } catch (\Throwable $configError) {
+                $this->logger->write("Config error getting assets_url: " . $configError->getMessage(), LOG_WARNING);
+                $assetsUrl = '/assets/';
+            }
+
+            // Simple template variable replacement
+            $templateContent = str_replace('{assetsUrl}', $assetsUrl, $templateContent);
+            $templateContent = str_replace('{date}', date('Y'), $templateContent);
+            $templateContent = str_replace('{year}', date('Y'), $templateContent);
+
+            return $templateContent;
+
         } catch (\Throwable $e) {
             $this->logger->write(
-                "Failed to load error template: {$templatePath}",
+                "Failed to load error template: {$templatePath} - " . $e->getMessage(),
                 LOG_ERR,
-                ['exception' => $e->getMessage()]
+                ['exception' => $e->getMessage(), 'file' => $templatePath]
             );
 
             return $this->getDefaultErrorTemplate();
