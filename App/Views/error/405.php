@@ -3,72 +3,18 @@
 <head>
   <meta charset="utf-8">
   <title>Error 405 Method Not Allowed!</title>
-  <style>
-    body {
-      background-color: #121212;
-      margin: 0;
-      padding: 0;
-      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      line-height: 1.5;
-    }
-    .error-container {
-      background-color: #1e1e1e;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      padding: 2rem;
-      max-width: 500px;
-      width: 90%;
-      text-align: center;
-    }
-    .error-template h1 {
-      font-size: 4rem;
-      font-weight: 300;
-      margin: 0 0 1rem 0;
-      color: #ffffff;
-    }
-    .error-template h2 {
-      font-size: 1.5rem;
-      font-weight: 400;
-      margin: 0 0 1.5rem 0;
-      color: #b0b0b0;
-    }
-    .error-details {
-      margin-bottom: 2rem;
-      color: #b0b0b0;
-    }
-    .btn {
-      background-color: transparent;
-      border: none;
-      color: #ffffff;
-      padding: 0.75rem 1.5rem;
-      border-radius: 4px;
-      font-size: 0.875rem;
-      font-weight: 500;
-      text-decoration: none;
-      display: inline-block;
-      transition: background-color 0.2s ease;
-      cursor: pointer;
-    }
-    .btn:hover {
-      background-color: rgba(255, 255, 255, 0.08);
-    }
-  </style>
+  <link rel="stylesheet" href="{assetsUrl}css/styles.css">
 </head>
 
-<body>
-  <div class="error-container">
+<body class="d-flex align-items-center justify-content-center min-vh-100">
+  <div class="card p-5 shadow text-center mx-auto" style="max-width: 500px; width: 90%;">
     <div class="error-template">
-      <h1>405</h1>
-      <h2>Method Not Allowed</h2>
+      <h1 class="display-4 font-weight-light">405</h1>
+      <h2 class="h4 text-secondary">Method Not Allowed</h2>
       <div class="error-details">
         Sorry, the request method is not supported for the requested resource.
       </div>
-      <a href="#" onclick="history.back()" class="btn">Go Back</a>
+      <a href="#" onclick="history.back()" class="btn btn-outline-primary">Go Back</a>
     </div>
   </div>
 </body>

@@ -35,10 +35,10 @@ class Template
 
     /**
      * Whether to automatically clear the cache when in development mode
-     * 
+     *
      * @var bool
      */
-    public bool $autoClearInDevelopment = true;
+    public bool $autoClearInDevelopment = false;
 
     /**
      * @var \Core\Config Configuration instance
@@ -47,21 +47,20 @@ class Template
 
     /**
      * Constructor
-     * 
+     *
      * Loads environment-specific settings using Core\Config
      */
     public function __construct()
     {
         try {
             $this->config = new \Core\Config();
-            
-            // Check if we're in development mode
-            if ($this->config->get()->env === 'development') {
-                $this->autoClearInDevelopment = true;
-            }
+
+            // Cache invalidation happens automatically via file modification time
+            // No need to clear cache in development mode
+            $this->autoClearInDevelopment = false;
         } catch (\Exception $e) {
             // Fallback to default settings if config loading fails
-            $this->autoClearInDevelopment = true;
+            $this->autoClearInDevelopment = false;
         }
     }
 }

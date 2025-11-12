@@ -26,6 +26,7 @@ $router->get('/examples/nested', 'Web\Examples', 'nested');
 $router->get('/examples/blog', 'Web\Examples', 'blog');
 $router->get('/examples/dashboard', 'Web\Examples', 'dashboard');
 $router->get('/examples/product', 'Web\Examples', 'product');
+$router->get('/examples/css-framework', 'Web\Examples', 'cssFramework');
 $router->get('/examples/run/([A-Za-z0-9\-\_]+)', 'Web\Examples', 'runAll');
 
 
