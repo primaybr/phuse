@@ -1,6 +1,6 @@
 ### v1.1.3 (2025-11-12)
 - **Complete CSS Framework Modernization**: Bootstrap 5+ compatible framework with dark theme optimization
-  - **Modern Grid System**: Complete Bootstrap 5.3.8 grid implementation with gap-based spacing
+  - **Modern Grid System**: Complete Bootstrap 5+ grid implementation with gap-based spacing
     - **12-Column Responsive Grid**: Full breakpoint support (xs, sm, md, lg, xl, xxl)
     - **Auto-sizing Columns**: `col-auto` classes for all responsive breakpoints
     - **Gap-based Spacing**: CSS variables `--ps-gutter-x` and `--ps-gutter-y` for modern spacing
