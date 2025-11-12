@@ -16,7 +16,7 @@ class PgSQL implements DriversInterface {
 	public function connect($host, $port, $dbname, $user, $password, $options = []){
 		if (empty($options)) {
             $options = [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_WARNING,
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             ];
         }
 

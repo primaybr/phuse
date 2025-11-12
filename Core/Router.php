@@ -7,7 +7,6 @@ namespace Core;
 use Core\Exception\Error as Error;
 use Core\Folder as Folder;
 use Core\Log as Log;
-use Core\Cache\CacheManager as Cache;
 
 /**
  * Class Router
@@ -71,17 +70,17 @@ class Router
      */
     private function loadRoutes(): void
     {
-        // Load routes from cache using new cache system
-        $cache = Cache::get('router', 'file');
-        $cachedRoutes = $cache->get(Folder\Path::CACHE . 'routes.cache');
-
-        // If cached routes exist, unserialize and set them
-        if ($cachedRoutes) {
-            $this->cachedRoutes = unserialize($cachedRoutes);
-            $this->routes = $this->cachedRoutes['routes'];
-            $this->actions = $this->cachedRoutes['actions'];
-            $this->methods = $this->cachedRoutes['methods'];
-            $this->middlewares = $this->cachedRoutes['middlewares'];
+        // Load routes from cache file
+        $cacheFile = Folder\Path::CACHE . 'routes.cache';
+        if (file_exists($cacheFile)) {
+            $cachedRoutes = file_get_contents($cacheFile);
+            if ($cachedRoutes) {
+                $this->cachedRoutes = unserialize($cachedRoutes);
+                $this->routes = $this->cachedRoutes['routes'];
+                $this->actions = $this->cachedRoutes['actions'];
+                $this->methods = $this->cachedRoutes['methods'];
+                $this->middlewares = $this->cachedRoutes['middlewares'];
+            }
         }
     }
 
@@ -119,15 +118,15 @@ class Router
      */
     private function cacheRoutes(): void
     {
-        // Cache the routes using new cache system
+        // Cache the routes to file
         $this->cachedRoutes = [
             'routes' => $this->routes,
             'actions' => $this->actions,
             'methods' => $this->methods,
             'middlewares' => $this->middlewares,
         ];
-        $cache = Cache::get('router', 'file');
-        $cache->set(Folder\Path::CACHE . 'routes.cache', serialize($this->cachedRoutes));
+        $cacheFile = Folder\Path::CACHE . 'routes.cache';
+        file_put_contents($cacheFile, serialize($this->cachedRoutes));
     }
 
     /**

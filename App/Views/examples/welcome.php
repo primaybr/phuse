@@ -76,7 +76,7 @@
         </div>
 
         <p class="mb-2">
-          This example demonstrates the basic functionality of the Phuse template system. Variables are replaced with their actual values using the <span class="highlight">{variable}</span> syntax.
+          This example demonstrates the basic functionality of the Phuse template system. Variables are replaced with their actual values using the <span class="highlight">&lbrace;variable&rbrace;</span> syntax.
         </p>
         <p class="mb-0">
           The template system provides a clean separation between presentation and logic, making your code more maintainable and reusable.

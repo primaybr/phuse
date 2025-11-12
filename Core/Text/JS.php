@@ -8,7 +8,7 @@ namespace Core\Text;
  * JavaScript Minifier
  *
  * A clean, modular JavaScript minifier that removes unnecessary characters
- * while preserving functionality. Much more maintainable than the original JShrink.
+ * while preserving functionality.
  *
  * @author Prima Yoga
  */

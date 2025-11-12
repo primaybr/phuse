@@ -1,3 +1,47 @@
+### v1.1.1 (2025-11-12)
+- **Complete ORM System Overhaul**: Modern Active Record implementation with enterprise features
+  - Comprehensive Model class with relationships (hasOne, hasMany, belongsTo, belongsToMany)
+  - Eager loading with `with()` method for relationship optimization
+  - Model events/hooks system (saving, created, updated, deleted)
+  - Scopes for query filtering and reusable query logic
+  - Soft deletes with restore functionality and trashed record access
+  - Automatic timestamps (created_at, updated_at) management
+  - Attribute casting system (boolean, integer, string, array, json)
+  - Accessors and mutators for data transformation
+  - Mass assignment protection (fillable/guarded attributes)
+  - Hidden attributes for API security
+  - Global scopes for application-wide query modifications
+- **Database Connection Pooling**: Performance optimization with connection reuse
+  - ConnectionPool class for managing multiple database connections
+  - Automatic connection health monitoring and cleanup
+  - Configurable pool size and timeout settings
+  - Improved concurrent request handling
+- **Enhanced Database Builders**: Advanced query building capabilities
+  - Improved BuildersTrait with additional aggregation methods
+  - Enhanced MySQL and PostgreSQL driver support
+  - Better query compilation and parameter binding
+  - Support for complex joins and subqueries
+- **Model Validation Integration**: Automatic validation before save operations
+  - Integration with existing Validator system
+  - Custom validation rules per model
+  - Automatic validation error handling
+  - Pre-save validation hooks
+- **Query Result Caching**: Intelligent caching system for database queries
+  - QueryCache integration with Model class
+  - Automatic cache invalidation on data changes
+  - Configurable cache lifetime and storage
+  - Development-friendly cache management
+- **Comprehensive ORM Examples**: Complete demonstration system
+  - Full CRUD operations example with relationships
+  - Model validation examples
+  - Advanced query building demonstrations
+  - Real-world usage scenarios
+- **Database Documentation**: Complete setup and usage guides
+  - ORM examples guide with database schema
+  - Model configuration and relationship documentation
+  - Performance optimization tips
+  - Troubleshooting and best practices
+
 ### v1.1.0 (2025-11-10)
 - **Refactor Exception System**: Complete overhaul with modern PHP practices and framework integration
   - New BaseException class with type categorization, severity levels, and context data

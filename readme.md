@@ -7,7 +7,9 @@ Phuse is a PHP framework that simplifies web development with conventions and he
 ### Core Features
 
 - **MVC Pattern**: Phuse implements the Model-View-Controller pattern, which separates the application logic from the presentation layer. This makes the code more organized, maintainable, and testable.
-- **Active Record ORM**: Phuse uses the Active Record pattern, which maps database tables to PHP classes and objects. This makes the database operations easier, faster, and more secure.
+- **Advanced Active Record ORM**: Complete ORM system with relationships, eager loading, model events, scopes, soft deletes, attribute casting, accessors/mutators, and automatic validation
+- **Database Connection Pooling**: High-performance connection management for concurrent requests with automatic health monitoring
+- **Query Result Caching**: Intelligent caching system with automatic invalidation and configurable storage options
 - **Routing**: Phuse handles routing efficiently, allowing developers to define clean and understandable URLs for their applications.
 - **HTML Components**: Secure, fluent HTML generation with automatic XSS protection and modern PHP patterns
 - **Pagination Component**: Enterprise-grade pagination system with accessibility support, URL generation, and comprehensive configuration options
@@ -86,6 +88,7 @@ Routing is managed by the `Router.php` class in the `Core` directory. Define you
 
 Phuse provides comprehensive documentation for all features:
 
+- **[ORM Examples Guide](docs/orm-examples.md)**: Complete ORM setup with database schema, model configuration, and advanced usage examples
 - **[HTML Components](docs/html-components.md)**: Secure HTML generation with fluent API
 - **[Image Utilities](docs/image-utilities.md)**: Advanced image manipulation with GD library
 - **[Pagination Utilities](docs/pagination-utilities.md)**: Enterprise-grade pagination with accessibility support
@@ -120,6 +123,50 @@ If you have any questions, issues, or feedback regarding Phuse, you can contact 
 Phuse is an open-source project, and you are welcome to contribute to its development. You can fork the repository, make your changes, and submit a pull request. Please follow the coding standards and guidelines before submitting your code.
 
 ## Latest Changes
+
+### v1.1.1 (2025-11-12)
+- **Complete ORM System Overhaul**: Modern Active Record implementation with enterprise features
+  - Comprehensive Model class with relationships (hasOne, hasMany, belongsTo, belongsToMany)
+  - Eager loading with `with()` method for relationship optimization
+  - Model events/hooks system (saving, created, updated, deleted)
+  - Scopes for query filtering and reusable query logic
+  - Soft deletes with restore functionality and trashed record access
+  - Automatic timestamps (created_at, updated_at) management
+  - Attribute casting system (boolean, integer, string, array, json)
+  - Accessors and mutators for data transformation
+  - Mass assignment protection (fillable/guarded attributes)
+  - Hidden attributes for API security
+  - Global scopes for application-wide query modifications
+- **Database Connection Pooling**: Performance optimization with connection reuse
+  - ConnectionPool class for managing multiple database connections
+  - Automatic connection health monitoring and cleanup
+  - Configurable pool size and timeout settings
+  - Improved concurrent request handling
+- **Enhanced Database Builders**: Advanced query building capabilities
+  - Improved BuildersTrait with additional aggregation methods
+  - Enhanced MySQL and PostgreSQL driver support
+  - Better query compilation and parameter binding
+  - Support for complex joins and subqueries
+- **Model Validation Integration**: Automatic validation before save operations
+  - Integration with existing Validator system
+  - Custom validation rules per model
+  - Automatic validation error handling
+  - Pre-save validation hooks
+- **Query Result Caching**: Intelligent caching system for database queries
+  - QueryCache integration with Model class
+  - Automatic cache invalidation on data changes
+  - Configurable cache lifetime and storage
+  - Development-friendly cache management
+- **Comprehensive ORM Examples**: Complete demonstration system
+  - Full CRUD operations example with relationships
+  - Model validation examples
+  - Advanced query building demonstrations
+  - Real-world usage scenarios
+- **Database Documentation**: Complete setup and usage guides
+  - ORM examples guide with database schema
+  - Model configuration and relationship documentation
+  - Performance optimization tips
+  - Troubleshooting and best practices
 
 ### v1.1.0 (2025-11-10)
 - **Refactor Exception System**: Complete overhaul with modern PHP practices and framework integration
@@ -181,10 +228,6 @@ Phuse is an open-source project, and you are welcome to contribute to its develo
 - Integrated DI container with middleware system for better dependency management
 - Added comprehensive documentation for both DI container and middleware features
 - Improved code organization and separation of concerns across the framework
-
-### v1.0.2a (2025-10-21)
-- Removed Versioning information on code files
-- Fixed session issue on local machine
 
 ## Credits
 

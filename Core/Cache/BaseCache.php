@@ -6,7 +6,7 @@ namespace Core\Cache;
 
 use Core\Log;
 use Core\Cache\CacheConfig;
-use Core\Cache\CacheException;
+use Core\Exception\CacheException;
 
 /**
  * Abstract base class for all cache implementations

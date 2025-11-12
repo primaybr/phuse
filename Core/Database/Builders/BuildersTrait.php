@@ -651,14 +651,23 @@ trait BuildersTrait {
      * @param array $data The data to insert.
      * @return self
      */
-    public function insertBatch(array $data): self 
+    public function insertBatch(array $data): self
     {
         if (!empty($data)) {
             $columns = implode(',', array_keys($data[0]));
-            $values = array_map(function($item) {
-                return '('.implode(',', array_map('quote', $item)).')';
-            }, $data);
-            $this->queryInsert = "INSERT INTO {$this->table} ({$columns}) VALUES " . implode(',', $values);
+            $valuePlaceholders = [];
+
+            foreach ($data as $rowIndex => $row) {
+                $placeholders = [];
+                foreach ($row as $column => $value) {
+                    $placeholder = ":{$column}_{$rowIndex}";
+                    $placeholders[] = $placeholder;
+                    $this->binds[$placeholder] = $value;
+                }
+                $valuePlaceholders[] = '(' . implode(',', $placeholders) . ')';
+            }
+
+            $this->queryInsert = "INSERT INTO {$this->table} ({$columns}) VALUES " . implode(',', $valuePlaceholders);
         }
         return $this;
     }
@@ -749,5 +758,157 @@ trait BuildersTrait {
     public function clearCache(): void {
         $this->queryCache = []; // Clear the cache
     }
-	
+
+    /**
+     * Add database-agnostic random ordering (to be overridden by specific implementations)
+     *
+     * @return self
+     */
+    public function orderByRandom(): self
+    {
+        // Default implementation - can be overridden
+        $this->queryOrderBy = " ORDER BY RAND()";
+        return $this;
+    }
+
+    /**
+     * Add database-agnostic limit with offset
+     *
+     * @param int $limit
+     * @param int $offset
+     * @return self
+     */
+    public function limitOffset(int $limit, int $offset = 0): self
+    {
+        $this->queryLimit = " LIMIT {$limit}";
+        if ($offset > 0) {
+            $this->queryOffset = " OFFSET {$offset}";
+        }
+        return $this;
+    }
+
+    /**
+     * Add database-agnostic date formatting (to be overridden)
+     *
+     * @param string $field
+     * @param string $format
+     * @return self
+     */
+    public function dateFormat(string $field, string $format = 'Y-m-d'): self
+    {
+        // Default implementation - can be overridden
+        $this->querySelect .= ", DATE_FORMAT({$field}, '{$format}')";
+        return $this;
+    }
+
+    /**
+     * Add database-agnostic JSON extraction (to be overridden)
+     *
+     * @param string $field
+     * @param string $path
+     * @return self
+     */
+    public function jsonExtract(string $field, string $path): self
+    {
+        // Default implementation - can be overridden
+        $this->querySelect .= ", JSON_EXTRACT({$field}, '$.{$path}')";
+        return $this;
+    }
+
+    /**
+     * Add database-agnostic JSON contains (to be overridden)
+     *
+     * @param string $field
+     * @param mixed $value
+     * @param string $path
+     * @return self
+     */
+    public function jsonContains(string $field, $value, string $path = '$'): self
+    {
+        // Default implementation - can be overridden
+        $jsonValue = json_encode($value);
+        $this->queryWhere .= " JSON_CONTAINS({$field}, '{$jsonValue}', '$.{$path}')";
+        return $this;
+    }
+
+    /**
+     * Add database-agnostic null coalescing (to be overridden)
+     *
+     * @param string $field
+     * @param mixed $defaultValue
+     * @return self
+     */
+    public function coalesce(string $field, $defaultValue): self
+    {
+        // Default implementation - can be overridden
+        $this->querySelect .= ", COALESCE({$field}, '{$defaultValue}')";
+        return $this;
+    }
+
+    /**
+     * Add database-agnostic case-when statement
+     *
+     * @param string $field
+     * @param array $cases [value => result]
+     * @param mixed $default
+     * @return self
+     */
+    public function caseWhen(string $field, array $cases, $default = null): self
+    {
+        $caseSql = " CASE {$field}";
+        foreach ($cases as $value => $result) {
+            $caseSql .= " WHEN '{$value}' THEN '{$result}'";
+        }
+        if ($default !== null) {
+            $caseSql .= " ELSE '{$default}'";
+        }
+        $caseSql .= " END";
+        $this->querySelect .= ", {$caseSql}";
+        return $this;
+    }
+
+    /**
+     * Add database-agnostic regex search (to be overridden)
+     *
+     * @param string $field
+     * @param string $pattern
+     * @return self
+     */
+    public function regexp(string $field, string $pattern): self
+    {
+        // Default implementation - can be overridden
+        $this->queryWhere .= " {$field} REGEXP '{$pattern}'";
+        return $this;
+    }
+
+    /**
+     * Add database-agnostic full-text search (to be overridden)
+     *
+     * @param string $field
+     * @param string $searchTerm
+     * @return self
+     */
+    public function fullTextSearch(string $field, string $searchTerm): self
+    {
+        // Default implementation - can be overridden
+        $this->queryWhere .= " MATCH({$field}) AGAINST('{$searchTerm}')";
+        return $this;
+    }
+
+    /**
+     * Add database-agnostic string aggregation (to be overridden)
+     *
+     * @param string $field
+     * @param string $separator
+     * @param string $alias
+     * @return self
+     */
+    public function stringAgg(string $field, string $separator = ',', string $alias = ''): self
+    {
+        // Default implementation - can be overridden
+        $aliasSql = $alias ? " AS {$alias}" : '';
+        $this->querySelect .= ", GROUP_CONCAT({$field} SEPARATOR '{$separator}'){$aliasSql}";
+        return $this;
+    }
+
 }

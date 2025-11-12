@@ -7,6 +7,7 @@ namespace Core\Cache;
 use Core\Cache\CacheConfig;
 use Core\Cache\FileCache;
 use Core\Cache\MemoryCache;
+use Core\Exception\CacheException;
 
 /**
  * Cache Manager - Factory and manager for different cache implementations
