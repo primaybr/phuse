@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Core\Text;
+namespace Core\Utilities\Text;
 
 /**
  * CSS Minifier and Processor

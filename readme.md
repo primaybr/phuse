@@ -13,6 +13,7 @@ Phuse is a PHP framework that simplifies web development with conventions and he
 - **Routing**: Phuse handles routing efficiently, allowing developers to define clean and understandable URLs for their applications.
 - **HTML Components**: Secure, fluent HTML generation with automatic XSS protection and modern PHP patterns
 - **Pagination Component**: Enterprise-grade pagination system with accessibility support, URL generation, and comprehensive configuration options
+- **Text Utilities**: Comprehensive text processing system with string manipulation, number formatting, HTML/CSS/JS minification, and secure UUID generation
 
 ### Performance Optimizations
 
@@ -100,6 +101,7 @@ Phuse provides comprehensive documentation for all features:
 - **[CSRF Protection](docs/csrf-protection.md)**: Cross-site request forgery protection
 - **[HTTP Components](docs/http-components.md)**: Comprehensive HTTP utilities including Client, Input, Request, Response, Session, URI, and CSRF protection
 - **[Validator Utilities](docs/validator-utilities.md)**: Data validation with comprehensive rule system
+- **[Text Utilities](docs/text-utilities.md)**: Comprehensive text processing with string manipulation, number formatting, HTML/CSS/JS minification, and secure UUID generation
 
 ## Logging
 Phuse provides a logging mechanism to track application errors and events. Log files are stored in the `Logs` directory.
@@ -123,6 +125,44 @@ If you have any questions, issues, or feedback regarding Phuse, you can contact 
 Phuse is an open-source project, and you are welcome to contribute to its development. You can fork the repository, make your changes, and submit a pull request. Please follow the coding standards and guidelines before submitting your code.
 
 ## Latest Changes
+
+### v1.1.2 (2025-11-12)
+- **Text Utilities System Overhaul**: Complete reorganization and enhancement of text processing utilities
+  - **Relocated Core Classes**: Moved all text utilities from `Core/Text/` to `Core/Utilities/Text/` for better organization
+  - **Enhanced String Utilities (Str)**: Comprehensive improvements to string manipulation and generation
+    - **Advanced UUID Generation**: Multi-version UUID support (v1, v3, v4, v5) with maximum uniqueness guarantees
+    - **Cryptographically Secure Random Strings**: Enhanced entropy using `random_bytes()` with additional mixing
+    - **Improved Pluralization**: Support for irregular plurals and comprehensive linguistic rules
+    - **Enhanced Time Formatting**: Better time elapsed strings with proper pluralization
+    - **Base64 Validation Fix**: Corrected inverted logic in `isBase64()` method
+    - **Meta Keywords Generation**: Improved keyword extraction with frequency-based sorting
+    - **RFC 4122 Namespace Support**: Predefined namespaces for DNS, URL, OID, and X.500
+    - **UUID Validation**: Built-in format validation for generated UUIDs
+  - **Enhanced Number Utilities (Number)**: Improved number formatting and currency handling
+    - **Negative Number Support**: Proper handling of negative values in `shortNumber()`
+    - **International Phone Formatting**: Support for 10+ countries with automatic country code detection
+    - **Improved Type Safety**: Better parameter validation and union types
+    - **Enhanced Currency Formatting**: Flexible decimal and thousands separators
+  - **HTML Processing Utilities**: Secure HTML minification with XSS protection
+  - **CSS Minification Utilities**: Comprehensive CSS optimization and compression
+  - **JavaScript Minification Utilities**: Safe JavaScript compression with string/regex handling
+- **Framework Architecture Improvement**: Better utility organization and separation of concerns
+  - **Namespace Restructuring**: Moved utility classes to dedicated `Core/Utilities/` namespace
+  - **Updated Dependencies**: All framework components updated to use new utility namespaces
+  - **Backward Compatibility**: Maintained API compatibility where possible
+- **Security Enhancements**: Improved security across all text processing utilities
+  - **XSS Protection**: Enhanced HTML escaping and validation
+  - **Input Sanitization**: Comprehensive input validation and sanitization
+  - **Secure Random Generation**: Cryptographically secure random number generation
+- **Performance Optimizations**: Enhanced performance for text processing operations
+  - **Efficient Algorithms**: Optimized string processing and UUID generation
+  - **Memory Management**: Improved memory usage for large text operations
+  - **Caching Compatibility**: Better integration with framework caching systems
+- **Comprehensive Documentation**: Complete documentation for text utilities system
+  - **Text Utilities Guide**: Detailed usage examples and API documentation in `docs/text-utilities.md`
+  - **Migration Guide**: Instructions for upgrading from old `Core\Text` namespace
+  - **Security Best Practices**: Guidelines for secure text processing
+  - **Performance Tips**: Optimization recommendations for production use
 
 ### v1.1.1 (2025-11-12)
 - **Complete ORM System Overhaul**: Modern Active Record implementation with enterprise features
