@@ -8,7 +8,7 @@ use Core\Config as Config;
 use Core\Database\Builders\Builders as Builders;
 use Core\Database\ConnectionPool;
 use Config\Database as DatabaseConfig;
-use Core\Text\Str as Str;
+use Core\Utilities\Text\Str as Str;
 use Core\Exception\DatabaseException;
 use Core\Exception\ValidationException;
 use Core\Utilities\Validator\Validator;

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Tests\Core\Text;
+namespace Tests\Core\Utilities\Text;
 
 use PHPUnit\Framework\TestCase;
-use Core\Text\Str;
+use Core\Utilities\Text\Str;
 
 class StrTest extends TestCase
 {

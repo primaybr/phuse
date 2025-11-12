@@ -6,7 +6,7 @@ namespace Core\Template;
 
 use Core\Folder\Path as Path;
 use Core\Exception\Error as Error;
-use Core\Text\HTML;
+use Core\Utilities\Text\HTML;
 use Core\Log as Log;
 use Core\Cache\TemplateCache;
 
