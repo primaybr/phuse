@@ -119,7 +119,7 @@
         {% endif %}
 
         <div class="alert alert-info mt-3">
-          <strong>Template Syntax:</strong> The <span class="highlight">{&percnt; if logged_in &percnt;}</span> condition shows different content based on the user's authentication status.
+          <strong>Template Syntax:</strong> The <span class="highlight">&lbrace;% if logged_in %&rbrace;</span> condition shows different content based on the user's authentication status.
         </div>
       </div>
 

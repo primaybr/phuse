@@ -19,7 +19,7 @@ class MySQL implements DriversInterface {
             $options = [
                 //PDO::ATTR_PERSISTENT => true,
                 PDO::MYSQL_ATTR_FOUND_ROWS => true,
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_WARNING,
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             ];
         }
 

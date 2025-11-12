@@ -138,9 +138,9 @@ class Controller extends \stdClass
         $this->cache = Cache::get('controller', 'file');
         $this->csrf = new CSRF();
 
-        $this->baseUrl = $this->config->site->baseUrl;
-        $this->imgUrl = $this->config->site->imgUrl;
-        $this->assetsUrl = $this->baseUrl . $this->config->site->assetsUrl . '/';
+        $this->baseUrl = $this->config->site->baseUrl ?? '';
+        $this->imgUrl = $this->config->site->imgUrl ?? '';
+        $this->assetsUrl = $this->baseUrl . $this->config->site->assetsUrl . '/' ?? '';
     }
 
     /**

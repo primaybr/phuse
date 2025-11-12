@@ -140,4 +140,26 @@ final class Str
         // For other versions, return a default UUID (this method only supports v4)
         return '00000000-0000-0000-0000-000000000000';
     }
+
+    public function studly(string $string): string
+    {
+        return str_replace(' ', '', ucwords(str_replace('_', ' ', $string)));
+    }
+
+    public function snake(string $string): string
+    {
+        return strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $string));
+    }
+
+    public function plural(string $string): string
+    {
+        // Simple pluralization rules
+        if (substr($string, -1) === 'y') {
+            return substr($string, 0, -1) . 'ies';
+        } elseif (substr($string, -1) === 's' || substr($string, -2) === 'es') {
+            return $string;
+        } else {
+            return $string . 's';
+        }
+    }
 }

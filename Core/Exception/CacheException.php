@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Core\Cache;
+namespace Core\Exception;
 
 /**
  * Exception class for cache-related errors

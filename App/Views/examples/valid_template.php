@@ -87,7 +87,7 @@
         </div>
 
         <div class="alert alert-success mt-4">
-          <strong>Basic Template:</strong> This simple template demonstrates the most basic functionality of the Phuse template system using the <span class="highlight">{message}</span> variable.
+          <strong>Basic Template:</strong> This simple template demonstrates the most basic functionality of the Phuse template system using the <span class="highlight">&lt;message&gt;</span> variable.
         </div>
       </div>
 

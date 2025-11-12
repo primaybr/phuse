@@ -7,6 +7,7 @@ namespace Core\Cache;
 use Core\Exception\Error;
 use Core\Folder\Path;
 use Core\Log;
+use Core\Config\Template;
 
 /**
  * TemplateCache handles the caching of compiled templates
@@ -58,7 +59,7 @@ class TemplateCache
         }
         
         // Clear cache in development mode if configured to do so
-        if ($this->autoClearInDevelopment && defined('ENVIRONMENT') && ENVIRONMENT === 'development') {
+        if ($this->autoClearInDevelopment) {
             $this->clear();
         }
     }

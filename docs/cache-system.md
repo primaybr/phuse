@@ -214,7 +214,6 @@ Core/Cache/
 ├── Cache.php (Enhanced - backward compatible)
 ├── CacheInterface.php (Extended with new methods)
 ├── CacheConfig.php (Unified configuration)
-├── CacheException.php (Proper error handling)
 ├── BaseCache.php (Abstract base class)
 ├── FileCache.php (Advanced file caching)
 ├── MemoryCache.php (In-memory caching)
@@ -222,6 +221,7 @@ Core/Cache/
 ├── QueryCache.php (Database query caching)
 ├── TemplateCache.php (Template compilation caching)
 └── Examples.php (PHP usage examples)
-```
 
-The cache system is now production-ready with enterprise-level features while maintaining full backward compatibility!
+Core/Exception/
+├── CacheException.php (Proper error handling)
+```

@@ -6,7 +6,7 @@ namespace Core\Cache;
 
 use Core\Cache\BaseCache;
 use Core\Cache\CacheConfig;
-use Core\Cache\CacheException;
+use Core\Exception\CacheException;
 
 /**
  * In-memory cache implementation
