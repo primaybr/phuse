@@ -80,7 +80,9 @@ class Log
         // define log file from path method or use previously set default
         $this->logFile ??= $logFileDefault;
 
-        if (!is_dir(Path::LOGS)) {
+
+        if (!file_exists($this->logFile)) {
+            $this->fileExists = false;
             mkdir(Path::LOGS, 0777, true);
         }
 

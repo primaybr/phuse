@@ -126,7 +126,7 @@ class Router
             'middlewares' => $this->middlewares,
         ];
 
-        if(!is_dir(Folder\Path::CACHE)) {
+        if(!file_exists(Folder\Path::CACHE)) {
             mkdir(Folder\Path::CACHE, 0777, true);
         }
 
