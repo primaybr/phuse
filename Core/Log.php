@@ -82,6 +82,7 @@ class Log
 
         if (!file_exists($this->logFile)) {
             $this->fileExists = false;
+            mkdir(Path::LOGS, 0777, true);
         }
 
         $this->pointer = fopen($this->logFile, 'a') or exit("Can't open {$this->logFile}!");
