@@ -8,13 +8,13 @@ return [
     'env' => 'development',
     'https' => false, // only use it for development on local machine
     'site' => [
-        'baseUrl' => 'phuse',
+        'baseUrl' => 'vertex',
         'adminUrl' => 'admin',
         'assetsUrl' => 'assets',
-        'title' => 'Phuse',
-        'imgUrl'  => 'phuse/',
-        'metaTitle' => 'Phuse - PHP Framework',
-        'metaDescription' => 'Phuse - PHP Framework',
-        'metaKeywords' => 'phuse'
+        'title' => 'Vertex CMS',
+        'imgUrl'  => 'vertex/',
+        'metaTitle' => 'Vertex CMS - Your Solution for Advanced Projects.',
+        'metaDescription' => 'Vertex CMS - Your Solution for Advanced Projects.',
+        'metaKeywords' => 'vertex cms, vertex'
     ]
 ];
