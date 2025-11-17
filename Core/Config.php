@@ -100,7 +100,7 @@ class Config
      */
     private function buildBaseUrl(array $config): string
     {
-        $baseUrl = $config['site']->baseUrl ?? '';
+        $baseUrl = !empty($config['site']->baseUrl) ? $config['site']->baseUrl : basename(trim(ROOT, DS));
         return $this->uri->getProtocol() . $this->uri->getHost() . '/' . 
                (!empty($baseUrl) ? $baseUrl . '/' : '');
     }

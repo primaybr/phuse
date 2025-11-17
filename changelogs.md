@@ -1,3 +1,80 @@
+### v1.1.4 (2025-11-17)
+- **Complete Bootstrap JavaScript Components Integration**: Full Bootstrap 5.3.8 JavaScript compatibility with Phuse-specific implementations
+  - **Alert Component**: Dismissible alert notifications with fade animations and auto-cleanup
+    - Supports all Bootstrap alert types (primary, success, warning, danger, info)
+    - Click-to-dismiss functionality with smooth animations
+    - Automatic alert element removal for memory efficiency
+  - **Button Toggle Component**: Interactive button states with checkbox/radio synchronization
+    - Active/inactive state toggling via data attributes
+    - Form input synchronization for proper form handling
+    - Bootstrap-compatible button groups and toolbars
+  - **Carousel Component**: Image/media slider with full Bootstrap 5 features
+    - Slide navigation with next/previous controls
+    - Indicator dots for direct slide access
+    - Automatic slide transitions and smooth animations
+    - Keyboard navigation and touch support foundation
+  - **Offcanvas Component**: Sliding sidebar panels with multiple positioning options
+    - Flexible positioning (top, bottom, left, right)
+    - Backdrop overlay with click-outside-to-close
+    - Smooth slide animations and mobile-optimized sizing
+    - Accessibility features with proper ARIA attributes
+  - **Popover Component**: Rich content overlays triggered by clicks
+    - Customizable title and content via data attributes
+    - Smart positioning with viewport awareness
+    - Click-outside-to-hide functionality
+    - Fade animations with proper cleanup
+  - **ScrollSpy Component**: Navigation highlighting based on scroll position
+    - Automatic active link updates during scrolling
+    - Configurable scroll offset for precision targeting
+    - Smooth navigation integration with hash links
+    - Performance-optimized scroll event handling
+  - **Tooltip Component**: Hover-activated information displays
+    - Multiple placement options (top, bottom, left, right)
+    - Automatic positioning with collision detection
+    - Lightweight implementation without external dependencies
+    - Accessible tooltip experience with proper ARIA labels
+- **Enhanced Modal System**: Improved modal functionality with better UX
+  - Enhanced focus management and accessibility
+  - Better backdrop handling and body scroll prevention
+  - Improved modal stacking and z-index management
+  - Cross-browser compatibility improvements
+- **Complete Event Delegation System**: All components use Phuse's optimized event delegation
+  - Efficient event binding with automatic cleanup
+  - Dynamic component initialization
+  - Memory leak prevention through proper event management
+  - Performance-optimized selector matching
+- **CSS Framework Enhancements**: Supporting styles for new JavaScript components
+  - Complete carousel styles with controls and indicators
+  - Offcanvas positioning with backdrop support
+  - Tooltip and popover positioning with arrows
+  - Enhanced alert animations and button states
+  - ScrollSpy active state management
+  - Dark theme optimizations for all new components
+- **Interactive Components Demo**: Complete example page showcasing all features
+  - Live component demonstrations at `/examples/components`
+  - Code examples with syntax highlighting
+  - Real-world usage patterns and best practices
+  - Responsive design with mobile optimization
+  - Performance monitoring and loading states
+- **Framework Integration**: Zero-configuration component initialization
+  - Auto-initialization on DOM ready
+  - Data attribute-driven configuration
+  - No external JavaScript dependencies beyond Phuse core
+  - Backward compatibility with existing projects
+  - Production-ready component implementations
+- **Bootstrap 5.3.8 Full Compatibility**: Complete JavaScript feature parity
+  - All Bootstrap 5.3.8 interactive components supported
+  - Consistent API with Bootstrap data attributes
+  - Enhanced accessibility features
+  - Modern JavaScript patterns without jQuery dependency
+  - Lightweight and performant implementations
+- **Developer Documentation**: Comprehensive component usage guides
+  - HTML markup examples for each component
+  - JavaScript API documentation
+  - Customization and configuration options
+  - Accessibility guidelines and best practices
+  - Migration guides for existing applications
+
 ### v1.1.3 (2025-11-12)
 - **Complete CSS Framework Modernization**: Bootstrap 5+ compatible framework with dark theme optimization
   - **Modern Grid System**: Complete Bootstrap 5+ grid implementation with gap-based spacing

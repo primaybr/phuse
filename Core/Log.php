@@ -80,8 +80,8 @@ class Log
         // define log file from path method or use previously set default
         $this->logFile ??= $logFileDefault;
 
-        if (!file_exists($this->logFile)) {
-            $this->fileExists = false;
+        if (!is_dir(Path::LOGS)) {
+            mkdir(Path::LOGS, 0777, true);
         }
 
         $this->pointer = fopen($this->logFile, 'a') or exit("Can't open {$this->logFile}!");

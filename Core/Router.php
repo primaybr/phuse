@@ -125,6 +125,11 @@ class Router
             'methods' => $this->methods,
             'middlewares' => $this->middlewares,
         ];
+
+        if(!is_dir(Folder\Path::CACHE)) {
+            mkdir(Folder\Path::CACHE, 0777, true);
+        }
+
         $cacheFile = Folder\Path::CACHE . 'routes.cache';
         file_put_contents($cacheFile, serialize($this->cachedRoutes));
     }
