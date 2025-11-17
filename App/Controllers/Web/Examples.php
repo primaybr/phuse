@@ -81,6 +81,12 @@ class Examples extends Controller
                     'description' => 'E-commerce product page with conditional pricing and related products',
                     'url' => $this->baseUrl.'examples/product',
                     'template' => 'product_page'
+                ],
+                [
+                    'name' => 'Bootstrap Components',
+                    'description' => 'Complete Bootstrap 5.3.8 compatible components: Alert, Carousel, Offcanvas, Popover, ScrollSpy, Tooltip',
+                    'url' => $this->baseUrl.'examples/components',
+                    'template' => 'components'
                 ]
             ],
             'baseUrl' => $this->baseUrl,
@@ -310,5 +316,22 @@ class Examples extends Controller
         ];
 
         $this->render('examples/product_page', $data);
+    }
+
+    /**
+     * Display Bootstrap-compatible components example
+     *
+     * @return void
+     */
+    public function components(): void
+    {
+        $data = [
+            'title' => 'Bootstrap Components Examples',
+            'description' => 'Interactive demonstrations of all Bootstrap 5.3.8 compatible components integrated with Phuse framework.',
+            'year' => date('Y'),
+            'assetsUrl' => $this->baseUrl.'assets/',
+        ];
+
+        $this->render('examples/components', $data);
     }
 }

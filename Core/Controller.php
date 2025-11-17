@@ -137,8 +137,8 @@ class Controller extends \stdClass
         $this->textNumber = new Number();
         $this->cache = Cache::get('controller', 'file');
         $this->csrf = new CSRF();
-
-        $this->baseUrl = $this->config->site->baseUrl ?? '';
+        
+        $this->baseUrl = !empty($this->config->site->baseUrl) ? $this->config->site->baseUrl : basename(trim(ROOT, DS));
         $this->imgUrl = $this->config->site->imgUrl ?? '';
         $this->assetsUrl = $this->baseUrl . $this->config->site->assetsUrl . '/' ?? '';
     }

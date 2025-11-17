@@ -12,6 +12,7 @@ Phuse is a PHP framework that simplifies web development with conventions and he
 - **Query Result Caching**: Intelligent caching system with automatic invalidation and configurable storage options
 - **Routing**: Phuse handles routing efficiently, allowing developers to define clean and understandable URLs for their applications.
 - **Modern CSS Framework**: Bootstrap 5.3.8-compatible CSS framework with dark theme optimization, responsive grid system, and comprehensive component library
+- **Complete JavaScript Components**: Full Bootstrap 5.3.8 JavaScript compatibility with Alert, Carousel, Offcanvas, Popover, ScrollSpy, Tooltip, and Button components
 - **HTML Components**: Secure, fluent HTML generation with automatic XSS protection and modern PHP patterns
 - **Pagination Component**: Enterprise-grade pagination system with accessibility support, URL generation, and comprehensive configuration options
 - **Text Utilities**: Comprehensive text processing system with string manipulation, number formatting, HTML/CSS/JS minification, and secure UUID generation
@@ -91,6 +92,7 @@ Routing is managed by the `Router.php` class in the `Core` directory. Define you
 Phuse provides comprehensive documentation for all features:
 
 - **[CSS Framework](docs/css-framework.md)**: Modern Bootstrap 5.3.8-compatible CSS framework with dark theme optimization, responsive grid system, and comprehensive component library
+- **[JavaScript Components](docs/javascript-components.md)**: Complete Bootstrap 5.3.8 JavaScript compatibility with Alert, Carousel, Offcanvas, Popover, ScrollSpy, Tooltip, and Button components
 - **[ORM Examples Guide](docs/orm-examples.md)**: Complete ORM setup with database schema, model configuration, and advanced usage examples
 - **[HTML Components](docs/html-components.md)**: Secure HTML generation with fluent API
 - **[Image Utilities](docs/image-utilities.md)**: Advanced image manipulation with GD library
@@ -128,51 +130,82 @@ Phuse is an open-source project, and you are welcome to contribute to its develo
 
 ## Latest Changes
 
-### v1.1.3 (2025-11-12)
-- **Complete CSS Framework Modernization**: Bootstrap 5+ compatible framework with dark theme optimization
-  - **Modern Grid System**: Complete Bootstrap 5+ grid implementation with gap-based spacing
-    - **12-Column Responsive Grid**: Full breakpoint support (xs, sm, md, lg, xl, xxl)
-    - **Auto-sizing Columns**: `col-auto` classes for all responsive breakpoints
-    - **Gap-based Spacing**: CSS variables `--ps-gutter-x` and `--ps-gutter-y` for modern spacing
-    - **Row Columns Utilities**: `row-cols-*` classes for automatic column distribution
-    - **Fixed 3-Card Layout**: Proper gap spacing ensures correct 3-card per row display
-  - **Phuse-Specific Variables**: Renamed all CSS variables from `--bs-*` to `--ps-*` for framework branding
-  - **Enhanced Component Library**: Modern components optimized for dark themes
-    - **Dark Theme Alerts**: Highly visible alerts with light text, colored backgrounds, and left accent borders
-    - **Compact Badges**: Content-width badges using `width: fit-content` instead of full width
-    - **Modern Cards**: Enhanced card components with hover effects and proper dark theme styling
-    - **Form Controls**: Dark theme optimized form inputs with proper focus states
-  - **Extended Utility Classes**: Comprehensive spacing, flexbox, and display utilities
-    - **Modern Spacing Scale**: Extended spacing utilities (m-6 through m-8, p-6 through p-8)
-    - **Complete Responsive Display**: All breakpoints with flex, block, inline, and none utilities
-    - **Enhanced Flexbox**: Complete flexbox control with alignment and justification
-    - **Modern Typography**: Extended text utilities and color classes
-  - **Dark Theme Optimization**: All components designed for excellent dark background visibility
-    - **Color Hierarchy**: Primary, secondary, and tertiary background levels
-    - **Text Contrast**: Optimized text colors for readability on dark backgrounds
-    - **Component Visibility**: Enhanced contrast for alerts, buttons, and interactive elements
-    - **Focus States**: Clear focus indicators for accessibility
-  - **Performance Optimized**: Efficient CSS with modern selectors and minimal footprint
-  - **Bootstrap 5.3.8 Compatibility**: Full compatibility while maintaining Phuse-specific enhancements
-- **Interactive CSS Framework Examples**: Comprehensive demonstration system
-  - **CSS Framework Examples Page**: Complete showcase at `/examples/css-framework`
-  - **Grid System Demonstrations**: Basic grid, responsive 3-card layout, auto-sizing columns
-  - **Component Showcases**: Enhanced alerts, compact badges, modern cards
-  - **Utility Examples**: Spacing scales, flexbox utilities, responsive display
-  - **Dark Theme Features**: Color hierarchy and contrast demonstrations
-  - **CSS Variables Showcase**: Phuse-specific variable system explanation
-- **Comprehensive CSS Documentation**: Complete framework guide in `docs/css-framework.md`
-  - **Quick Start Guide**: Basic HTML structure and grid usage
-  - **Component Documentation**: Cards, alerts, badges, buttons with code examples
-  - **Utility Reference**: Spacing, flexbox, display, colors, borders, shadows
-  - **Dark Theme Guide**: Optimization strategies and color system
-  - **Migration Guide**: Converting from Bootstrap with variable name changes
-  - **Browser Support**: Compatibility information and performance notes
-- **Framework Integration**: Seamless integration with existing Phuse features
-  - **Examples Controller Update**: Added CSS framework to examples system
-  - **Routing Integration**: Proper URL routing for CSS framework examples
-  - **Template System Compatibility**: Works with existing template rendering
-  - **Asset Management**: Proper CSS file serving and caching
+### v1.1.4 (2025-11-17)
+- **Complete Bootstrap JavaScript Components Integration**: Full Bootstrap 5.3.8 JavaScript compatibility with Phuse-specific implementations
+  - **Alert Component**: Dismissible alert notifications with fade animations and auto-cleanup
+    - Supports all Bootstrap alert types (primary, success, warning, danger, info)
+    - Click-to-dismiss functionality with smooth animations
+    - Automatic alert element removal for memory efficiency
+  - **Button Toggle Component**: Interactive button states with checkbox/radio synchronization
+    - Active/inactive state toggling via data attributes
+    - Form input synchronization for proper form handling
+    - Bootstrap-compatible button groups and toolbars
+  - **Carousel Component**: Image/media slider with full Bootstrap 5 features
+    - Slide navigation with next/previous controls
+    - Indicator dots for direct slide access
+    - Automatic slide transitions and smooth animations
+    - Keyboard navigation and touch support foundation
+  - **Offcanvas Component**: Sliding sidebar panels with multiple positioning options
+    - Flexible positioning (top, bottom, left, right)
+    - Backdrop overlay with click-outside-to-close
+    - Smooth slide animations and mobile-optimized sizing
+    - Accessibility features with proper ARIA attributes
+  - **Popover Component**: Rich content overlays triggered by clicks
+    - Customizable title and content via data attributes
+    - Smart positioning with viewport awareness
+    - Click-outside-to-hide functionality
+    - Fade animations with proper cleanup
+  - **ScrollSpy Component**: Navigation highlighting based on scroll position
+    - Automatic active link updates during scrolling
+    - Configurable scroll offset for precision targeting
+    - Smooth navigation integration with hash links
+    - Performance-optimized scroll event handling
+  - **Tooltip Component**: Hover-activated information displays
+    - Multiple placement options (top, bottom, left, right)
+    - Automatic positioning with collision detection
+    - Lightweight implementation without external dependencies
+    - Accessible tooltip experience with proper ARIA labels
+- **Enhanced Modal System**: Improved modal functionality with better UX
+  - Enhanced focus management and accessibility
+  - Better backdrop handling and body scroll prevention
+  - Improved modal stacking and z-index management
+  - Cross-browser compatibility improvements
+- **Complete Event Delegation System**: All components use Phuse's optimized event delegation
+  - Efficient event binding with automatic cleanup
+  - Dynamic component initialization
+  - Memory leak prevention through proper event management
+  - Performance-optimized selector matching
+- **CSS Framework Enhancements**: Supporting styles for new JavaScript components
+  - Complete carousel styles with controls and indicators
+  - Offcanvas positioning with backdrop support
+  - Tooltip and popover positioning with arrows
+  - Enhanced alert animations and button states
+  - ScrollSpy active state management
+  - Dark theme optimizations for all new components
+- **Interactive Components Demo**: Complete example page showcasing all features
+  - Live component demonstrations at `/examples/components`
+  - Code examples with syntax highlighting
+  - Real-world usage patterns and best practices
+  - Responsive design with mobile optimization
+  - Performance monitoring and loading states
+- **Framework Integration**: Zero-configuration component initialization
+  - Auto-initialization on DOM ready
+  - Data attribute-driven configuration
+  - No external JavaScript dependencies beyond Phuse core
+  - Backward compatibility with existing projects
+  - Production-ready component implementations
+- **Bootstrap 5.3.8 Full Compatibility**: Complete JavaScript feature parity
+  - All Bootstrap 5.3.8 interactive components supported
+  - Consistent API with Bootstrap data attributes
+  - Enhanced accessibility features
+  - Modern JavaScript patterns without jQuery dependency
+  - Lightweight and performant implementations
+- **Developer Documentation**: Comprehensive component usage guides
+  - HTML markup examples for each component
+  - JavaScript API documentation
+  - Customization and configuration options
+  - Accessibility guidelines and best practices
+  - Migration guides for existing applications
 
 ## Credits
 
