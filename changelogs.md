@@ -1,3 +1,17 @@
+### v1.1.5 (2025-11-19)
+- **Core Http URI**: Updated core URI handling for local development
+- **Core Parser**: Enhanced parsing tag for `<script>` elements
+- **Theme Variable Integration**: Integrated all Bootstrap 5.3.8 CSS variables with Phuse-specific `--ps-` prefix
+  - **Automatic Theme Switching**: Support for `data-theme="dark"` and `datas-theme="light"` attributes
+  - **Dark Theme variables**: Complete dark theme variable set with optimized colors
+  - **Light Theme Variables**: Complete light theme variable set with optimized colors
+  - **Semantic Color System**: Full semantic color palette (primary, secondary, success, info, warning, danger)
+  - **Component Compatibility**: All existing Phuse components now support Bootstrap theme switching
+  - **Performance Optimized**: CSS variables for efficient runtime theme customization
+  - **Documentation Updated**: Complete CSS framework documentation with theme system integration examples
+- **Theme Switching Documentation**: Comprehensive documentation for Bootstrap theme system integration
+  - **Theme Switching Examples**: HTML and JavaScript examples for dynamic theme switching
+
 ### v1.1.4 (2025-11-17)
 - **Complete Bootstrap JavaScript Components Integration**: Full Bootstrap 5.3.8 JavaScript compatibility with Phuse-specific implementations
   - **Alert Component**: Dismissible alert notifications with fade animations and auto-cleanup

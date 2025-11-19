@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Core\Template;
 
-use Traversable;
-
 trait ParserTrait
 {
 
@@ -399,6 +397,10 @@ trait ParserTrait
         // Set the data for use in parsing methods
         $this->data = $data;
 
+        // Pre-process certain attributes that should be allowed to be template-processed
+        $processedBlocks = [];
+        $template = $this->preProcessAttributes($template, $processedBlocks);
+
         // Protect content inside HTML tags that shouldn't be processed
         $protectedBlocks = [];
         $template = $this->protectHtmlBlocks($template, $protectedBlocks);
@@ -424,6 +426,9 @@ trait ParserTrait
 
         // Parse nested property access (e.g., {stats.total_users}) after foreach processing
         $template = $this->parseNestedProperties($template, $this->data);
+
+        // Restore pre-processed attributes
+        $template = $this->restorePreProcessedAttributes($template, $processedBlocks);
 
         // Restore protected HTML blocks
         $template = $this->restoreHtmlBlocks($template, $protectedBlocks);
@@ -913,6 +918,35 @@ trait ParserTrait
     }
 
     /**
+     * Pre-processes certain attributes that should be template-processed before protection.
+     *
+     * @param string $template The template string.
+     * @param array &$processedBlocks Array to store processed blocks for restoration.
+     * @return string The template with pre-processed attributes.
+     */
+    protected function preProcessAttributes(string $template, array &$processedBlocks): string
+    {
+        // Handle script src attributes specifically
+        $template = preg_replace_callback(
+            '~<script([^>]*)src="([^"]*)"([^>]*)>~is',
+            function($matches) use (&$processedBlocks) {
+                $beforeSrc = $matches[1];
+                $src = $matches[2];
+                $afterSrc = $matches[3];
+
+                // Store the processed src attribute for later restoration
+                $srcPlaceholder = '___PROCESSED_SCRIPT_SRC_' . count($processedBlocks) . '___';
+                $processedBlocks[$srcPlaceholder] = $src;
+
+                return '<script' . $beforeSrc . 'src="' . $srcPlaceholder . '"' . $afterSrc . '>';
+            },
+            $template
+        );
+
+        return $template;
+    }
+
+    /**
      * Protects content inside HTML tags that shouldn't be processed by template parsing.
      *
      * @param string $template The template string.
@@ -921,7 +955,7 @@ trait ParserTrait
      */
     protected function protectHtmlBlocks(string $template, array &$protectedBlocks): string
     {
-        $tagsToProtect = ['style', 'script', 'code', 'pre'];
+        $tagsToProtect = ['style', 'code', 'pre'];
 
         foreach ($tagsToProtect as $tag) {
             // Pattern to match opening and closing tags with content
@@ -932,6 +966,32 @@ trait ParserTrait
                 $protectedBlocks[$placeholder] = $matches[0];
                 return $placeholder;
             }, $template);
+        }
+
+        // Special handling for script tags - only protect those that don't contain pre-processed placeholders
+        $scriptPattern = '~<script(?!\s[^>]*___PROCESSED_SCRIPT_SRC_)[^>]*>(.*?)</script>~is';
+        $template = preg_replace_callback($scriptPattern, function($matches) use (&$protectedBlocks) {
+            $placeholder = '___PROTECTED_SCRIPT_' . count($protectedBlocks) . '___';
+            $protectedBlocks[$placeholder] = $matches[0];
+            return $placeholder;
+        }, $template);
+
+        return $template;
+    }
+
+    /**
+     * Restores pre-processed attributes after template processing.
+     *
+     * @param string $template The processed template string.
+     * @param array $processedBlocks Array of pre-processed blocks.
+     * @return string The template with pre-processed attributes restored.
+     */
+    protected function restorePreProcessedAttributes(string $template, array $processedBlocks): string
+    {
+        foreach ($processedBlocks as $placeholder => $originalContent) {
+            // Process the original content (which contains template variables) through variable replacement
+            $processedContent = $this->parseNestedProperties($originalContent, $this->data);
+            $template = str_replace($placeholder, $processedContent, $template);
         }
 
         return $template;
