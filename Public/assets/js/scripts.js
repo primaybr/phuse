@@ -257,7 +257,7 @@ class Phuse {
   // Event delegation
   static on(event, selector, callback) {
     document.addEventListener(event, function(e) {
-      if (e.target.matches(selector) || e.target.closest(selector)) {
+      if (e.target.nodeType === Node.ELEMENT_NODE && (e.target.matches(selector) || e.target.closest(selector))) {
         callback.call(e.target, e);
       }
     });

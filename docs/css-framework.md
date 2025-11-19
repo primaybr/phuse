@@ -6,8 +6,9 @@ The Phuse CSS Framework is a modern, Bootstrap 5+ compatible CSS framework speci
 
 ### 🎨 **Modern Design System**
 - **Dark Theme Optimized**: All components designed for dark backgrounds with proper contrast
-- **Bootstrap 5.3.8 Compatible**: Full compatibility with Bootstrap's grid system and utilities
+- **Bootstrap 5.3.8 Theme System**: Complete Bootstrap 5.3.8 theme variable system with dark/light mode support
 - **Phuse-Specific Variables**: Uses `--ps-` prefixed CSS variables instead of Bootstrap's `--bs-`
+- **Theme Switching**: Automatic light/dark theme switching via `data-theme` attribute
 - **Modern CSS Architecture**: CSS variables, calc() functions, and modern selectors
 
 ### 📱 **Responsive Grid System**
@@ -276,6 +277,67 @@ The Phuse CSS Framework is a modern, Bootstrap 5+ compatible CSS framework speci
 ## Dark Theme Optimization
 
 The Phuse CSS Framework is specifically optimized for dark themes:
+
+## Bootstrap Theme System Integration
+
+Phuse now includes complete Bootstrap 5.3.8 theme variable system integration, allowing seamless theme switching between light and dark modes.
+
+### Theme Switching
+
+```html
+<!-- Dark theme (default Phuse theme) -->
+<html data-theme="dark">
+  <body>
+    <!-- Dark-themed content -->
+    <div class="alert alert-primary">This will use dark theme styles</div>
+  </body>
+</html>
+
+<!-- Light theme -->
+<html data-theme="light">
+  <body>
+    <!-- Light-themed content -->
+    <div class="alert alert-primary">This will use light theme styles</div>
+  </body>
+</html>
+```
+
+### CSS Variables Integration
+
+The framework integrates all Bootstrap 5.3.8 CSS variables with Phuse-specific naming:
+
+```css
+/* Light theme variables */
+[data-theme=light] {
+  --ps-primary: #0d6efd;           /* Bootstrap primary blue */
+  --ps-body-color: #212529;        /* Dark text for light backgrounds */
+  --ps-body-bg: #fff;              /* White background */
+  /* All other Bootstrap variables... */
+}
+
+/* Dark theme variables */
+[data-theme=dark] {
+  --ps-primary: #6ea8fe;           /* Lighter primary for dark themes */
+  --ps-body-color: #dee2e6;        /* Light text for dark backgrounds */
+  --ps-body-bg: #212529;           /* Dark background */
+  /* All other dark theme variables... */
+}
+```
+
+### Automatic Theme Detection
+
+```javascript
+// JavaScript theme switching
+const setTheme = (theme) => {
+  document.documentElement.setAttribute('data-theme', theme);
+};
+
+// Switch to light theme
+setTheme('light');
+
+// Switch to dark theme
+setTheme('dark');
+```
 
 ### Color System
 - **Primary Colors**: High contrast blues for interactive elements
