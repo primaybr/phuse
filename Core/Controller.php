@@ -138,9 +138,24 @@ class Controller extends \stdClass
         $this->cache = Cache::get('controller', 'file');
         $this->csrf = new CSRF();
         
-        $this->baseUrl = !empty($this->config->site->baseUrl) ? $this->config->site->baseUrl : basename(trim(ROOT, DS));
-        $this->imgUrl = $this->config->site->imgUrl ?? '';
-        $this->assetsUrl = $this->baseUrl . $this->config->site->assetsUrl . '/' ?? '';
+        // Generate baseUrl and assetsUrl based on access type (domain vs subdirectory)
+        $host = $_SERVER['HTTP_HOST'] ?? '';
+        $isDomainAccess = !str_contains($host, 'localhost') && !str_contains($host, '127.0.0.1');
+        
+        if ($isDomainAccess) {
+            // Domain access: baseUrl is empty (root level)
+            $this->baseUrl = '';
+            $this->imgUrl = $this->config->site->imgUrl ?? '';
+            $this->assetsUrl = '/' . $this->config->site->assetsUrl . '/';
+        } else {
+            // Subdirectory access: baseUrl includes the subdirectory path with leading slash
+            $fullBaseUrl = $this->config->site->baseUrl;
+            $basePath = !empty($fullBaseUrl) ? parse_url($fullBaseUrl, PHP_URL_PATH) : basename(trim(ROOT, DS));
+            $basePath = trim($basePath, '/'); // Remove any trailing slashes
+            $this->baseUrl = '/' . $basePath; // Always include leading slash for URL construction
+            $this->imgUrl = $this->config->site->imgUrl ?? '';
+            $this->assetsUrl = $this->baseUrl . '/' . $this->config->site->assetsUrl . '/';
+        }
     }
 
     /**

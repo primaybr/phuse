@@ -37,55 +37,55 @@ class Examples extends Controller
                 [
                     'name' => 'CSS Framework',
                     'description' => 'Modern CSS framework with Bootstrap 5+ compatibility, dark theme optimization, and grid system',
-                    'url' => $this->baseUrl.'examples/css-framework',
+                    'url' => $this->baseUrl . '/examples/css-framework',
                     'template' => 'css_framework'
                 ],
                 [
                     'name' => 'Basic Template',
                     'description' => 'Simple variable replacement and basic template rendering',
-                    'url' => $this->baseUrl.'examples/basic',
+                    'url' => $this->baseUrl . '/examples/basic',
                     'template' => 'welcome'
                 ],
                 [
                     'name' => 'Conditional Logic',
                     'description' => 'If/else statements and conditional rendering',
-                    'url' => $this->baseUrl.'examples/conditional',
+                    'url' => $this->baseUrl . '/examples/conditional',
                     'template' => 'user_dashboard'
                 ],
                 [
                     'name' => 'Foreach Loops',
                     'description' => 'Iterating over arrays and collections',
-                    'url' => $this->baseUrl.'examples/foreach',
+                    'url' => $this->baseUrl . '/examples/foreach',
                     'template' => 'product_list'
                 ],
                 [
                     'name' => 'Nested Data',
                     'description' => 'Accessing nested object properties and complex data structures',
-                    'url' => $this->baseUrl.'examples/nested',
+                    'url' => $this->baseUrl . '/examples/nested',
                     'template' => 'user_profile'
                 ],
                 [
                     'name' => 'Blog Post',
                     'description' => 'Complex template with multiple features and real-world usage',
-                    'url' => $this->baseUrl.'examples/blog',
+                    'url' => $this->baseUrl . '/examples/blog',
                     'template' => 'blog_post'
                 ],
                 [
                     'name' => 'Dashboard',
                     'description' => 'Advanced template features with statistics and notifications',
-                    'url' => $this->baseUrl.'examples/dashboard',
+                    'url' => $this->baseUrl . '/examples/dashboard',
                     'template' => 'dashboard'
                 ],
                 [
                     'name' => 'Product Page',
                     'description' => 'E-commerce product page with conditional pricing and related products',
-                    'url' => $this->baseUrl.'examples/product',
+                    'url' => $this->baseUrl . '/examples/product',
                     'template' => 'product_page'
                 ],
                 [
                     'name' => 'Bootstrap Components',
                     'description' => 'Complete Bootstrap 5.3.8 compatible components: Alert, Carousel, Offcanvas, Popover, ScrollSpy, Tooltip',
-                    'url' => $this->baseUrl.'examples/components',
+                    'url' => $this->baseUrl . '/examples/components',
                     'template' => 'components'
                 ]
             ],
@@ -273,7 +273,6 @@ class Examples extends Controller
             'title' => 'CSS Framework Examples',
             'description' => 'Explore the modern CSS framework features including grid system, components, and utilities optimized for dark themes.',
             'year' => date('Y'),
-            'assetsUrl' => $this->baseUrl.'assets/',
         ];
 
         $this->render('examples/css_framework', $data);
@@ -329,7 +328,6 @@ class Examples extends Controller
             'title' => 'Bootstrap Components Examples',
             'description' => 'Interactive demonstrations of all Bootstrap 5.3.8 compatible components integrated with Phuse framework.',
             'year' => date('Y'),
-            'assetsUrl' => $this->baseUrl.'assets/',
         ];
 
         $this->render('examples/components', $data);

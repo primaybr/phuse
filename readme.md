@@ -10,7 +10,7 @@ Phuse is a PHP framework that simplifies web development with conventions and he
 - **Advanced Active Record ORM**: Complete ORM system with relationships, eager loading, model events, scopes, soft deletes, attribute casting, accessors/mutators, and automatic validation
 - **Database Connection Pooling**: High-performance connection management for concurrent requests with automatic health monitoring
 - **Query Result Caching**: Intelligent caching system with automatic invalidation and configurable storage options
-- **Routing**: Phuse handles routing efficiently, allowing developers to define clean and understandable URLs for their applications.
+- **Routing**: Phuse handles routing efficiently with cross-platform compatibility, allowing developers to define clean and understandable URLs for their applications. Supports both domain-based and subdirectory deployments with automatic detection.
 - **Modern CSS Framework**: Bootstrap 5.3.8-compatible CSS framework with dark theme optimization, responsive grid system, and comprehensive component library
 - **Complete JavaScript Components**: Full Bootstrap 5.3.8 JavaScript compatibility with Alert, Carousel, Offcanvas, Popover, ScrollSpy, Tooltip, and Button components
 - **HTML Components**: Secure, fluent HTML generation with automatic XSS protection and modern PHP patterns
@@ -129,6 +129,19 @@ If you have any questions, issues, or feedback regarding Phuse, you can contact 
 Phuse is an open-source project, and you are welcome to contribute to its development. You can fork the repository, make your changes, and submit a pull request. Please follow the coding standards and guidelines before submitting your code.
 
 ## Latest Changes
+
+### v1.1.6 (2026-03-11)
+- **Cross-Platform Routing Compatibility**: Enhanced routing system to support both domain-based and subdirectory-based access patterns
+  - **Dynamic URL Generation**: Automatic detection of access type (domain vs localhost/subdirectory)
+  - **Windows/Linux Compatibility**: Proper handling of directory separators across different operating systems
+  - **Asset URL Generation**: Correct asset path generation for both access methods
+  - **Template Variable Consistency**: Unified baseUrl and assetsUrl handling across controllers
+  - **Router Pattern Matching**: Fixed regex patterns to work with both access types
+  - **URL Separator Constants**: Added URL_SEPARATOR constant for consistent URL handling
+  - **Development Environment**: Seamless switching between local development and production deployments
+  - **Backward Compatibility**: All existing localhost/subdirectory installations continue to work
+  - **Performance**: Optimized URL generation with minimal overhead
+  - **Framework-Level Solution**: Controllers use consistent `$this->baseUrl . '/path'` pattern without manual conditions
 
 ### v1.1.5 (2025-11-19)
 - **Core Http URI**: Updated core URI handling for local development
@@ -251,6 +264,34 @@ $router->add('GET', '/items', 'Web\ItemController', 'index');
 
 ### Step 5: Access the Application
 Now you can access your application by navigating to `http://your-domain/items` in your web browser. You should see a list of items displayed on the page.
+
+### Cross-Platform Deployment
+
+Phuse supports flexible deployment options for different environments:
+
+#### Domain-Based Deployment
+For production or domain-based access (e.g., `https://phuse.test`):
+- Routes work directly: `/examples`, `/items`, etc.
+- Assets load from root: `/assets/css/styles.css`
+- No additional configuration required
+
+#### Subdirectory Deployment  
+For local development or subdirectory access (e.g., `http://localhost/phuse/`):
+- Routes include directory: `/phuse/examples`, `/phuse/items`, etc.
+- Assets load from subdirectory: `/phuse/assets/css/styles.css`
+- Automatic detection based on HTTP_HOST
+
+#### Automatic Detection
+The framework automatically detects the deployment type and adjusts:
+- URL generation for routes and links
+- Asset path generation for CSS, JS, and images
+- Template variables (`baseUrl`, `assetsUrl`)
+- Router pattern matching for clean URLs
+
+#### Windows/Linux Compatibility
+- Uses proper directory separators for file paths
+- Consistent forward slashes for URLs across platforms
+- No manual configuration required
 
 ### Template System Examples
 The Phuse framework includes comprehensive template system examples that demonstrate all features:

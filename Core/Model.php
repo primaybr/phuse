@@ -879,6 +879,18 @@ class Model
     }
 
     /**
+     * Sets the OFFSET clause for the query.
+     *
+     * @param int $offset The number of records to skip.
+     * @return self
+     */
+    public function offset(int $offset = 0): self
+    {
+        $this->builder->offset($offset);
+        return $this;
+    }
+
+    /**
      * Begins a database transaction.
      *
      * @return bool True on success, false on failure.

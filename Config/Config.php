@@ -8,7 +8,7 @@ return [
     'env' => 'development',
     'https' => false, // only use it for development on local machine
     'site' => [
-        'baseUrl' => 'phuse',
+        'baseUrl' => '',
         'adminUrl' => 'admin',
         'assetsUrl' => 'assets',
         'title' => 'Phuse',

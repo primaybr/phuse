@@ -9,6 +9,11 @@ use Core\Folder as Folder;
 use Core\Log as Log;
 
 /**
+ * URL separator constant - URLs should always use forward slashes regardless of OS
+ */
+const URL_SEPARATOR = '/';
+
+/**
  * Class Router
  *
  * Handles the routing of HTTP requests to the appropriate controllers and actions.
@@ -211,6 +216,13 @@ class Router
     {
         $url = $this->getUrl();
         $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+        
+        // Debug: Check if any redirects have already been sent
+        if (headers_sent($filename, $linenum)) {
+            $this->log->write("Headers already sent in $filename at line $linenum");
+        } else {
+            $this->log->write("Headers not sent yet");
+        }
 
         $this->redirectIfNeeded();
         
@@ -333,10 +345,25 @@ class Router
      */
     private function preparePattern(string $pattern): string
     {
-        return match ($pattern) {
-            '/' => '~^\/' . basename(strtolower(ROOT)) . '\/$~',
-            default => '~^\/' . str_replace('/', '\/', basename(strtolower(ROOT)) . $pattern) . '$~',
-        };
+        $baseName = basename(strtolower(ROOT));
+        
+        // Check if we're accessing via domain (phuse.test) or subdirectory (localhost/phuse)
+        $host = $_SERVER['HTTP_HOST'] ?? '';
+        $isDomainAccess = !str_contains($host, 'localhost') && !str_contains($host, '127.0.0.1');
+        
+        if ($isDomainAccess) {
+            // Domain access: patterns don't include base name, trailing slash optional
+            return match ($pattern) {
+                '/' => '~^' . URL_SEPARATOR . '?$~',
+                default => '~^' . $pattern . URL_SEPARATOR . '?$~',
+            };
+        } else {
+            // Subdirectory access: include base name, trailing slash optional
+            return match ($pattern) {
+                '/' => '~^' . URL_SEPARATOR . $baseName . URL_SEPARATOR . '?$~',
+                default => '~^' . URL_SEPARATOR . $baseName . $pattern . URL_SEPARATOR . '?$~',
+            };
+        }
     }
 
     /**
@@ -346,19 +373,23 @@ class Router
      */
     private function getUrl(): string
     {
-        
         $url = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
         $url = ($url != '/' && $_SERVER['HTTP_HOST'] != 'localhost') ? rtrim($url, '/') : $url;
         
         // Split the URL into segments by the slash character
-		$segments = explode('/', $url);
+        $segments = explode('/', $url);
+        $baseName = basename(strtolower(ROOT));
 
-		// If the second segment is not set, use the basename of the root directory as the default
-		$segments[1] ??= basename(strtolower(ROOT));
-
-		// If the second segment is not the same as the basename of the root directory, prepend it to the URL
-		$url = ($segments[1] !== basename(strtolower(ROOT))) ? DS . basename(strtolower(ROOT)) . $url : $url;
-		
+        // Check if we're accessing via domain (phuse.test) or subdirectory (localhost/phuse)
+        $isDomainAccess = !isset($segments[1]) || $segments[1] !== $baseName;
+        
+        if ($isDomainAccess) {
+            // Domain access: use URL as-is (no base name needed)
+            $url = $url;
+        } else {
+            // Subdirectory access: URL already contains base name, use as-is
+            $url = $url;
+        }
 
         return $url;
     }
@@ -381,9 +412,12 @@ class Router
 		};
 
         if ($redirect) {
+            $this->log->write("Redirecting to: " . $redirect);
             header('HTTP/1.1 301 Moved Permanently');
             header('location: ' . $redirect);
             exit;
+        } else {
+            $this->log->write("No redirect needed");
         }
     }
 
