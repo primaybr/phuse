@@ -9,7 +9,7 @@ use Core\Exception\Error as Error;
 use Core\Utilities\Text\HTML;
 use Core\Log as Log;
 use Core\Cache\TemplateCache;
-
+use Core\Security\CSRF;
 /**
  * Template Parser Class
  *
@@ -41,6 +41,9 @@ class Parser implements ParserInterface
 
     /** @var \Config\Template Configuration instance */
     protected \Config\Template $config;
+
+    /** @var CSRF The CSRF protection object */
+    protected CSRF $csrf;
 
     /**
      * Set the template file to be rendered
@@ -124,6 +127,7 @@ class Parser implements ParserInterface
         $this->cache = new TemplateCache();
         $this->useCache = $this->config->enableCache;
         $this->data = [];
+        $this->csrf = new CSRF();
     }
 
     /**

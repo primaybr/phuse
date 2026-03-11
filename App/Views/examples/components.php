@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Phuse Framework - Bootstrap-Compatible Components</title>
-    <link rel="stylesheet" href="/assets/css/styles.css">
+    <link rel="stylesheet" href="<?php echo $assetsUrl; ?>css/styles.css">
     <style>
         body { background-color: var(--bg-primary); color: var(--text-primary); padding: 2rem 0; }
         .demo-section { margin-bottom: 3rem; padding: 1.5rem; border-radius: var(--border-radius); background-color: var(--bg-secondary); }
@@ -211,6 +211,6 @@
         </div>
     </div>
 
-    <script src="/assets/js/scripts.js"></script>
+    <script src="<?php echo $assetsUrl; ?>js/scripts.js"></script>
 </body>
 </html>

@@ -1,3 +1,16 @@
+### v1.1.6 (2026-03-11)
+- **Cross-Platform Routing Compatibility**: Enhanced routing system to support both domain-based and subdirectory-based access patterns
+  - **Dynamic URL Generation**: Automatic detection of access type (domain vs localhost/subdirectory)
+  - **Windows/Linux Compatibility**: Proper handling of directory separators across different operating systems
+  - **Asset URL Generation**: Correct asset path generation for both access methods
+  - **Template Variable Consistency**: Unified baseUrl and assetsUrl handling across controllers
+  - **Router Pattern Matching**: Fixed regex patterns to work with both access types
+  - **URL Separator Constants**: Added URL_SEPARATOR constant for consistent URL handling
+  - **Development Environment**: Seamless switching between local development and production deployments
+  - **Backward Compatibility**: All existing localhost/subdirectory installations continue to work
+  - **Performance**: Optimized URL generation with minimal overhead
+  - **Documentation**: Updated routing documentation with cross-platform examples
+
 ### v1.1.5 (2025-11-19)
 - **Core Http URI**: Updated core URI handling for local development
 - **Core Parser**: Enhanced parsing tag for `<script>` elements
