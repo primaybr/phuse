@@ -151,17 +151,14 @@ class Parser implements ParserInterface
             $this->setData($data);
         }
 
-        // Check for cached version if caching is enabled
+        // Clear existing cache for this template
         $cacheKey = null;
         if ($this->useCache) {
             $cacheKey = $this->cache->generateKey($this->template, $this->data);
-            
-            if ($this->cache->hasValidCache($cacheKey)) {
-                if ($return) {
-                    return file_get_contents($this->cache->getCachePath($cacheKey));
-                }
-                include $this->cache->getCachePath($cacheKey);
-                return null;
+            // Force cache invalidation
+            $cacheFile = $this->cache->getCachePath($cacheKey);
+            if (file_exists($cacheFile)) {
+                unlink($cacheFile);
             }
         }
 
@@ -248,6 +245,8 @@ class Parser implements ParserInterface
         }
 
         $template = $this->parseTemplate($template, $mergedData);
+
+        $template = $this->parseConditionals($template);
 
         //Minify the template
         $html = new HTML();

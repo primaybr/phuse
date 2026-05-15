@@ -68,7 +68,12 @@ final class Session
     public function __construct(?Log $logger = null)
     {
         $this->logger = $logger ?? new Log();
-        $this->initializeSession();
+        
+        // Only initialize if session is not already active
+        if (session_status() === PHP_SESSION_NONE) {
+            $this->initializeSession();
+        }
+        
         $this->session = $_SESSION ?? [];
     }
 
@@ -130,8 +135,18 @@ final class Session
             ]);
         }
 
-        // Set session garbage collection only if session is not active
+        // Set session save path and garbage collection only if session is not active
         if (session_status() === PHP_SESSION_NONE) {
+            // Set explicit session save path to avoid permission issues
+            $sessionPath = ini_get('session.save_path');
+            if (empty($sessionPath) || !is_dir($sessionPath) || !is_writable($sessionPath)) {
+                // Fallback to system temp directory if default path is not writable
+                $sessionPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'php_sessions';
+                if (!is_dir($sessionPath)) {
+                    mkdir($sessionPath, 0777, true);
+                }
+                ini_set('session.save_path', $sessionPath);
+            }
             ini_set('session.gc_maxlifetime', (string)self::SESSION_GC_MAXLIFETIME);
         }
 
@@ -358,14 +373,17 @@ final class Session
     }
 
     /**
-     * Ensures the session is properly started before operations.
-     *
-     * @throws RuntimeException If session cannot be started.
+     * Ensures the session is started, but only if not already active.
      */
     private function ensureSessionStarted(): void
     {
-        if (!$this->initialized) {
+        error_log("Session status: " . session_status() . " (NONE=" . PHP_SESSION_NONE . ", ACTIVE=" . PHP_SESSION_ACTIVE . ")");
+        if (session_status() === PHP_SESSION_NONE) {
+            error_log("Initializing new session...");
             $this->initializeSession();
+        } else {
+            error_log("Session already active, using existing session");
         }
     }
+
 }

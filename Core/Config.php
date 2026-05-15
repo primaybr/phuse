@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Core;
 
 use Core\Http\URI;
+use Core\Folder\Path;
 use Exception;
 use Throwable;
 
@@ -16,10 +17,10 @@ use Throwable;
  */
 class Config
 {
-    // Use readonly properties to prevent accidental modification
-    private readonly array $config;
-    private readonly URI $uri;
-    private readonly string $env;
+    // Use properties to prevent accidental modification (readonly removed for PHP 8.3 compatibility)
+    private array $config;
+    private ?URI $uri = null;
+    private string $env;
 
     /**
      * Config constructor.
@@ -29,16 +30,19 @@ class Config
      */
     public function __construct()
     {
-        $configFile = Folder\Path::CONFIG . 'Config.php';
+        $configFile = Path::CONFIG . 'Config.php';
         if (!file_exists($configFile)) {
             throw new Exception("Configuration file not found: $configFile");
         }
         try {
-            $this->config = require $configFile;
+            $config = require $configFile;
+            if (!is_array($config)) {
+                throw new Exception("Configuration file must return an array, got: " . gettype($config));
+            }
+            $this->config = $config;
         } catch (Throwable $e) {
             throw new Exception("Error loading configuration file: " . $e->getMessage());
         }
-        $this->uri = new URI;
         $this->env = $this->config['env'] ?? 'production'; // Default to 'production' if not set
     }
 
@@ -101,7 +105,7 @@ class Config
     private function buildBaseUrl(array $config): string
     {
         $baseUrl = !empty($config['site']->baseUrl) ? $config['site']->baseUrl : basename(trim(ROOT, DS));
-        return $this->uri->getProtocol() . $this->uri->getHost() . '/' . 
+        return $this->getURI()->getProtocol() . $this->getURI()->getHost() . '/' . 
                (!empty($baseUrl) ? $baseUrl . '/' : '');
     }
 
@@ -126,5 +130,18 @@ class Config
     public function getEnv(): string
     {
         return $this->env;
+    }
+    
+    /**
+     * Get the URI instance (lazy loading)
+     * 
+     * @return URI URI instance
+     */
+    private function getURI(): URI
+    {
+        if ($this->uri === null) {
+            $this->uri = new URI();
+        }
+        return $this->uri;
     }
 }

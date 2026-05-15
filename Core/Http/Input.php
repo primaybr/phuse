@@ -74,7 +74,10 @@ class Input
     {
         if ($name) {
             $value = $_POST[$name] ?? '';
-            return $sanitize ? $this->sanitize($value) : $value;
+            if ($sanitize) {
+                return is_array($value) ? $this->sanitizeArray($value) : $this->sanitize($value);
+            }
+            return $value;
         }
 
         return $sanitize ? $this->sanitizeArray($_POST) : $_POST;

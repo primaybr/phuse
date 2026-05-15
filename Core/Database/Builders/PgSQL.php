@@ -252,4 +252,67 @@ class PgSQL implements BuildersInterface
         $this->querySelect .= ", {$function}{$over}{$aliasSql}";
         return $this;
     }
+
+    /**
+     * Compile SQL query using custom implementation
+     *
+     * @param bool $reset Whether to reset after compilation
+     * @return string The compiled SQL query
+     */
+    public function compile(bool $reset = true): string
+    {
+        $sql = '';
+        
+        if (!empty($this->querySelect)) {
+            if(!empty($this->queryWhere) && !empty($this->queryWhereIn))
+            {
+                $this->queryWhereIn = str_replace('WHERE', 'AND',$this->queryWhereIn);
+            }
+            
+            $sql = $this->querySelect.$this->queryFrom.$this->queryJoin.$this->queryWhere.$this->queryWhereIn.$this->queryGroupBy.$this->queryOrderBy.$this->queryLimit.$this->queryOffset;
+        } elseif (!empty($this->queryInsert)) {
+            $sql = $this->queryInsert;
+        } elseif (!empty($this->queryUpdate)) {
+            $sql = $this->queryUpdate.$this->queryWhere;
+        } elseif (!empty($this->queryDelete)) {
+            $sql = $this->queryDelete;
+        }
+		else
+		{
+			$sql = '';
+		}
+        
+        if ($reset) {
+            $this->resetQuery();
+        }
+        
+        return str_replace("''", "'", $sql);
+    }
+
+    /**
+     * Reset query parameters using custom implementation
+     *
+     * @return self
+     */
+    public function resetQuery(): self
+    {
+        // Reset all query properties
+        $this->querySelect = '';
+        $this->queryWhere = '';
+        $this->queryWhereIn = '';
+        $this->queryFrom = '';
+        $this->queryJoin = '';
+        $this->queryInsert = '';
+        $this->queryUpdate = '';
+        $this->queryDelete = '';
+        $this->queryOrderBy = '';
+        $this->queryGroupBy = '';
+        $this->queryLimit = '';
+        $this->queryOffset = '';
+        
+        // Reset binds array to prevent parameter naming conflicts
+        $this->binds = [];
+        
+        return $this;
+    }
 }

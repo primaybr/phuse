@@ -98,6 +98,40 @@ $valid = Str::isValidUUID('550e8400-e29b-41d4-a716-446655440000'); // true
 $invalid = Str::isValidUUID('not-a-uuid'); // false
 ```
 
+### Formatting Helpers
+
+Added in v1.2.0, these static helpers cover common presentation formatting tasks.
+
+```php
+// Human-readable file sizes
+echo Str::formatBytes(1048576);          // "1 MB"
+echo Str::formatBytes(1536, 1);          // "1.5 KB"
+
+// Number with thousands separator
+echo Str::formatNumber(1234567);         // "1,234,567"
+echo Str::formatNumber(9999.9, 2);       // "9,999.90"
+
+// Currency
+echo Str::formatCurrency(1999.50);       // "$1,999.50"
+echo Str::formatCurrency(4900, '€');     // "€4,900.00"
+
+// Percentage
+echo Str::formatPercentage(87.456);      // "87.5%"
+echo Str::formatPercentage(100, 0);      // "100%"
+
+// Datetime
+echo Str::formatDatetime('2024-12-25');              // "2024-12-25 00:00:00"
+echo Str::formatDatetime(1735084800, 'd M Y');       // "25 Dec 2024"
+
+// URL-safe slug
+echo Str::slug('Hello World! How are you?'); // "hello-world-how-are-you"
+echo Str::slug('PHP 8.3 & Beyond');          // "php-8-3-beyond"
+
+// Phone number formatting
+echo Str::formatPhone('5551234567');             // "(555) 123-4567"
+echo Str::formatPhone('5551234567', '{1}.{2}.{3}'); // "555.123.4567"
+```
+
 ### Pluralization
 
 ```php

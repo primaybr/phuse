@@ -73,15 +73,48 @@ Apply filters to variables using the pipe syntax:
 <p>Name: {name|capitalize}</p>
 ```
 
-Available filters:
-- `length` / `count`: Get array length or count
-- `upper` / `uppercase`: Convert to uppercase
-- `lower` / `lowercase`: Convert to lowercase
-- `capitalize`: Capitalize first letter of each word
-- `trim`: Remove whitespace
-- `title`: Convert to title case
-- `round`: Round to nearest integer
-- `stars`: Convert rating to star symbols (★☆)
+#### Available filters
+
+| Filter | Description | Example |
+|---|---|---|
+| `length` / `count` | Array length or string character count | `{items\|length}` |
+| `upper` / `uppercase` | Convert to uppercase | `{name\|upper}` |
+| `lower` / `lowercase` | Convert to lowercase | `{name\|lower}` |
+| `capitalize` | Capitalize first letter of each word | `{name\|capitalize}` |
+| `trim` | Remove surrounding whitespace | `{value\|trim}` |
+| `title` | Convert to title case | `{title\|title}` |
+| `round` | Round to nearest integer | `{rating\|round}` |
+| `stars` | Convert numeric rating to star symbols (★☆) | `{score\|stars}` |
+| `substr` | Extract substring — `substr:start` or `substr:start:length` | `{name\|substr:0:1}` |
+| `date` | Format a date string or Unix timestamp | `{created_at\|date:'M d, Y'}` |
+
+#### Filter chaining (v1.2.0)
+
+Filters can be chained with `|` — they are applied left to right:
+
+```php
+<!-- Get first letter of name, uppercased -->
+{name|substr:0:1|upper}
+
+<!-- Trim whitespace then capitalize -->
+{title|trim|capitalize}
+```
+
+#### Parameterized filters (v1.2.0)
+
+Pass colon-delimited arguments after the filter name. Quoted strings (single or double) preserve spaces and commas:
+
+```php
+<!-- Substring: start 0, length 50 -->
+{description|substr:0:50}
+
+<!-- Date format with spaces and commas inside quotes -->
+{created_at|date:'F j, Y'}
+{updated_at|date:'Y-m-d H:i'}
+
+<!-- Chained: format date then uppercase -->
+{event_date|date:'M d, Y'|upper}
+```
 
 ```php
 // PHP code
@@ -89,28 +122,28 @@ $data = [
     'title' => 'welcome to our site',
     'items' => ['item1', 'item2', 'item3'],
     'product' => ['rating' => 4.7],
-    'name' => 'john doe'
+    'name' => 'john doe',
+    'created_at' => '2024-12-25 09:00:00'
 ];
-// Output: "WELCOME TO OUR SITE", "Length: 3", "Rating: 5 stars", "Name: John Doe"
+// Outputs: "WELCOME TO OUR SITE", "3", "5 stars", "John Doe", "December 25, 2024"
 ```
 
 ### Conditional Statements
 
-Use `{% if %}...{% endif %}` for conditional logic. Supports boolean variables, comparisons, and the `not` keyword:
+Use `{% if %}...{% endif %}` for conditional logic. Supports boolean variables, comparisons, and the `not` keyword.
+
+The conditional parser supports **proper nesting** (v1.2.0) — inner `{% if %}` blocks no longer break the outer block.
 
 ```php
 <!-- Template file -->
 {% if logged_in %}
     <p>Welcome back, {username}!</p>
+    {% if user.role == 'admin' %}
+        <p>You have admin privileges.</p>
+    {% endif %}
     <a href="/logout">Logout</a>
-{% endif %}
-
-{% if not logged_in %}
+{% else %}
     <p>Please <a href="/login">login</a> to continue.</p>
-{% endif %}
-
-{% if user.role == 'admin' %}
-    <p>You have admin privileges.</p>
 {% endif %}
 ```
 
@@ -123,16 +156,33 @@ $data = [
 ];
 ```
 
+Array variables evaluate as truthy when non-empty, falsy when empty:
+
+```php
+{% if items %}
+    <p>Found {items|count} items.</p>
+{% else %}
+    <p>No items found.</p>
+{% endif %}
+```
+
 ### Foreach Loops
 
-Iterate over arrays with `{% foreach %}...{% endforeach %}`:
+Iterate over arrays with `{% foreach %}...{% endforeach %}`. Filters and `{% if/else/endif %}` blocks are fully supported inside loops (v1.2.0):
 
 ```php
 <!-- Template file -->
 <h2>Your Posts:</h2>
 <ul>
 {% foreach posts as post %}
-    <li>{post.title} - {post.date}</li>
+    <li>
+        {post.title|capitalize} — {post.created_at|date:'M d, Y'}
+        {% if post.published %}
+            <span class="badge">Published</span>
+        {% else %}
+            <span class="badge">Draft</span>
+        {% endif %}
+    </li>
 {% endforeach %}
 </ul>
 ```
