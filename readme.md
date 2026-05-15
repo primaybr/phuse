@@ -15,7 +15,7 @@ Phuse is a PHP framework that simplifies web development with conventions and he
 - **Complete JavaScript Components**: Full Bootstrap 5.3.8 JavaScript compatibility with Alert, Carousel, Offcanvas, Popover, ScrollSpy, Tooltip, and Button components
 - **HTML Components**: Secure, fluent HTML generation with automatic XSS protection and modern PHP patterns
 - **Pagination Component**: Enterprise-grade pagination system with accessibility support, URL generation, and comprehensive configuration options
-- **Text Utilities**: Comprehensive text processing system with string manipulation, number formatting, HTML/CSS/JS minification, and secure UUID generation
+- **Text Utilities**: Comprehensive text processing system with string manipulation, number formatting (bytes, currency, percentage, phone, slug), HTML/CSS/JS minification, and secure UUID generation
 
 ### Performance Optimizations
 
@@ -130,20 +130,19 @@ Phuse is an open-source project, and you are welcome to contribute to its develo
 
 ## Latest Changes
 
-### v1.1.6 (2026-03-11)
-- **Cross-Platform Routing Compatibility**: Enhanced routing system to support both domain-based and subdirectory-based access patterns
-  - **Dynamic URL Generation**: Automatic detection of access type (domain vs localhost/subdirectory)
-  - **Windows/Linux Compatibility**: Proper handling of directory separators across different operating systems
-  - **Asset URL Generation**: Correct asset path generation for both access methods
-  - **Template Variable Consistency**: Unified baseUrl and assetsUrl handling across controllers
-  - **Router Pattern Matching**: Fixed regex patterns to work with both access types
-  - **URL Separator Constants**: Added URL_SEPARATOR constant for consistent URL handling
-  - **Development Environment**: Seamless switching between local development and production deployments
-  - **Backward Compatibility**: All existing localhost/subdirectory installations continue to work
-  - **Performance**: Optimized URL generation with minimal overhead
-  - **Framework-Level Solution**: Controllers use consistent `$this->baseUrl . '/path'` pattern without manual conditions
+### v1.2.0 (2026-05-15)
+- **Database Layer Overhaul**: Critical fixes to query parameter binding — unique placeholder names eliminate bind conflicts; `!=` operator added; PostgreSQL driver has its own `compile()` / `resetQuery()` with proper bind lifecycle management
+- **UUID Primary Key Support**: `save()` now returns `int|string|bool`; PostgreSQL `RETURNING` clause correctly fetches string UUIDs without integer casting
+- **Audit Fields**: Model now supports `created_by` / `updated_by` / `deleted_by` columns with `setCurrentUser()` for automatic audit trail population
+- **Template Filter Chaining & Parameters**: Filters can now be chained (`{var|filter1|filter2}`) and accept parameters (`{date|date:'M d, Y'}`); new `substr` and `date` built-in filters added
+- **Nested `{% if %}` Blocks**: Replaced regex-based conditional parser with a proper nesting-aware implementation; `{% else %}` now works correctly inside loops
+- **Str Utility Additions**: Seven new static methods — `formatBytes`, `formatNumber`, `formatCurrency`, `formatPercentage`, `formatDatetime`, `slug`, `formatPhone`
+- **Session Stability**: Session initialization is now idempotent; fallback save path used when the default path is unwritable
+- **Cache Fixes**: Named cache directories, corrected subdirectory key, and cross-platform `clear()` fix
+- **Config**: Lazy URI loading and config array validation for safer bootstrap
+- **`Input::post()` Fix**: Array POST values are now correctly sanitized with `sanitizeArray()`
 
-### v1.1.5 (2025-11-19)
+### v1.1.6 (2026-03-11)
 - **Core Http URI**: Updated core URI handling for local development
 - **Core Parser**: Enhanced parsing tag for `<script>` elements
 - **Theme Variable Integration**: Integrated all Bootstrap 5.3.8 CSS variables with Phuse-specific `--ps-` prefix

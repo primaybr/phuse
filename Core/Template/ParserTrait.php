@@ -51,7 +51,7 @@ trait ParserTrait
     }
 	
 	/**
-     * Parses filters in template variables (e.g., {variable|filter}).
+     * Parses filters in template variables (e.g., {variable|filter} or {variable|filter:param1:param2}).
      *
      * @param string $template The template string containing filter expressions.
      * @param array $data The data array used for filter evaluation.
@@ -59,18 +59,19 @@ trait ParserTrait
      */
     protected function parseFilters(string $template, array $data): string
     {
-        // Pattern to match {variable|filter} or {variable.nested|filter}
-        $pattern = '~\{([a-zA-Z_][a-zA-Z0-9_.]*)\|([a-zA-Z_][a-zA-Z0-9_]*)\}~';
+        // Pattern to match {variable|filter} or {variable|filter:param1:param2} or chained filters
+        // This pattern handles quoted parameters like 'M d, Y' with spaces and commas
+        $pattern = '~\{([a-zA-Z_][a-zA-Z0-9_.]*)\|([a-zA-Z_][a-zA-Z0-9_:|\'\" ,]+)\}~';
 
         return preg_replace_callback($pattern, function($matches) use ($data) {
             $variablePath = $matches[1];
-            $filterName = $matches[2];
+            $filterChain = $matches[2];
 
             // Get the value using nested property resolution
             $value = $this->resolveNestedProperty($data, $variablePath);
 
-            // Apply the filter
-            return $this->applyFilter($value, $filterName);
+            // Apply chained filters
+            return $this->applyFilterChain($value, $filterChain);
         }, $template);
     }
 
@@ -118,15 +119,74 @@ trait ParserTrait
     }
 
     /**
+     * Applies a chain of filters to a value.
+     *
+     * @param mixed $value The value to filter.
+     * @param string $filterChain The filter chain (e.g., "substr:0:1|upper").
+     * @return string The filtered value as a string.
+     */
+    protected function applyFilterChain($value, string $filterChain): string
+    {
+        // Split the filter chain by pipe symbol
+        $filters = explode('|', $filterChain);
+        
+        $result = $value;
+        
+        // Apply each filter in sequence
+        foreach ($filters as $filter) {
+            $result = $this->applyFilterWithParams($result, $filter);
+        }
+        
+        return (string) $result;
+    }
+
+    /**
+     * Applies a single filter with parameters to a value.
+     *
+     * @param mixed $value The value to filter.
+     * @param string $filterSpec The filter specification (e.g., "substr:0:1" or "upper").
+     * @return mixed The filtered value.
+     */
+    protected function applyFilterWithParams($value, string $filterSpec)
+    {
+        // Split filter name and parameters, handling quoted parameters
+        $parts = preg_split('/(?<!\\\\):/', $filterSpec);
+        $filterName = $parts[0];
+        $params = array_slice($parts, 1);
+        
+        // Clean up parameters - remove quotes and trim
+        $cleanParams = [];
+        foreach ($params as $param) {
+            $param = trim($param);
+            // Remove surrounding quotes if present
+            if ((str_starts_with($param, "'") && str_ends_with($param, "'")) ||
+                (str_starts_with($param, '"') && str_ends_with($param, '"'))) {
+                $param = substr($param, 1, -1);
+            }
+            $cleanParams[] = $param;
+        }
+        
+        return $this->applyFilter($value, $filterName, $cleanParams);
+    }
+
+    /**
      * Applies a filter to a value.
      *
      * @param mixed $value The value to filter.
      * @param string $filterName The name of the filter to apply.
+     * @param array $params Optional parameters for the filter.
      * @return string The filtered value as a string.
      */
-    protected function applyFilter($value, string $filterName): string
+    protected function applyFilter($value, string $filterName, array $params = []): string
     {
         switch ($filterName) {
+            case 'substr':
+                $start = isset($params[0]) ? (int) $params[0] : 0;
+                $length = isset($params[1]) ? (int) $params[1] : null;
+                return $length !== null 
+                    ? substr((string) $value, $start, $length)
+                    : substr((string) $value, $start);
+
             case 'length':
                 if (is_array($value) || $value instanceof \Countable) {
                     return (string) count($value);
@@ -156,6 +216,21 @@ trait ParserTrait
 
             case 'title':
                 return ucwords(strtolower((string) $value));
+
+            case 'date':
+                $format = isset($params[0]) ? trim($params[0], "'\"") : 'Y-m-d';
+                if (is_numeric($value)) {
+                    // Handle timestamp
+                    return date($format, (int) $value);
+                } elseif (is_string($value)) {
+                    // Try to parse the date string
+                    $timestamp = strtotime($value);
+                    if ($timestamp !== false) {
+                        return date($format, $timestamp);
+                    }
+                }
+                // Fallback to original value if parsing fails
+                return (string) $value;
 
             case 'round':
                 return (string) round((float) $value);
@@ -295,7 +370,7 @@ trait ParserTrait
 
             // Get the rating value and apply round filter
             $rating = $this->resolveNestedProperty($data, $ratingVar);
-            $rating = $this->applyFilter($rating, 'round');
+            $rating = $this->applyFilter($rating, 'round', []);
             $rating = (int) $rating;
 
             // Calculate filled and empty stars
@@ -319,7 +394,7 @@ trait ParserTrait
                 if (strpos($countExpr, '|') !== false) {
                     list($var, $filter) = explode('|', $countExpr, 2);
                     $count = $this->resolveNestedProperty($data, trim($var));
-                    $count = $this->applyFilter($count, trim($filter));
+                    $count = $this->applyFilter($count, trim($filter), []);
                 } elseif (preg_match('/^(.+)\s*-\s*(.+)$/', $countExpr, $arithMatches)) {
                     $left = $this->resolveExpressionValue(trim($arithMatches[1]), $data);
                     $right = $this->resolveExpressionValue(trim($arithMatches[2]), $data);
@@ -405,9 +480,6 @@ trait ParserTrait
         $protectedBlocks = [];
         $template = $this->protectHtmlBlocks($template, $protectedBlocks);
 
-        // Parse filters first (e.g., {variable|filter})
-        $template = $this->parseFilters($template, $data);
-
         $replace = [];
 
         if ($data) {
@@ -423,6 +495,9 @@ trait ParserTrait
 
         // Parse conditionals (includes foreach loops)
         $template = $this->parseConditionals($template);
+
+        // Parse filters after foreach processing (e.g., {variable|filter})
+        $template = $this->parseFilters($template, $this->data);
 
         // Parse nested property access (e.g., {stats.total_users}) after foreach processing
         $template = $this->parseNestedProperties($template, $this->data);
@@ -447,18 +522,8 @@ trait ParserTrait
         // Handle foreach loops with proper nesting support first
         $template = $this->parseNestedForeach($template);
 
-        // Handle if/elseif/else blocks
-        $ifPattern = '~{%\s*if\s+([^%]*?)\s*%}(.*?)(?:{%\s*else\s*%}(.*?))?{%\s*endif\s*%}~s';
-        $template = preg_replace_callback($ifPattern, function($matches) {
-            $condition = trim($matches[1]);
-            $ifContent = trim($matches[2]);
-            $elseContent = isset($matches[3]) ? trim($matches[3]) : '';
-            if ($this->evaluateCondition($condition)) {
-                return $ifContent;
-            } else {
-                return $elseContent;
-            }
-        }, $template);
+        // Handle if/elseif/else blocks with proper nesting support
+        $template = $this->parseNestedIfBlocks($template);
 
         // Handle for loops
         $forPattern = '~{%\s*for\s+(\w+)\s+in\s+(\d+)\s*\.\.\s*(\d+)\s*%}(.*?){%\s*endfor\s*%}~s';
@@ -473,6 +538,165 @@ trait ParserTrait
         }, $template);
 
         return $template;
+    }
+    
+    /**
+     * Parses if/else/endif blocks with proper nesting support
+     *
+     * @param string $template The template string containing conditional statements
+     * @return string The template string with conditionals processed
+     */
+    protected function parseNestedIfBlocks(string $template): string
+    {
+        // Find all top-level if blocks (not nested inside other if blocks)
+        $blocks = $this->findTopLevelIfBlocks($template);
+
+        foreach ($blocks as $block) {
+            $parsedContent = $this->parseIfBlock([
+                'condition' => $block['condition'],
+                'if_content' => $block['if_content'],
+                'else_content' => $block['else_content']
+            ]);
+
+            $template = str_replace($block['full_match'], $parsedContent, $template);
+        }
+
+        return $template;
+    }
+    
+    /**
+     * Finds top-level if blocks that are not nested inside other if blocks
+     *
+     * @param string $template The template string to search
+     * @return array Array of top-level if blocks
+     */
+    protected function findTopLevelIfBlocks(string $template): array
+    {
+        $blocks = [];
+        $length = strlen($template);
+        $i = 0;
+
+        while ($i < $length) {
+            $ifPos = strpos($template, '{% if', $i);
+            if ($ifPos === false) {
+                break;
+            }
+
+            // Find the matching endif by counting nesting levels
+            $depth = 0;
+            $j = $ifPos + 7; // Skip past '{% if'
+            $endPos = false;
+
+            while ($j < $length) {
+                $nextIf = strpos($template, '{% if', $j);
+                $nextEndif = strpos($template, '{% endif', $j);
+
+                // If no more endif found, break
+                if ($nextEndif === false) {
+                    break;
+                }
+
+                // If there's an if before the next endif, it's nested
+                if ($nextIf !== false && $nextIf < $nextEndif) {
+                    $depth++;
+                    $j = $nextIf + 7;
+                } else {
+                    // Found an endif
+                    if ($depth === 0) {
+                        $endPos = $nextEndif;
+                        break;
+                    } else {
+                        $depth--;
+                        $j = $nextEndif + 12;
+                    }
+                }
+            }
+
+            if ($endPos !== false) {
+                $blockContent = substr($template, $ifPos, $endPos - $ifPos + 12); // +12 for '{% endif %}'
+
+                // Find else position first
+                $elsePos = strpos($blockContent, '{% else %}');
+                
+                if ($elsePos !== false) {
+                    // Extract if line (up to the else tag)
+                    $ifLine = substr($blockContent, 0, $elsePos);
+                    
+                    // Extract condition
+                    if (preg_match('/{%\s*if\s+([^%]*?)\s*%}/', $ifLine, $conditionMatch)) {
+                        $condition = trim($conditionMatch[1]);
+                    } else {
+                        $condition = '';
+                    }
+                    
+                    // Extract content
+                    $ifContent = substr($ifLine, strlen($conditionMatch[0]));
+                    $elseStart = $elsePos + 9; // Length of '{% else %}'
+                    $elseEnd = strpos($blockContent, '{% endif %}', $elseStart);
+                    $elseContent = $elseEnd !== false ? substr($blockContent, $elseStart, $elseEnd - $elseStart) : '';
+                    
+                    // Trim whitespace from both content blocks
+                    $ifContent = trim($ifContent);
+                    $elseContent = trim($elseContent);
+                    
+                    // Remove leading } from else content if it exists
+                    if (substr($elseContent, 0, 1) === '}') {
+                        $elseContent = trim(substr($elseContent, 1));
+                    }
+                } else {
+                    // No else clause
+                    // Extract if line
+                    if (preg_match('/^{%[^%]*%}/', $blockContent, $matches)) {
+                        $ifLine = $matches[0];
+                    } else {
+                        $ifLine = substr($blockContent, 0, strpos($blockContent, "%}") + 2);
+                    }
+                    
+                    // Extract condition
+                    if (preg_match('/{%\s*if\s+([^%]*?)\s*%}/', $ifLine, $conditionMatch)) {
+                        $condition = trim($conditionMatch[1]);
+                    } else {
+                        $condition = '';
+                    }
+                    
+                    // Extract content (remove endif tag)
+                    $ifContent = substr($ifLine, strlen($conditionMatch[0]), -12); // Remove '{% endif %}' from end
+                    $elseContent = '';
+                }
+
+                $blocks[] = [
+                    'full_match' => $blockContent,
+                    'condition' => $condition,
+                    'if_content' => $ifContent,
+                    'else_content' => $elseContent
+                ];
+
+                $i = $endPos + 12;
+            } else {
+                $i = $ifPos + 7;
+            }
+        }
+
+        return $blocks;
+    }
+    
+    /**
+     * Parses a single if block
+     *
+     * @param array $block The block components
+     * @return string The parsed content
+     */
+    protected function parseIfBlock(array $block): string
+    {
+        $condition = $block['condition'];
+        $ifContent = $block['if_content'];
+        $elseContent = $block['else_content'];
+
+        if ($this->evaluateCondition($condition)) {
+            return $ifContent;
+        } else {
+            return $elseContent;
+        }
     }
 	
 	/**
@@ -514,6 +738,10 @@ trait ParserTrait
             
             // Process the content with the current iteration's replacements
             $processedContent = strtr($content, $replacements);
+
+            // Process filters in the content with the current iteration data
+            $loopData = array_merge($this->data, [$loopVar => $value]);
+            $processedContent = $this->parseFilters($processedContent, $loopData);
 
             // Process nested foreach loops
             $processedContent = $this->processNestedForeach($processedContent, $value, $loopVar);
@@ -638,6 +866,7 @@ trait ParserTrait
         $length = strlen($template);
         $i = 0;
 
+        
         while ($i < $length) {
             $foreachPos = strpos($template, '{% foreach', $i);
             if ($foreachPos === false) {
@@ -792,16 +1021,17 @@ trait ParserTrait
      */
     protected function parseConditionalsInLoop(string $content, $loopValue, string $loopVar): string
     {
-        // Handle if/endif blocks within loop content (most common case)
-        $ifPattern = '~\{%\s*if\s+([^%]*?)\s*%\}([^{]*?)\{%\s*endif\s*%\}~s';
+        // Handle if/else/endif blocks within loop content
+        $ifPattern = '~\{%\s*if\s+([^%]*?)\s*%\}([^{]*?)(?:\{%\s*else\s*%\}([^{]*?))?\{%\s*endif\s*%\}~s';
         $content = preg_replace_callback($ifPattern, function($matches) use ($loopValue, $loopVar) {
             $condition = trim($matches[1]);
             $ifContent = trim($matches[2]);
+            $elseContent = isset($matches[3]) ? trim($matches[3]) : '';
 
             if ($this->evaluateConditionInLoop($condition, $loopValue, $loopVar)) {
                 return $ifContent;
             } else {
-                return '';
+                return $elseContent;
             }
         }, $content);
 
@@ -1078,12 +1308,31 @@ trait ParserTrait
         foreach ($parts as $i => &$part) {
             // Skip quoted strings (odd indices contain the delimiters)
             if ($i % 2 === 0) {
-                // This is an unquoted part, replace variables
-                $part = preg_replace_callback('~\\$?([a-zA-Z_][a-zA-Z0-9_.]*)~', function ($match) {
-                    $varPath = $match[1];
+                // This is an unquoted part, replace variables with filters
+                $part = preg_replace_callback('~\\$?([a-zA-Z_][a-zA-Z0-9_.|\'\": ]*)~', function ($match) {
+                    $expression = $match[1];
 
-                    // Get the value using nested property resolution
-                    $value = $this->resolveNestedProperty($this->data, $varPath);
+                    // Check if this contains a filter
+                    if (strpos($expression, '|') !== false) {
+                        // Handle specific filters directly for conditions
+                        if (strpos($expression, '|count') !== false) {
+                            $varPath = str_replace('|count', '', $expression);
+                            $value = $this->resolveNestedProperty($this->data, trim($varPath));
+                            if (is_array($value) || $value instanceof \Countable) {
+                                $value = count($value);
+                            } else {
+                                $value = 0;
+                            }
+                        } else {
+                            // Process other filters
+                            $result = $this->parseFilters('{' . $expression . '}', $this->data);
+                            // Remove the curly braces added by parseFilters
+                            $value = trim($result, '{}');
+                        }
+                    } else {
+                        // Get the value using nested property resolution
+                        $value = $this->resolveNestedProperty($this->data, $expression);
+                    }
 
                     if (is_bool($value)) {
                         return $value ? 'true' : 'false';
@@ -1093,6 +1342,12 @@ trait ParserTrait
                         return (string) $value;
                     } elseif (is_null($value)) {
                         return 'null';
+                    } elseif (is_array($value)) {
+                        // Handle arrays - check if they're non-empty
+                        return !empty($value) ? 'true' : 'false';
+                    } elseif (is_object($value)) {
+                        // Handle objects - check their truthiness
+                        return (bool) $value ? 'true' : 'false';
                     } else {
                         return 'false'; // Default for unsupported types
                     }

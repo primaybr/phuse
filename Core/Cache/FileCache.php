@@ -17,13 +17,27 @@ class FileCache extends BaseCache
      * Cache directory path
      */
     private string $cacheDir;
+    
+    /**
+     * Cache type/name
+     */
+    private string $cacheType;
+
+    /**
+     * Constructor
+     */
+    public function __construct(?CacheConfig $config = null, string $cacheType = 'default')
+    {
+        $this->cacheType = $cacheType;
+        parent::__construct($config);
+    }
 
     /**
      * Initialize the file cache
      */
     protected function initialize(): void
     {
-        $this->cacheDir = $this->ensureCacheDirectory();
+        $this->cacheDir = $this->ensureCacheDirectory($this->cacheType);
     }
 
     /**
@@ -151,15 +165,18 @@ class FileCache extends BaseCache
     public function clear(): bool
     {
         try {
-            $files = glob($this->cacheDir . '*');
+            $files = glob($this->cacheDir . DIRECTORY_SEPARATOR . '*');
             $success = true;
+            $deletedCount = 0;
 
             if ($files === false) {
                 return false;
             }
 
             foreach ($files as $file) {
-                if (is_file($file) && !unlink($file)) {
+                if (is_file($file) && unlink($file)) {
+                    $deletedCount++;
+                } elseif (is_file($file)) {
                     $success = false;
                     $this->log('Failed to delete cache file', 'warning', [
                         'file' => $file
@@ -169,7 +186,7 @@ class FileCache extends BaseCache
 
             $this->resetStats();
             $this->log('Cache cleared', 'info', [
-                'files_deleted' => count($files)
+                'files_deleted' => $deletedCount
             ]);
 
             return $success;

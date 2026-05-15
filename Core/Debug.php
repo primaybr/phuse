@@ -72,9 +72,9 @@ class Debug {
 	{
 		$output = json_encode($data);
 		if ($label !== '') {
-			echo "<script>console.log('{$label}:', {$output});</script>";
+			echo "Debug output for label: '" . $label . "'";
 		} else {
-			echo "<script>console.log({$output});</script>";
+			echo "Debug output without label";
 		}
 	}
 }

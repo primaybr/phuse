@@ -39,7 +39,7 @@ class CacheManager
         $config->defaultDriver = $driver;
 
         $instance = match ($driver) {
-            'file' => new FileCache($config),
+            'file' => new FileCache($config, $name),
             'memory' => new MemoryCache($config),
             default => throw CacheException::configurationError("Unsupported cache driver: {$driver}")
         };

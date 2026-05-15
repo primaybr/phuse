@@ -172,6 +172,128 @@ final class Str
     }
 
     /**
+     * Format bytes into human readable format
+     *
+     * @param int $bytes The number of bytes to format
+     * @param int $precision The number of decimal places
+     * @return string The formatted bytes string
+     */
+    public static function formatBytes(int $bytes, int $precision = 2): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+
+        for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
+            $bytes /= 1024;
+        }
+
+        return round($bytes, $precision) . ' ' . $units[$i];
+    }
+
+    /**
+     * Format a number with thousands separator
+     *
+     * @param int|float $number The number to format
+     * @param int $decimals Number of decimal places
+     * @return string The formatted number
+     */
+    public static function formatNumber($number, int $decimals = 0): string
+    {
+        return number_format($number, $decimals);
+    }
+
+    /**
+     * Format currency amount
+     *
+     * @param int|float $amount The amount to format
+     * @param string $currency The currency symbol
+     * @param int $decimals Number of decimal places
+     * @return string The formatted currency
+     */
+    public static function formatCurrency($amount, string $currency = '$', int $decimals = 2): string
+    {
+        return $currency . number_format($amount, $decimals);
+    }
+
+    /**
+     * Format percentage
+     *
+     * @param int|float $value The value to format as percentage
+     * @param int $decimals Number of decimal places
+     * @return string The formatted percentage
+     */
+    public static function formatPercentage($value, int $decimals = 1): string
+    {
+        return number_format($value, $decimals) . '%';
+    }
+
+    /**
+     * Format date/time
+     *
+     * @param string|int $datetime The datetime to format
+     * @param string $format The date format (defaults to Y-m-d H:i:s)
+     * @return string The formatted date/time
+     */
+    public static function formatDatetime($datetime, string $format = 'Y-m-d H:i:s'): string
+    {
+        if (is_string($datetime)) {
+            $datetime = strtotime($datetime);
+        }
+
+        return date($format, $datetime);
+    }
+
+    /**
+     * Convert string to slug format
+     *
+     * @param string $text The text to slugify
+     * @return string The slugified text
+     */
+    public static function slug(string $text): string
+    {
+        // Convert to lowercase and replace spaces with hyphens
+        $slug = strtolower($text);
+
+        // Replace non-alphanumeric characters with hyphens
+        $slug = preg_replace('/[^a-z0-9]+/', '-', $slug);
+
+        // Remove multiple hyphens
+        $slug = preg_replace('/-+/', '-', $slug);
+
+        // Trim hyphens from start and end
+        return trim($slug, '-');
+    }
+
+    /**
+     * Format phone number
+     *
+     * @param string $phone The phone number to format
+     * @param string $format The format pattern
+     * @return string The formatted phone number
+     */
+    public static function formatPhone(string $phone, string $format = '({1}) {2}-{3}'): string
+    {
+        // Remove all non-numeric characters
+        $numbers = preg_replace('/[^0-9]/', '', $phone);
+
+        // Apply format if we have enough numbers
+        if (strlen($numbers) >= 10) {
+            $parts = str_split($numbers);
+            $formatted = str_replace(
+                ['{1}', '{2}', '{3}'],
+                [
+                    substr($numbers, 0, 3),
+                    substr($numbers, 3, 3),
+                    substr($numbers, 6)
+                ],
+                $format
+            );
+            return $formatted;
+        }
+
+        return $phone;
+    }
+
+    /**
      * Generate a UUID with enhanced uniqueness guarantees
      *
      * Supports multiple UUID versions with different uniqueness strategies:

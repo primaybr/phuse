@@ -28,6 +28,14 @@ class Model
     private const DEFAULT_RETURN_TYPE = 'array';
     private const DEFAULT_FIELDS = '*';
     private const DEFAULT_PRIMARY_KEY = 'id';
+    
+    // Audit field constants
+    private const CREATED_AT_COLUMN = 'created_at';
+    private const UPDATED_AT_COLUMN = 'updated_at';
+    private const DELETED_AT_COLUMN = 'deleted_at';
+    private const CREATED_BY_COLUMN = 'created_by';
+    private const UPDATED_BY_COLUMN = 'updated_by';
+    private const DELETED_BY_COLUMN = 'deleted_by';
     private const CACHE_LIFETIME = 3600; // 1 hour
     private const CACHE_DIRECTORY = 'database';
 
@@ -41,15 +49,22 @@ class Model
     protected object $str;
     protected ?QueryCache $queryCache = null;
 
+    // Debug properties for error tracking (can be removed in production)
+    public string $lastDebugQuery = '';
+    public array $lastDebugBinds = [];
+
     public bool $byPassWhere = false;
-    public string $primaryKey = self::DEFAULT_PRIMARY_KEY;
+    protected string $primaryKey = self::DEFAULT_PRIMARY_KEY;
 
 	// ORM Features
 	protected bool $timestamps = true;
 	protected bool $softDeletes = false;
-	protected string $createdAtColumn = 'created_at';
-	protected string $updatedAtColumn = 'updated_at';
-	protected string $deletedAtColumn = 'deleted_at';
+	protected ?string $createdAtColumn = self::CREATED_AT_COLUMN;
+	protected ?string $updatedAtColumn = self::UPDATED_AT_COLUMN;
+	protected ?string $deletedAtColumn = self::DELETED_AT_COLUMN;
+	protected ?string $createdByColumn = self::CREATED_BY_COLUMN;
+	protected ?string $updatedByColumn = self::UPDATED_BY_COLUMN;
+	protected ?string $deletedByColumn = self::DELETED_BY_COLUMN;
 	protected array $casts = [];
 	protected array $fillable = [];
 	protected array $guarded = [];
@@ -58,6 +73,7 @@ class Model
 	protected array $relationships = [];
 	protected array $events = [];
 	protected array $globalScopes = [];
+    protected ?string $currentUser = null; // Current user ID for audit fields
 
 	// Validation properties
 	protected array $validationRules = [];
@@ -222,15 +238,22 @@ class Model
 	
     /**
      * Adds a WHERE clause to the query.
+     * 
+     * Supports multiple formats for flexibility:
+     * - where('field', 'value') - Uses default = operator
+     * - where('field', 'value', 'operator') - Traditional format  
+     * - where('field', 'operator', 'value') - SQL-like format (more practical)
+     *
+     * The builder automatically detects operator vs value and swaps if needed.
      *
      * @param string $key The field to apply the condition to.
-     * @param string|int $value The value to compare with.
-     * @param string $type The operator to use for the condition.
+     * @param string|int $value The value to compare with OR the operator if using 3-parameter format.
+     * @param string|int $type The operator to use OR the value if using 3-parameter format.
      * @return self
      */
-    public function where(string $key = '', string|int $value = '', string $type = '='): self
+    public function where(string $key = '', string|int $value = '', string|int $type = '='): self
     {
-
+        // The builder automatically handles operator/value detection
         $this->builder->where($key, $value, $type);
         
         return $this;
@@ -1366,6 +1389,28 @@ class Model
     }
 
     /**
+     * Set the current user ID for audit fields
+     *
+     * @param string|null $userId The current user ID
+     * @return self
+     */
+    public function setCurrentUser(?string $userId): self
+    {
+        $this->currentUser = $userId;
+        return $this;
+    }
+
+    /**
+     * Get the current user ID for audit fields
+     *
+     * @return string|null
+     */
+    public function getCurrentUser(): ?string
+    {
+        return $this->currentUser;
+    }
+
+    /**
      * Set timestamps on the data.
      *
      * @param array $data The data to set timestamps on.
@@ -1382,9 +1427,17 @@ class Model
 
         if (!$update) {
             $data[$this->createdAtColumn] = $now;
+            // Set created_by if current user is available and not users table (to avoid circular reference)
+            if ($this->currentUser && $this->createdByColumn && $this->table !== 'users') {
+                $data[$this->createdByColumn] = $this->currentUser;
+            }
         }
 
         $data[$this->updatedAtColumn] = $now;
+        // Set updated_by if current user is available and not users table (to avoid circular reference)
+        if ($this->currentUser && $this->updatedByColumn && $this->table !== 'users') {
+            $data[$this->updatedByColumn] = $this->currentUser;
+        }
 
         return $data;
     }
@@ -1493,7 +1546,7 @@ class Model
      */
     public function whereNotNull(string $field): self
     {
-        return $this->where($field . ' IS NOT NULL');
+        return $this->whereQuery($field . ' IS NOT NULL');
     }
 
     /**
@@ -1503,7 +1556,7 @@ class Model
      * @param bool $update Whether this is an update operation.
      * @return int|bool The result.
      */
-    public function save(array $data, bool $update = false): int|bool
+    public function save(array $data, bool $update = false): int|string|bool
     {
         // Fire before save event
         $this->fireEvent('saving', $data);
@@ -1524,7 +1577,7 @@ class Model
 
         // Set timestamps
         $data = $this->setTimestamps($data, $update);
-
+        
         // Include soft delete condition for updates
         if ($update && $this->softDeletes) {
             $this->whereNull($this->deletedAtColumn);
@@ -1535,14 +1588,23 @@ class Model
             if (!$this->builder->queryWhere) {
                 throw DatabaseException::queryError('', 'WHERE clause is required for update operations');
             }
-            $query = $this->builder->update($data)->compile();
+            $this->builder->update($data);
         } else {
             if ($this->ignoreDuplicate) {
-                $query = $this->builder->insertIgnore($data)->compile();
+                $this->builder->insertIgnore($data);
             } else {
-                $query = $this->builder->insert($data)->compile();
+                $this->builder->insert($data);
             }
         }
+        
+        // Store binds BEFORE compile() resets them
+        $bindsForExecution = $this->builder->binds;
+        
+        // Debug: Log binds before execution
+        error_log("Model save: Binds array = " . json_encode($bindsForExecution));
+        
+        // Now compile the query
+        $query = $this->builder->compile();
 
         if(strtolower($this->dbconfig->driver) === 'pgsql')
         {
@@ -1553,19 +1615,46 @@ class Model
             $this->db->query($query);
         }
 
-        $this->db->arrayBind($this->builder->binds);
-
+        $this->db->arrayBind($bindsForExecution);
+        
         $this->builder->binds = [];
 
         try {
-            if ($lastId = $this->db->execute()) {
+            if ($this->db->execute()) {
                 if ($update) {
                     return $this->db->rowCount();
                 }
 
-                return $lastId;
+                // For PostgreSQL with RETURNING clause, fetch the returned ID
+                if(strtolower($this->dbconfig->driver) === 'pgsql') {
+                    try {
+                        $result = $this->db->single();
+                        if ($result && isset($result[$this->primaryKey])) {
+                            // Return the ID as-is for UUID fields, don't cast to int
+                            return $result[$this->primaryKey];
+                        }
+                    } catch (\PDOException $returningException) {
+                        // If RETURNING clause fails, fall back to lastInsertId()
+                        error_log("PostgreSQL RETURNING clause failed, falling back to lastInsertId(): " . $returningException->getMessage());
+                    }
+                }
+
+                // For other databases, or as fallback for PostgreSQL
+                try {
+                    return $this->db->lastInsertId();
+                } catch (\PDOException $lastIdException) {
+                    // If both methods fail, but data was saved, return true
+                    error_log("lastInsertId() failed after successful save: " . $lastIdException->getMessage());
+                    return true;
+                }
             }
         } catch (\PDOException $e) {
+            // Log the actual PDOException details
+            error_log("PDOException Code: " . $e->getCode());
+            error_log("PDOException Message: " . $e->getMessage());
+            error_log("PDOException File: " . $e->getFile());
+            error_log("PDOException Line: " . $e->getLine());
+            
             throw DatabaseException::queryError($query, 'Database save operation failed', [], $e);
         }
 
@@ -1613,19 +1702,18 @@ class Model
             throw DatabaseException::queryError('', 'WHERE clause is required for update operations');
         }
 
-        $query = $this->builder->update($data)->compile();
-
+        $query = $this->builder->update($data)->compile(false);
+        
         $this->db->query($query);
         $this->db->arrayBind($this->builder->binds);
-
-        $this->builder->binds = [];
-
+        
         try {
             if ($this->db->execute()) {
+                $this->builder->binds = [];
                 return $this->db->rowCount();
             }
         } catch (\PDOException $e) {
-            throw DatabaseException::queryError($query, 'Database update operation failed', [], $e);
+            throw DatabaseException::queryError($query, 'Database update operation failed. SQL: ' . $query . ' | BINDS: ' . json_encode($this->builder->binds) . ' | ERROR: ' . $e->getMessage(), [], $e);
         }
 
         // Fire after update event
@@ -1653,7 +1741,7 @@ class Model
                 throw DatabaseException::queryError('', 'WHERE clause is required for delete operations');
             }
 
-            $query = $this->builder->delete()->compile();
+            $query = $this->builder->delete()->compile(false);
             $this->db->query($query);
             $this->db->arrayBind($this->builder->binds);
             $this->builder->binds = [];
@@ -1725,15 +1813,22 @@ class Model
 			}
 		}
 
-		if(!empty($this->builder->querySelect))	{
-			$this->fields = str_ireplace('select','',$this->builder->querySelect);
-		}
-
+		// Store binds BEFORE compile() resets them
+        $bindsForExecution = $this->builder->binds;
+        
+        // Fix missing FROM clause by setting it explicitly if needed
+        if(empty($this->builder->queryFrom)) {
+            $this->builder->from($this->table);
+        }
         $query = $this->builder->select($this->fields)->compile(true);
-
+        
+        // Debug: Store SQL info for error reporting (don't output to avoid breaking JSON)
+        $this->lastDebugQuery = $query;
+        $this->lastDebugBinds = $bindsForExecution;
+        
         // Check cache first for SELECT queries
         if ($this->queryCache && $this->queryCache->shouldCacheQuery($query)) {
-            $cacheKey = $this->queryCache->generateKey($query, $this->builder->binds);
+            $cacheKey = $this->queryCache->generateKey($query, $bindsForExecution);
 
             if ($this->queryCache->hasValidCache($cacheKey)) {
                 $cachedResult = $this->queryCache->getCachedResult($cacheKey);
@@ -1758,7 +1853,7 @@ class Model
         }
 
         $this->db->query($query);
-        $this->db->arrayBind($this->builder->binds);
+        $this->db->arrayBind($bindsForExecution);
 
         try {
             if ($limit == 1) {
@@ -1768,12 +1863,17 @@ class Model
             }
 
         } catch (\PDOException $e) {
+            // Include debug info in the error message
+            $debugInfo = "SQL: " . $this->lastDebugQuery . " | Binds: " . json_encode($this->lastDebugBinds);
+            $pdoError = $e->getMessage();
+            $errorMessage = "Database query execution failed - " . $debugInfo . " - PDO Error: " . $pdoError;
+            
             // Cache the failed result (false) for failed queries too
-            if ($this->queryCache && $this->queryCache->shouldCacheQuery($query)) {
-                $cacheKey = $this->queryCache->generateKey($query, $this->builder->binds);
+            if ($this->queryCache && $this->queryCache->shouldCacheQuery($this->lastDebugQuery)) {
+                $cacheKey = $this->queryCache->generateKey($this->lastDebugQuery, $this->lastDebugBinds);
                 $this->queryCache->storeResult($cacheKey, false);
             }
-            throw DatabaseException::queryError($query, 'Database query execution failed', [], $e);
+            throw DatabaseException::queryError($this->lastDebugQuery, $errorMessage, [], $e);
         }
 
         // Cache the result if caching is enabled and this is a cacheable query
@@ -1783,7 +1883,10 @@ class Model
         }
 
         $this->builder->binds = [];
-		$this->fields = '*';
+        $this->fields = '*';
+        
+        // Reset bound parameters for next query
+        $this->db->resetBoundParams();
 
         return $result;
     }
@@ -1851,7 +1954,7 @@ class Model
      */
     public function whereNull(string $field): self
     {
-        return $this->where($field . ' IS NULL');
+        return $this->whereQuery($field . ' IS NULL');
     }
 
     // ===== VALIDATION METHODS =====

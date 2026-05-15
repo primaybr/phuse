@@ -13,6 +13,7 @@ class Connection
 {
     private ?PDO $handler;
     private ?PDOStatement $statement;
+    private array $boundParams = [];
 
     public function __construct(
         string $driver,
@@ -64,6 +65,8 @@ class Connection
 		if ($this->statement === false) {
 			throw new DatabaseException('Failed to prepare SQL statement');
 		}
+		// Reset bound parameters when preparing a new statement to prevent accumulation
+		$this->boundParams = [];
     }
 
     /**
@@ -84,6 +87,8 @@ class Connection
         };
 
         $this->statement->bindValue($param, $value, $type);
+        // Also add to boundParams for execute()
+        $this->boundParams[$param] = $value;
     }
 
     /**
@@ -96,7 +101,13 @@ class Connection
     {
         if ($data) {
             foreach ($data as $k => $v) {
-                $this->bind(param: ":{$k}", value: $v);
+                // Check if key already has colon prefix
+                $param = strpos($k, ':') === 0 ? $k : ":{$k}";
+                if ($this->statement) {
+                    $this->bind(param: $param, value: $v);
+                    // Track the bound parameters for execute()
+                    $this->boundParams[$param] = $v;
+                }
             }
         }
     }
@@ -111,11 +122,14 @@ class Connection
    public function execute(array $params = []): mixed
     {
         try {
-            if (!empty($params)) {
-                return $this->statement->execute($params);
+            // Always use boundParams if they exist, regardless of passed params
+            if (!empty($this->boundParams)) {
+                // Merge passed params with bound parameters (passed params take precedence)
+                $allParams = !empty($params) ? array_merge($this->boundParams, $params) : $this->boundParams;
+                return $this->statement->execute($allParams);
             }
 
-            return $this->statement->execute();
+            return $this->statement->execute($params);
         } catch (PDOException $e) {
             // For debugging, throw the original PDO exception
             throw $e;
@@ -148,7 +162,11 @@ class Connection
      */
     public function single() : array|false
     {
-        $this->execute();
+        // Only execute if the statement hasn't been executed yet
+        // This prevents double execution for INSERT queries with RETURNING clause
+        if (!isset($this->statement) || $this->statement->rowCount() === 0) {
+            $this->execute();
+        }
 
         return $this->statement->fetch(PDO::FETCH_ASSOC);
     }
@@ -173,6 +191,26 @@ class Connection
         $this->execute();
 
         return $this->statement->rowCount();
+    }
+
+    /**
+     * Get the currently bound parameters (for debugging)
+     *
+     * @return array The currently bound parameters
+     */
+    public function getBoundParams(): array
+    {
+        return $this->boundParams;
+    }
+
+    /**
+     * Reset bound parameters to empty array
+     *
+     * @return void
+     */
+    public function resetBoundParams(): void
+    {
+        $this->boundParams = [];
     }
 
     /**

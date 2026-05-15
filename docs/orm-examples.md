@@ -158,11 +158,47 @@ class User extends Core\Model
 }
 ```
 
+### Audit Fields (v1.2.0)
+
+Models can automatically record which user created, updated, or deleted each row. Add the `created_by`, `updated_by`, and/or `deleted_by` columns to your table, then call `setCurrentUser()` before any write operation:
+
+```sql
+ALTER TABLE posts
+    ADD COLUMN created_by VARCHAR(36) NULL,
+    ADD COLUMN updated_by VARCHAR(36) NULL,
+    ADD COLUMN deleted_by VARCHAR(36) NULL;
+```
+
+```php
+$post = new Post();
+$post->setCurrentUser($session->get('user_id'));
+
+// created_by and updated_by are filled automatically
+$postId = $post->save([
+    'title'   => 'My Post',
+    'content' => 'Hello world',
+]);
+
+// Only updated_by is refreshed on update
+$post->setCurrentUser($session->get('user_id'))
+     ->where('id', $postId)
+     ->update(['title' => 'Updated Title']);
+```
+
+To disable individual audit columns without removing them from the schema, set their property to `null` in the model:
+
+```php
+protected ?string $createdByColumn = null; // disabled
+protected ?string $updatedByColumn = 'modified_by'; // custom column name
+```
+
+> The `users` table is intentionally excluded from audit field auto-population to avoid a circular self-reference during user creation.
+
 ### Key ORM Features Demonstrated
 
 #### 1. **Basic CRUD Operations**
 ```php
-// Create
+// Create — returns int (auto-increment) or string (UUID)
 $userId = $user->save([
     'name' => 'John Doe',
     'email' => 'john@example.com',
@@ -173,12 +209,20 @@ $userId = $user->save([
 // Read
 $user = (new User())->where('id', $userId)->get(1);
 
+// where() with explicit operator (SQL-like order: field, operator, value)
+$adults = (new User())->where('age', '>=', 18)->get();
+
+// where() with != operator (added in v1.2.0)
+$others = (new User())->where('role', '!=', 'admin')->get();
+
 // Update
 $user->where('id', $userId)->update(['name' => 'Jane Doe']);
 
 // Delete
 $user->where('id', $userId)->delete();
 ```
+
+> **UUID primary keys (v1.2.0):** If your table uses a `VARCHAR`/`UUID` primary key, `save()` returns the string UUID directly. PostgreSQL models use `RETURNING id` to fetch the inserted value without a second query.
 
 #### 2. **Relationships**
 ```php

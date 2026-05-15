@@ -55,7 +55,7 @@ class CacheConfig
     public array $subdirectories = [
         'default' => 'default',
         'query' => 'database',
-        'template' => 'templates'
+        'templates' => 'templates'
     ];
 
     /**

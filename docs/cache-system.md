@@ -135,13 +135,15 @@ $config = Core\Cache\CacheManager::createFileConfig([
     'file_permission' => 0755,
     'key_prefix' => 'prod_app',
     'subdirectories' => [
-        'default' => 'cache',
-        'query' => 'database',
-        'template' => 'templates'
+        'default'   => 'default',
+        'query'     => 'database',
+        'templates' => 'templates'  // Note: key is 'templates', not 'template'
     ]
 ]);
 ?>
 ```
+
+> **Note (v1.2.0):** The subdirectory config key for template caching was corrected from `'template'` to `'templates'`. Each named cache instance now receives its own subdirectory automatically via `CacheManager`, so manual subdirectory wiring is rarely needed.
 
 ## Technical Improvements
 

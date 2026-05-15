@@ -10,7 +10,7 @@ trait BuildersTrait {
 	
 	//SQL default operators
 	protected array $operators = ['+','-','*','/','%','&','|','^', // Arithmetic & Bitwise 
-								  '=','>','<','>=','<=','<>','+=','-=','*=','/=','%=','&=','^-=','|*=', // Comparison & Compound
+								  '=','>','<','>=','<=','<>','!=','+=','-=','*=','/=','%=','&=','^-=','|*=', // Comparison & Compound
 								  'ALL','AND','ANY','BETWEEN','EXISTS','IN','LIKE','NOT','OR','SOME','IS' // Logical
 								 ];
 	
@@ -124,18 +124,11 @@ trait BuildersTrait {
             $field_data = '';
             $count = 1;
             foreach ($data as $k => $v) {
-                if(isset($this->binds[$k]))
-                {
-                    $field_data .= "{$k}=:{$k}{$count}".',';
-                    $this->binds[$k.$count] = $v;
-                    $count++;
-                }
-                else
-                {
-                    $field_data .= "{$k}=:{$k}".',';
-                    $this->binds[$k] = $v;
-                }
-               
+                // Create unique placeholder for each field to avoid conflicts
+                $placeholder = ":param_" . $count;
+                $field_data .= "{$k}={$placeholder}".',';
+                $this->binds[$placeholder] = $v;
+                $count++;
             }
 
             $field_data = rtrim($field_data, ',');
@@ -305,7 +298,9 @@ trait BuildersTrait {
      */
     public function where(string $key = '', string|int $value = '', string $operator = '=', string $clause = 'AND'): self
     {
-		if(in_array($value,$this->operators))
+		// Only swap parameters if the second parameter is actually an operator
+		// and not a UUID or other legitimate value
+		if(is_string($value) && in_array(strtoupper($value),$this->operators))
 		{
 			$newValue = $operator;
 			$operator = $value;
@@ -314,14 +309,16 @@ trait BuildersTrait {
 		
         $where = ' WHERE ';
         $operator = strtoupper(trim($operator));
-		
-        $replacer = str_replace('.', '_', $key);
+        
+        // Create unique placeholder name to avoid conflicts
+        // Use different naming scheme for WHERE parameters
+        $placeholder = ":where_" . count($this->binds);
         
         if ($operator == "BETWEEN" || $operator == "IS") {
             $query = "{$key} {$operator} {$value}";
         } else {
-            $query = "{$key} {$operator} :{$replacer}";
-            $this->binds[$replacer] = $value;
+            $query = "{$key} {$operator} {$placeholder}";
+            $this->binds[$placeholder] = $value;
         }
         
         $result = $where.$query;
@@ -396,9 +393,12 @@ trait BuildersTrait {
 				
                 $inValue = '';
 				$replacer = str_replace('.', '_', $key);
+                $paramIndex = 0;
                 foreach ($value as $val) {
-                    $inValue .= ":{$replacer}{$val},";
-                    $this->binds[$replacer.$val] = $val;
+                    $paramName = $replacer . '_param' . $paramIndex;
+                    $inValue .= ":{$paramName},";
+                    $this->binds[$paramName] = $val;
+                    $paramIndex++;
                 }
 
                 $inValue = rtrim($inValue, ',');
@@ -577,55 +577,6 @@ trait BuildersTrait {
      *
      * @param string $part The part of the query to reset. Options include 'select', 'where', 'insert', etc.
      * @return self
-     */
-    public function resetQuery(string $part = ''): self {
-        match ($part) {
-            'select' => $this->querySelect = '',
-            'where' => $this->queryWhere = '',
-            'wherein' => $this->queryWhereIn = '',
-            'from' => $this->queryFrom = '',
-            'join' => $this->queryJoin = '',
-            'insert' => $this->queryInsert = '',
-            'update' => $this->queryUpdate = '',
-            'delete' => $this->queryDelete = '',
-            'orderby' => $this->queryOrderBy = '',
-            'groupby' => $this->queryGroupBy = '',
-            'limit' => $this->queryLimit = '',
-            'offset' => $this->queryOffset = '',
-            default => 
-                // Reset all
-                $this->querySelect = 
-                $this->queryWhere = 
-                $this->queryInsert = 
-                $this->queryUpdate = 
-                $this->queryDelete = 
-                $this->queryOrderBy = 
-                $this->queryGroupBy = 
-                $this->queryLimit = 
-                $this->queryOffset = 
-                $this->queryJoin = 
-                $this->queryWhereIn = ''
-            
-        };
-
-        return $this;
-    }
-
-    /**
-     * Compiles the SQL query based on the set parameters.
-     *
-     * @param bool $reset Indicates whether to reset the query after compilation.
-     * @return string The compiled SQL query.
-     */
-    public function compile(bool $reset = true): string
-	{
-        if (!empty($this->querySelect)) {
-			if(!empty($this->queryWhere) && !empty($this->queryWhereIn))
-			{
-				$this->queryWhereIn = str_replace('WHERE', 'AND',$this->queryWhereIn);
-			}
-			
-            $sql = $this->querySelect.$this->queryFrom.$this->queryJoin.$this->queryWhere.$this->queryWhereIn.$this->queryGroupBy.$this->queryOrderBy.$this->queryLimit.$this->queryOffset;
         } elseif (!empty($this->queryInsert)) {
             $sql = $this->queryInsert;
         } elseif (!empty($this->queryUpdate)) {
