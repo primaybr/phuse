@@ -180,7 +180,7 @@ class Request
                 throw new RuntimeException("Failed to open stream for URL: {$requestUrl}");
             }
 
-            $this->httpResponseCode = $this->extractResponseCode();
+            $this->httpResponseCode = $this->extractResponseCode($http_response_header ?? []);
 
         } catch (\Exception $e) {
             $this->logger->write("HTTP request failed for URL: {$requestUrl}", 'error', [
@@ -240,10 +240,10 @@ class Request
      *
      * @return int|string The HTTP response code.
      */
-    private function extractResponseCode(): int|string
+    private function extractResponseCode(array $headers = []): int|string
     {
-        if (isset($http_response_header[0])) {
-            $responseLine = $http_response_header[0];
+        if (isset($headers[0])) {
+            $responseLine = $headers[0];
             if (preg_match('/HTTP\/\d\.\d\s+(\d+)/', $responseLine, $matches)) {
                 return (int)$matches[1];
             }
@@ -282,18 +282,18 @@ class Request
      */
     private function refreshRequest(string $method, string $url, array|string $data = []): self
     {
-        $token = $this->session->get('sesstoken');
+        $token = json_decode($this->session->get('sesstoken'));
 
-        if (!$token || !isset($token->access_token, $token->refresh_token)) {
+        if (!$token || !isset($token->access_token)) {
             throw new \RuntimeException('No valid token available for refresh');
         }
 
         try {
-            // Attempt to refresh the token
+            // Attempt to refresh the token — send full token JSON as body (backend expects the whole token object)
             $newTokenResponse = $this->setContentType('application/json')
                 ->setHeader("Authorization: Bearer " . $token->access_token)
                 ->request('POST', $this->apiExternalUrl . '/auth/refresh', [
-                    'json' => json_encode(['refresh_token' => $token->refresh_token])
+                    'json' => $this->session->get('sesstoken')
                 ], false)
                 ->getContent();
 
@@ -345,7 +345,7 @@ class Request
         }
 
         $this->session->set('sessdata', $decodedPayload['dat'] ?? []);
-        $this->session->set('sesstoken', $newToken);
+        $this->session->set('sesstoken', json_encode($newToken));
     }
 
     /**
@@ -375,7 +375,7 @@ class Request
                 throw new \RuntimeException("Failed to open stream for URL after token refresh: {$requestUrl}");
             }
 
-            $this->httpResponseCode = $this->extractResponseCode();
+            $this->httpResponseCode = $this->extractResponseCode($http_response_header ?? []);
 
         } catch (\Exception $e) {
             throw new \RuntimeException("HTTP request with refreshed token failed: " . $e->getMessage(), 0, $e);

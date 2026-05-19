@@ -8,4 +8,5 @@ composer.lock
 composer.json
 .phpunit.cache
 .mcp.json
+.claude/
 

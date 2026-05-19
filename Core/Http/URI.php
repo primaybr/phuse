@@ -354,8 +354,15 @@ final class URI
      */
     public function redirect(string $url): void
     {
-        if (empty($url) || !filter_var($url, FILTER_VALIDATE_URL)) {
+        if (empty($url)) {
             throw new ValidationException('Invalid redirect URL provided');
+        }
+
+        // Resolve relative paths to absolute URLs before validation
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            $url = $scheme . '://' . $host . '/' . ltrim($url, '/');
         }
 
         // Prevent open redirect vulnerabilities - ensure URL uses allowed schemes
@@ -372,7 +379,8 @@ final class URI
         // Additional security: prevent redirects to private IP ranges
         if (isset($parsedUrl['host']) && !empty($parsedUrl['host']) && $parsedUrl['host'] !== 'localhost' && $parsedUrl['host'] !== '127.0.0.1') {
             $ip = gethostbyname($parsedUrl['host']);
-            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            $isLoopback = ($ip === '127.0.0.1' || $ip === '::1' || str_starts_with($ip, '127.'));
+            if (!$isLoopback && filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
                 throw new ValidationException('Redirect URL resolves to private or reserved IP address');
             }
         }
