@@ -1,3 +1,20 @@
+### v1.2.0a (2026-05-18)
+
+#### Core/Http/Request.php
+- **`extractResponseCode()` Scope Fix**: `$http_response_header` is a PHP local variable set only in the scope where `fopen()` runs — it was never accessible inside `extractResponseCode()`, causing it to always return the fallback `200`. The headers array is now passed as a parameter from the calling scope. This was the root cause of all HTTP response code detection being broken (401 checks, token refresh triggering, CMS token expiry detection)
+- **`refreshRequest()` — `json_decode` fix**: Session token (`sesstoken`) is stored as a JSON string; the method was accessing it as an object without decoding first, causing property lookups to always fail and the refresh to throw before even attempting
+- **`refreshRequest()` — refresh body fix**: The refresh endpoint receives the full token JSON (matching `Token.php`), not just `{"refresh_token":"..."}` — only `access_token` presence is now required before attempting the call
+- **`updateSessionWithNewToken()` — session storage fix**: New token is now stored as `json_encode()`d string; previously stored as a raw PHP object, which broke subsequent JSON decoding of the session token
+
+#### Core/Http/URI.php
+- **`redirect()` relative path support**: Method no longer rejects non-absolute URLs — relative paths are resolved to absolute URLs using the current scheme and host before validation, allowing controller redirects like `redirect('/admin/login')` to work correctly
+- **`redirect()` loopback allowance**: Added explicit `$isLoopback` check so redirects to `127.*` / `::1` addresses are permitted (previously blocked by the private IP filter)
+
+#### Core/Template/ParserTrait.php
+- **`restoreHtmlBlocks()` script variable substitution**: Protected `<script>` blocks are now processed for template variable substitution on restore — variables like `{adminUrl}`, `{apiUrl}` inside `<script>` tags now resolve correctly instead of being left as literal placeholders
+
+---
+
 ### v1.2.0 (2026-05-15)
 
 #### Database Layer

@@ -1236,7 +1236,19 @@ trait ParserTrait
      */
     protected function restoreHtmlBlocks(string $template, array $protectedBlocks): string
     {
+        // Script blocks can contain intentional template placeholders (e.g. {adminUrl}) that
+        // were protected before variable substitution ran — apply them now on restore.
+        $replace = [];
+        foreach ($this->data as $key => $val) {
+            if (!is_array($val)) {
+                $replace['{' . $key . '}'] = (string) $val;
+            }
+        }
+
         foreach ($protectedBlocks as $placeholder => $originalContent) {
+            if (str_starts_with($placeholder, '___PROTECTED_SCRIPT_') && !empty($replace)) {
+                $originalContent = strtr($originalContent, $replace);
+            }
             $template = str_replace($placeholder, $originalContent, $template);
         }
 

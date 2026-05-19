@@ -130,6 +130,13 @@ Phuse is an open-source project, and you are welcome to contribute to its develo
 
 ## Latest Changes
 
+### v1.2.0a (2026-05-18)
+- **`Request::extractResponseCode()` Scope Fix**: `$http_response_header` was accessed outside the scope where `fopen()` sets it, so HTTP response codes were always `200` — breaking 401 detection, token refresh, and CMS expiry checks
+- **`Request::refreshRequest()` Fixes**: Session token now correctly `json_decode()`d before use; refresh endpoint receives the full token JSON body; only `access_token` is required to proceed
+- **`Request::updateSessionWithNewToken()` Fix**: New token stored as JSON string (`json_encode()`) instead of raw PHP object
+- **`URI::redirect()` Relative Path Support**: Relative URLs are now resolved to absolute before validation; loopback addresses (`127.*`) are explicitly allowed through the private IP filter
+- **`ParserTrait::restoreHtmlBlocks()` Script Variables**: Template variables inside `<script>` blocks (e.g. `{adminUrl}`, `{apiUrl}`) are now substituted on restore instead of left as literal placeholders
+
 ### v1.2.0 (2026-05-15)
 - **Database Layer Overhaul**: Critical fixes to query parameter binding — unique placeholder names eliminate bind conflicts; `!=` operator added; PostgreSQL driver has its own `compile()` / `resetQuery()` with proper bind lifecycle management
 - **UUID Primary Key Support**: `save()` now returns `int|string|bool`; PostgreSQL `RETURNING` clause correctly fetches string UUIDs without integer casting
