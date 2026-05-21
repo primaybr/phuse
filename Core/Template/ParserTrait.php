@@ -113,7 +113,11 @@ trait ParserTrait
             // Get the value using nested property resolution
             $value = $this->resolveNestedProperty($data, $expression);
 
-            // Return the resolved value as a string
+            // If not found, leave the original expression unchanged (don't strip CSS/JS blocks)
+            if ($value === null) {
+                return $matches[0];
+            }
+
             return (string) $value;
         }, $template);
     }
