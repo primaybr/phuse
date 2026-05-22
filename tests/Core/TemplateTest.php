@@ -11,7 +11,7 @@ use Core\Cache\TemplateCache;
 use Core\Log;
 
 /**
- * Test suite for the PHUSE Template Parser (v1.3.0 double-brace syntax)
+ * Test suite for the PHUSE Template Parser (v1.2.1 double-brace syntax)
  *
  * Covers:
  *  - {{variable}} double-brace output

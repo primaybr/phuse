@@ -1,4 +1,4 @@
-### v1.3.0 (2026-05-22)
+### v1.2.1 (2026-05-22)
 
 #### Core/Template — Double-Brace Syntax Overhaul
 
@@ -15,7 +15,7 @@ Single curly braces conflicted with inline CSS (`.class { color: red; }`) and in
 - **`{{name|upper}}`** — filter (replaces `{name|upper}`)
 - **`{{name|substr:0:1|upper}}`** — chained filters with params (unchanged behaviour, new delimiter)
 
-##### New v1.3.0 syntax additions
+##### New v1.2.1 syntax additions
 
 - **`{!! variable !!}`** — Raw / unescaped HTML output (Laravel Blade parity). Use for trusted rich-text content only.
 - **`{# comment #}`** — Template comments stripped entirely from output (Twig parity). Supports multi-line.
@@ -51,7 +51,7 @@ Single curly braces conflicted with inline CSS (`.class { color: red; }`) and in
 </script>
 ```
 
-##### Migration from v1.2.x
+##### Migration from v1.2.0
 
 | Old | New |
 | --- | --- |
@@ -69,7 +69,7 @@ Single curly braces conflicted with inline CSS (`.class { color: red; }`) and in
 
 #### Documentation
 
-- `docs/template-system.md` fully rewritten for v1.3.0 syntax with Twig/Blade comparison table, migration guide, inline CSS/JS safety section, and troubleshooting
+- `docs/template-system.md` fully rewritten for v1.2.1 syntax with Twig/Blade comparison table, migration guide, inline CSS/JS safety section, and troubleshooting
 
 #### Tests
 

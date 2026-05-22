@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 /**
- * PHUSE FRAMEWORK — TEMPLATE SYSTEM EXAMPLES (v1.3.0)
+ * PHUSE FRAMEWORK — TEMPLATE SYSTEM EXAMPLES (v1.2.1)
  *
- * Demonstrates the double-brace {{variable}} syntax introduced in v1.3.0.
+ * Demonstrates the double-brace {{variable}} syntax introduced in v1.2.1.
  * Single { } are no longer parsed, so inline CSS and JavaScript are safe.
  *
  * Quick syntax reference:
@@ -299,7 +299,7 @@ function example_for_loop(): void
 // EXAMPLE 10 — Inline CSS & JavaScript Safety
 // ---------------------------------------------------------------------------
 /**
- * This is the primary motivation for the v1.3.0 syntax change.
+ * This is the primary motivation for the v1.2.1 syntax change.
  *
  * With the old {variable} syntax, CSS rules like  .btn { color: red; }
  * and JS objects like  var cfg = { debug: true };  would confuse the parser.
@@ -427,7 +427,7 @@ function example_error_handling(): void
 // Run all examples from CLI
 // ---------------------------------------------------------------------------
 if (php_sapi_name() === 'cli') {
-    echo "\nPHUSE Template System Examples — v1.3.0\n";
+    echo "\nPHUSE Template System Examples — v1.2.1\n";
     echo str_repeat('=', 50) . "\n\n";
 
     example_basic_variables();

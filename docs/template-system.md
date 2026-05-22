@@ -1,6 +1,6 @@
 # PHUSE Template System
 
-> **v1.3.0** — Syntax overhauled to double-brace `{{variable}}` — see [Migration from v1.2.x](#migration-from-v12x) if upgrading.
+> **v1.2.1** — Syntax overhauled to double-brace `{{variable}}` — see [Migration from v1.2.0](#migration-from-v120) if upgrading.
 
 The PHUSE template engine is a fast, zero-dependency engine with a syntax that is immediately familiar to **Twig** and **Laravel Blade** users.  Single curly braces `{ }` are **never** parsed, so inline CSS rules and JavaScript code pass through the template completely unchanged.
 
@@ -23,7 +23,7 @@ The PHUSE template engine is a fast, zero-dependency engine with a syntax that i
 13. [Caching](#caching)
 14. [Controller Integration](#controller-integration)
 15. [Configuration](#configuration)
-16. [Migration from v1.2.x](#migration-from-v12x)
+16. [Migration from v1.2.0](#migration-from-v120)
 17. [Troubleshooting](#troubleshooting)
 
 ---
@@ -66,7 +66,7 @@ var config = { debug: true, version: "1.0" };
 if (x) { doSomething(); }
 ```
 
-### The PHUSE v1.3.0 Solution
+### The PHUSE v1.2.1 Solution
 
 By switching to `{{variable}}` (double braces), **only `{{ }}` triggers parsing**. Single `{ }` are completely ignored:
 
@@ -386,7 +386,7 @@ Use `{% for var in start..end %}` for integer ranges:
 
 ## Inline CSS & JavaScript Safety
 
-This is the core improvement of v1.3.0. With double-brace syntax, **all CSS and JavaScript is completely safe**:
+This is the core improvement of v1.2.1. With double-brace syntax, **all CSS and JavaScript is completely safe**:
 
 ### Inline `<style>` Block
 
@@ -562,11 +562,11 @@ class Template
 
 ---
 
-## Migration from v1.2.x
+## Migration from v1.2.0
 
-The only **breaking change** in v1.3.0 is the variable delimiter.
+The only **breaking change** in v1.2.1 is the variable delimiter.
 
-| Old syntax (v1.2.x) | New syntax (v1.3.0) |
+| Old syntax (v1.2.0) | New syntax (v1.2.1) |
 | --- | --- |
 | `{variable}` | `{{variable}}` |
 | `{user.name}` | `{{user.name}}` |

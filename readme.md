@@ -100,7 +100,7 @@ Phuse provides comprehensive documentation for all features:
 - **[Upload Utilities](docs/upload-utilities.md)**: Secure file upload system with validation and XSS protection
 - **[Cache System](docs/cache-system.md)**: Enhanced caching with multiple drivers
 - **[Database Caching](docs/database-caching.md)**: Query result caching
-- **[Template System](docs/template-system.md)**: Twig/Blade-inspired template engine — `{{variable}}` double-brace syntax, inline CSS/JS safety, filters, `{# comments #}`, `{!! raw !!}` output, conditionals, loops, and caching (v1.3.0)
+- **[Template System](docs/template-system.md)**: Twig/Blade-inspired template engine — `{{variable}}` double-brace syntax, inline CSS/JS safety, filters, `{# comments #}`, `{!! raw !!}` output, conditionals, loops, and caching (v1.2.1)
 - **[Template Caching](docs/template-caching.md)**: Template compilation caching
 - **[CSRF Protection](docs/csrf-protection.md)**: Cross-site request forgery protection
 - **[HTTP Components](docs/http-components.md)**: Comprehensive HTTP utilities including Client, Input, Request, Response, Session, URI, and CSRF protection
@@ -130,7 +130,7 @@ Phuse is an open-source project, and you are welcome to contribute to its develo
 
 ## Latest Changes
 
-### v1.3.0 (2026-05-22)
+### v1.2.1 (2026-05-22)
 
 #### Template System — Double-Brace Syntax Overhaul
 
@@ -311,7 +311,7 @@ The framework automatically detects the deployment type and adjusts:
 - Consistent forward slashes for URLs across platforms
 - No manual configuration required
 
-### Template System (v1.3.0)
+### Template System (v1.2.1)
 
 PHUSE uses a **Twig/Blade-inspired** double-brace syntax. Single `{ }` are never parsed, so inline CSS and JavaScript are completely safe inside templates.
 

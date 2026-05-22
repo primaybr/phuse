@@ -334,7 +334,7 @@ class Examples extends Controller
     }
 
     /**
-     * Inline CSS & JS safety demo — v1.3.0 feature
+     * Inline CSS & JS safety demo — v1.2.1 feature
      * Shows that single { } in CSS/JS pass through unchanged while {{variables}} are injected.
      *
      * @return void
@@ -348,7 +348,7 @@ class Examples extends Controller
             'textColor'    => '#f8fafc',
             'bgColor'      => '#1e293b',
             'siteName'     => 'PHUSE Framework',
-            'version'      => '1.3.0',
+            'version'      => '1.2.1',
             'apiUrl'       => '/api/v1',
             'userId'       => 42,
             'year'         => date('Y'),

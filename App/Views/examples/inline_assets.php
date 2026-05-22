@@ -44,7 +44,7 @@
         <div class="text-center mb-2">
           <h1 class="display-5 fw-bold">
             Inline CSS &amp; JavaScript Safety
-            <span class="tag-new ms-2">v1.3.0</span>
+            <span class="tag-new ms-2">v1.2.1</span>
           </h1>
           <p class="lead mb-0">
             Single <code style="background:rgba(255,255,255,0.2);padding:1px 4px;border-radius:3px;">{ }</code>
@@ -81,14 +81,14 @@ if (condition) { doSomething(); }</div>
         {{# Section 2 — the solution with double braces                         #}}
         {{# ------------------------------------------------------------------ #}}
         <div class="demo-box">
-          <h5>✅ The Solution (PHUSE v1.3.0 Double-Brace Syntax)</h5>
+          <h5>✅ The Solution (PHUSE v1.2.1 Double-Brace Syntax)</h5>
           <p class="text-secondary mb-3">
             PHUSE now uses <code>{{variable}}</code> (double braces) just like
             <strong>Twig</strong> and <strong>Laravel Blade</strong>.
             Only <code>{{ }}</code> triggers variable substitution — single
             <code>{ }</code> pass through completely unchanged.
           </p>
-          <div class="code-block">/* ✅ PHUSE v1.3.0 — CSS is 100% safe */
+          <div class="code-block">/* ✅ PHUSE v1.2.1 — CSS is 100% safe */
 .button {
   background-color: #007bff;
   color: white;
@@ -183,10 +183,10 @@ var userName  = "{{userName}}";</div>
         </div>
 
         {{# ------------------------------------------------------------------ #}}
-        {{# Section 5 — new v1.3.0 syntax features                              #}}
+        {{# Section 5 — new v1.2.1 syntax features                              #}}
         {{# ------------------------------------------------------------------ #}}
         <div class="demo-box">
-          <h5>✨ New v1.3.0 Syntax Features</h5>
+          <h5>✨ New v1.2.1 Syntax Features</h5>
           <div class="row g-3">
 
             <div class="col-md-6">
@@ -232,7 +232,7 @@ var userName  = "{{userName}}";</div>
 
         <div class="alert alert-success mt-4">
           <strong>Summary:</strong> By switching from <code>{var}</code> to <code>{{var}}</code>,
-          PHUSE v1.3.0 eliminates all CSS/JS conflicts while staying familiar to
+          PHUSE v1.2.1 eliminates all CSS/JS conflicts while staying familiar to
           <strong>Twig</strong> and <strong>Laravel Blade</strong> developers.
         </div>
 

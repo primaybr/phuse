@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Core\Template;
 
 /**
- * ParserTrait — PHUSE Template Engine v1.3.0
+ * ParserTrait — PHUSE Template Engine v1.2.1
  *
  * Syntax overview (familiar to Twig & Laravel Blade users):
  *
@@ -74,7 +74,7 @@ trait ParserTrait
     }
 
     // -----------------------------------------------------------------------
-    // New v1.3.0 syntax helpers
+    // New v1.2.1 syntax helpers
     // -----------------------------------------------------------------------
 
     /**
