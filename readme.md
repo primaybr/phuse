@@ -100,7 +100,7 @@ Phuse provides comprehensive documentation for all features:
 - **[Upload Utilities](docs/upload-utilities.md)**: Secure file upload system with validation and XSS protection
 - **[Cache System](docs/cache-system.md)**: Enhanced caching with multiple drivers
 - **[Database Caching](docs/database-caching.md)**: Query result caching
-- **[Template System](docs/template-system.md)**: Powerful template engine with caching, conditionals, loops, filters, and security features
+- **[Template System](docs/template-system.md)**: Twig/Blade-inspired template engine — `{{variable}}` double-brace syntax, inline CSS/JS safety, filters, `{# comments #}`, `{!! raw !!}` output, conditionals, loops, and caching (v1.3.0)
 - **[Template Caching](docs/template-caching.md)**: Template compilation caching
 - **[CSRF Protection](docs/csrf-protection.md)**: Cross-site request forgery protection
 - **[HTTP Components](docs/http-components.md)**: Comprehensive HTTP utilities including Client, Input, Request, Response, Session, URI, and CSRF protection
@@ -129,6 +129,18 @@ If you have any questions, issues, or feedback regarding Phuse, you can contact 
 Phuse is an open-source project, and you are welcome to contribute to its development. You can fork the repository, make your changes, and submit a pull request. Please follow the coding standards and guidelines before submitting your code.
 
 ## Latest Changes
+
+### v1.3.0 (2026-05-22)
+
+#### Template System — Double-Brace Syntax Overhaul
+
+- **`{{variable}}` syntax** (was `{variable}`) — matches Twig and Laravel Blade, eliminating all conflicts with inline CSS rules (`.class { }`) and JavaScript objects (`var x = { }`)
+- **`{!! raw !!}`** — unescaped HTML output for trusted rich-text content (Blade parity)
+- **`{# comment #}`** — template comments stripped entirely from output (Twig parity)
+- **`@{{variable}}`** — escaped output tag, renders as literal `{{variable}}` (Blade parity)
+- All existing `{% if %}`, `{% foreach %}`, `{% for %}` control-flow tags are **unchanged**
+- New example page at `/examples/inline-assets` demonstrating CSS/JS safety
+- Full documentation rewrite in `docs/template-system.md`
 
 ### v1.2.0a (2026-05-18)
 - **`Request::extractResponseCode()` Scope Fix**: `$http_response_header` was accessed outside the scope where `fopen()` sets it, so HTTP response codes were always `200` — breaking 401 detection, token refresh, and CMS expiry checks
@@ -299,20 +311,44 @@ The framework automatically detects the deployment type and adjusts:
 - Consistent forward slashes for URLs across platforms
 - No manual configuration required
 
-### Template System Examples
-The Phuse framework includes comprehensive template system examples that demonstrate all features:
+### Template System (v1.3.0)
 
-**Interactive Examples:**
-- **Basic Templates**: Variable replacement and simple rendering
-- **Conditional Logic**: If/else statements and dynamic content
-- **Loops**: Foreach and for loop constructs
-- **Nested Data**: Complex data structure access
-- **Caching**: Performance optimization techniques
-- **Error Handling**: Robust error management
+PHUSE uses a **Twig/Blade-inspired** double-brace syntax. Single `{ }` are never parsed, so inline CSS and JavaScript are completely safe inside templates.
 
-**Access Examples:**
-- Visit `/examples` for the complete examples index
-- Individual examples: `/examples/basic`, `/examples/conditional`, etc.
-- **Documentation**: See `docs/template-system.md` for comprehensive guide
+```html
+{{# comment — stripped from output #}}
+<style>
+  .btn { color: red; }          /* single { } untouched */
+  .hero { background: {{bg}}; } /* {{var}} still works  */
+</style>
+
+<h1>{{title}}</h1>
+
+{% if logged_in %}
+  Welcome, {{user.name|capitalize}}!
+{% else %}
+  Please <a href="/login">login</a>.
+{% endif %}
+
+<script>
+  var cfg = { debug: false };   /* plain JS — safe */
+  var api = "{{apiUrl}}";       /* dynamic value    */
+</script>
+```
+
+**Interactive examples** — visit these URLs in the browser:
+
+| URL | Description |
+| --- | --- |
+| `/examples` | Example index |
+| `/examples/basic` | Variable replacement |
+| `/examples/conditional` | If/else logic |
+| `/examples/foreach` | Array iteration |
+| `/examples/nested` | Nested data access |
+| `/examples/inline-assets` | **Inline CSS/JS safety demo** ✨ |
+| `/examples/dashboard` | Admin dashboard |
+| `/examples/product` | E-commerce page |
+
+📖 Full documentation: [`docs/template-system.md`](docs/template-system.md)
 
 Thank you for using Phuse, and happy coding! 😊

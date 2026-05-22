@@ -1,182 +1,339 @@
-# Template System in Phuse
+# PHUSE Template System
 
-The Phuse framework provides a powerful and flexible template system that allows you to separate your application logic from presentation. The template system supports variable replacement, conditional statements, loops, caching, and more.
+> **v1.3.0** — Syntax overhauled to double-brace `{{variable}}` — see [Migration from v1.2.x](#migration-from-v12x) if upgrading.
 
-## Overview
+The PHUSE template engine is a fast, zero-dependency engine with a syntax that is immediately familiar to **Twig** and **Laravel Blade** users.  Single curly braces `{ }` are **never** parsed, so inline CSS rules and JavaScript code pass through the template completely unchanged.
 
-The template system consists of several key components:
+---
 
-- **Parser Class** (`Core/Template/Parser.php`) - Main template rendering engine
-- **ParserInterface** (`Core/Template/ParserInterface.php`) - Defines the contract for template operations
-- **ParserTrait** (`Core/Template/ParserTrait.php`) - Contains template parsing logic
-- **TemplateCache** (`Core/Cache/TemplateCache.php`) - Handles template caching
-- **Configuration** (`Config/Template.php`) - Template system settings
+## Table of Contents
 
-## Basic Usage
+1. [Quick Reference](#quick-reference)
+2. [Why Double Braces?](#why-double-braces)
+3. [Variable Output](#variable-output)
+4. [Nested / Dot-Notation Access](#nested--dot-notation-access)
+5. [Filters](#filters)
+6. [Raw HTML Output](#raw-html-output)
+7. [Template Comments](#template-comments)
+8. [Escaped Output Tag](#escaped-output-tag)
+9. [Conditional Statements](#conditional-statements)
+10. [Foreach Loops](#foreach-loops)
+11. [Numeric For Loops](#numeric-for-loops)
+12. [Inline CSS & JavaScript Safety](#inline-css--javascript-safety)
+13. [Caching](#caching)
+14. [Controller Integration](#controller-integration)
+15. [Configuration](#configuration)
+16. [Migration from v1.2.x](#migration-from-v12x)
+17. [Troubleshooting](#troubleshooting)
 
-### Setting Up Templates
+---
 
-```php
-// In your controller
-$this->template->setTemplate('welcome'); // Loads App/Views/welcome.php
-$data = ['name' => 'John Doe', 'title' => 'Welcome'];
-$this->template->setData($data);
-$output = $this->template->render('', [], true); // Return as string
+## Quick Reference
+
+| Syntax | Description |
+| --- | --- |
+| `{{variable}}` | Output a variable |
+| `{{user.profile.age}}` | Dot-notation nested access |
+| `{{name\|upper}}` | Apply a filter |
+| `{{name\|substr:0:1\|upper}}` | Chained filters with params |
+| `{!! htmlContent !!}` | Raw / unescaped HTML output |
+| `{# comment #}` | Template comment (stripped) |
+| `@{{variable}}` | Escaped — outputs literal `{{variable}}` |
+| `{% if condition %}…{% endif %}` | Conditional block |
+| `{% if … %}…{% else %}…{% endif %}` | If / else |
+| `{% foreach items as item %}…{% endforeach %}` | Loop over array |
+| `{% for i in 1..10 %}…{% endfor %}` | Numeric range loop |
+
+---
+
+## Why Double Braces?
+
+### The Problem with Single Braces
+
+The old `{variable}` syntax (single curly braces) conflicted with CSS and JavaScript because both languages use `{ }` extensively:
+
+```css
+/* ❌ OLD — single-brace parser could corrupt this */
+.button {
+  background-color: #007bff;
+  color: white;
+}
 ```
 
-### Method Chaining
-
-The template system supports method chaining for cleaner code:
-
-```php
-$output = $this->template
-    ->setTemplate('user/profile')
-    ->setData([
-        'user' => $userData,
-        'posts' => $userPosts
-    ])
-    ->render('', [], true);
+```javascript
+// ❌ OLD — also affected inline JS objects
+var config = { debug: true, version: "1.0" };
+if (x) { doSomething(); }
 ```
 
-## Template Syntax
+### The PHUSE v1.3.0 Solution
 
-### Variable Replacement
+By switching to `{{variable}}` (double braces), **only `{{ }}` triggers parsing**. Single `{ }` are completely ignored:
 
-Use double curly braces to output variables:
+```css
+/* ✅ NEW — CSS is 100% safe inside templates */
+.button {
+  background-color: #007bff;
+  color: {{primaryColor}};   /* dynamic value still works */
+}
+```
 
-```php
-<!-- Template file -->
-<h1>Hello {name}!</h1>
-<p>Your age is {age} years old.</p>
-<p>You live in {city}.</p>
+```javascript
+// ✅ NEW — JS objects and control flow are completely safe
+var config = { debug: true };
+if (x) { doSomething(); }
+
+// Dynamic values from PHP still work:
+var apiUrl = "{{apiUrl}}";
+var userId = {{userId}};
+```
+
+This matches the syntax used by **Twig** (`{{ var }}`) and **Laravel Blade** (`{{ $var }}`), so developers coming from either framework need minimal re-learning.
+
+---
+
+## Variable Output
+
+Use double curly braces to output any scalar variable passed from PHP:
+
+```html
+<!-- Template (App/Views/user/profile.php) -->
+<h1>Hello, {{name}}!</h1>
+<p>Age: {{age}}</p>
+<p>City: {{city}}</p>
 ```
 
 ```php
-// PHP code
-$data = [
+// Controller
+$this->render('user/profile', [
     'name' => 'Jane Doe',
-    'age' => 28,
-    'city' => 'New York'
-];
-$this->template->render('user/profile', $data, true);
+    'age'  => 28,
+    'city' => 'New York',
+]);
 ```
 
-### Filters
+**Output:**
 
-Apply filters to variables using the pipe syntax:
+```html
+<h1>Hello, Jane Doe!</h1>
+<p>Age: 28</p>
+<p>City: New York</p>
+```
+
+---
+
+## Nested / Dot-Notation Access
+
+Access nested arrays and objects with dot notation — works to any depth:
+
+```html
+<p>{{user.name}}</p>
+<p>{{user.profile.city}}</p>
+<p>{{user.address.geo.lat}}</p>
+```
 
 ```php
-<!-- Template file -->
-<h1>{title|upper}</h1>
-<p>Length: {items|length}</p>
-<p>Rating: {product.rating|round} stars</p>
-<p>Name: {name|capitalize}</p>
+$data = [
+    'user' => [
+        'name'    => 'Alice',
+        'profile' => ['city' => 'Jakarta'],
+        'address' => ['geo' => ['lat' => -6.2]],
+    ],
+];
 ```
 
-#### Available filters
+Works with **arrays**, **objects**, and any combination of the two via `get*()` accessor methods.
+
+---
+
+## Filters
+
+Apply transformations with the pipe operator — identical to Twig syntax:
+
+```html
+{{name|upper}}               <!-- ALICE -->
+{{name|lower}}               <!-- alice -->
+{{name|capitalize}}          <!-- Alice Johnson -->
+{{name|trim}}                <!-- removes surrounding whitespace -->
+{{name|substr:0:3}}          <!-- Ali  (start=0, length=3) -->
+{{name|substr:0:1|upper}}    <!-- A    (chained) -->
+{{items|length}}             <!-- 4    (count array items) -->
+{{items|count}}              <!-- 4    (alias for length) -->
+{{rating|round}}             <!-- 4    -->
+{{rating|stars}}             <!-- ★★★★☆ -->
+{{date|date:'Y-m-d'}}        <!-- 2024-01-15 -->
+{{date|date:'F j, Y'}}       <!-- January 15, 2024 -->
+{{date|date:'M d, Y'|upper}} <!-- JAN 15, 2024 (chained) -->
+```
+
+### Available Filters
 
 | Filter | Description | Example |
-|---|---|---|
-| `length` / `count` | Array length or string character count | `{items\|length}` |
-| `upper` / `uppercase` | Convert to uppercase | `{name\|upper}` |
-| `lower` / `lowercase` | Convert to lowercase | `{name\|lower}` |
-| `capitalize` | Capitalize first letter of each word | `{name\|capitalize}` |
-| `trim` | Remove surrounding whitespace | `{value\|trim}` |
-| `title` | Convert to title case | `{title\|title}` |
-| `round` | Round to nearest integer | `{rating\|round}` |
-| `stars` | Convert numeric rating to star symbols (★☆) | `{score\|stars}` |
-| `substr` | Extract substring — `substr:start` or `substr:start:length` | `{name\|substr:0:1}` |
-| `date` | Format a date string or Unix timestamp | `{created_at\|date:'M d, Y'}` |
+| --- | --- | --- |
+| `upper` / `uppercase` | Convert to uppercase | `{{name\|upper}}` |
+| `lower` / `lowercase` | Convert to lowercase | `{{name\|lower}}` |
+| `capitalize` / `title` | Title-case each word | `{{name\|capitalize}}` |
+| `trim` | Remove leading/trailing whitespace | `{{value\|trim}}` |
+| `substr:start` | Substring from start | `{{text\|substr:5}}` |
+| `substr:start:length` | Substring with length | `{{text\|substr:0:50}}` |
+| `length` / `count` | Count array items | `{{items\|length}}` |
+| `round` | Round to nearest integer | `{{rating\|round}}` |
+| `stars` | Rating to star symbols ★☆ | `{{score\|stars}}` |
+| `date:'format'` | Format date string or Unix timestamp | `{{date\|date:'Y-m-d'}}` |
 
-#### Filter chaining (v1.2.0)
+### Filter Chaining
 
-Filters can be chained with `|` — they are applied left to right:
+Filters are applied left to right:
 
-```php
-<!-- Get first letter of name, uppercased -->
-{name|substr:0:1|upper}
+```html
+<!-- First letter, uppercased -->
+{{name|substr:0:1|upper}}
 
-<!-- Trim whitespace then capitalize -->
-{title|trim|capitalize}
+<!-- Trim whitespace, then title-case -->
+{{title|trim|capitalize}}
+
+<!-- Format date and uppercase the result -->
+{{event_date|date:'M d, Y'|upper}}
 ```
 
-#### Parameterized filters (v1.2.0)
+---
 
-Pass colon-delimited arguments after the filter name. Quoted strings (single or double) preserve spaces and commas:
+## Raw HTML Output
 
-```php
-<!-- Substring: start 0, length 50 -->
-{description|substr:0:50}
+Use `{!! variable !!}` to output **unescaped HTML**. This is identical to Laravel Blade's `{!! !!}` syntax.
 
-<!-- Date format with spaces and commas inside quotes -->
-{created_at|date:'F j, Y'}
-{updated_at|date:'Y-m-d H:i'}
-
-<!-- Chained: format date then uppercase -->
-{event_date|date:'M d, Y'|upper}
+```html
+<!-- ⚠️ Only use for trusted content stored in your database -->
+<div class="article-body">
+    {!! article.body !!}
+</div>
 ```
 
 ```php
-// PHP code
 $data = [
-    'title' => 'welcome to our site',
-    'items' => ['item1', 'item2', 'item3'],
-    'product' => ['rating' => 4.7],
-    'name' => 'john doe',
-    'created_at' => '2024-12-25 09:00:00'
+    'article' => [
+        'body' => '<p>This is <strong>rich text</strong> stored in the DB.</p>',
+    ],
 ];
-// Outputs: "WELCOME TO OUR SITE", "3", "5 stars", "John Doe", "December 25, 2024"
 ```
 
-### Conditional Statements
+> **Security note**: Never pass untrusted user input through `{!! !!}`. Use `{{variable}}` for user-supplied content.
 
-Use `{% if %}...{% endif %}` for conditional logic. Supports boolean variables, comparisons, and the `not` keyword.
+---
 
-The conditional parser supports **proper nesting** (v1.2.0) — inner `{% if %}` blocks no longer break the outer block.
+## Template Comments
+
+Comments are stripped entirely at parse time — they do **not** appear in the rendered HTML, not even as `<!-- HTML comments -->`:
+
+```html
+{# This section needs updating — ticket #123 #}
+<h1>{{title}}</h1>
+
+{# TODO: add breadcrumb navigation here #}
+<p>{{description}}</p>
+```
+
+Multi-line comments are supported:
+
+```html
+{#
+  This entire block is invisible in the final HTML.
+  Great for developer notes and TODO items.
+#}
+```
+
+---
+
+## Escaped Output Tag
+
+Use `@{{variable}}` to output the **literal text** `{{variable}}` — useful when writing template documentation inside a template itself:
+
+```html
+<!-- Blade-style escaping -->
+<p>To output a name, write: @{{name}}</p>
+<p>Your name is: {{name}}</p>
+```
 
 ```php
-<!-- Template file -->
+$data = ['name' => 'Alice'];
+```
+
+**Output:**
+
+```html
+<p>To output a name, write: {{name}}</p>
+<p>Your name is: Alice</p>
+```
+
+---
+
+## Conditional Statements
+
+Use `{% if %}…{% endif %}` — identical to Twig's control flow tags:
+
+```html
 {% if logged_in %}
-    <p>Welcome back, {username}!</p>
+    <p>Welcome back, {{username}}!</p>
+{% else %}
+    <p>Please <a href="/login">login</a>.</p>
+{% endif %}
+```
+
+### Comparison Operators
+
+```html
+{% if user.role == 'admin' %}   Admin panel
+{% endif %}
+
+{% if age >= 18 %}              Adult content
+{% endif %}
+
+{% if not premium %}            Upgrade prompt
+{% endif %}
+
+{% if items|count > 0 %}        Items list
+{% endif %}
+```
+
+### Nested Conditionals
+
+Conditionals can be nested to any depth:
+
+```html
+{% if logged_in %}
+    Welcome, {{username}}!
     {% if user.role == 'admin' %}
-        <p>You have admin privileges.</p>
+        <a href="/admin">Admin Panel</a>
     {% endif %}
-    <a href="/logout">Logout</a>
 {% else %}
-    <p>Please <a href="/login">login</a> to continue.</p>
+    <a href="/login">Login</a>
 {% endif %}
 ```
 
-```php
-// PHP code
-$data = [
-    'logged_in' => true,
-    'username' => 'johndoe',
-    'user' => ['role' => 'admin']
-];
-```
+### Array Truthiness
 
-Array variables evaluate as truthy when non-empty, falsy when empty:
+An array variable evaluates as `true` when non-empty and `false` when empty:
 
-```php
-{% if items %}
-    <p>Found {items|count} items.</p>
+```html
+{% if notifications %}
+    <span class="badge">{{notifications|count}}</span>
 {% else %}
-    <p>No items found.</p>
+    No notifications.
 {% endif %}
 ```
 
-### Foreach Loops
+---
 
-Iterate over arrays with `{% foreach %}...{% endforeach %}`. Filters and `{% if/else/endif %}` blocks are fully supported inside loops (v1.2.0):
+## Foreach Loops
 
-```php
-<!-- Template file -->
-<h2>Your Posts:</h2>
+Iterate over arrays with `{% foreach … as … %}`:
+
+```html
 <ul>
 {% foreach posts as post %}
     <li>
-        {post.title|capitalize} — {post.created_at|date:'M d, Y'}
+        <strong>{{post.title|capitalize}}</strong>
+        — {{post.created_at|date:'M d, Y'}}
         {% if post.published %}
             <span class="badge">Published</span>
         {% else %}
@@ -188,282 +345,286 @@ Iterate over arrays with `{% foreach %}...{% endforeach %}`. Filters and `{% if/
 ```
 
 ```php
-// PHP code
 $data = [
     'posts' => [
-        ['title' => 'First Post', 'date' => '2023-01-01'],
-        ['title' => 'Second Post', 'date' => '2023-01-02']
-    ]
+        ['title' => 'first post', 'created_at' => '2024-01-01', 'published' => true],
+        ['title' => 'draft post', 'created_at' => '2024-01-10', 'published' => false],
+    ],
 ];
 ```
 
-### Nested Data Access
+### Nested Foreach
 
-Access nested array/object properties:
-
-```php
-<!-- Template file -->
+```html
 {% foreach users as user %}
     <div class="user">
-        <h3>{user.name}</h3>
-        <p>Age: {user.profile.age}</p>
-        <p>City: {user.profile.city}</p>
+        <h3>{{user.name}}</h3>
+        <ul>
+        {% foreach user.skills as skill %}
+            <li>{{skill}}</li>
+        {% endforeach %}
+        </ul>
     </div>
 {% endforeach %}
 ```
 
-```php
-// PHP code
-$data = [
-    'users' => [
-        [
-            'name' => 'John',
-            'profile' => ['age' => 30, 'city' => 'NYC']
-        ],
-        [
-            'name' => 'Jane',
-            'profile' => ['age' => 25, 'city' => 'LA']
-        ]
-    ]
-];
-```
+---
 
-### For Loops
+## Numeric For Loops
 
-Create numbered loops with `{% for %}...{% endfor %}`:
+Use `{% for var in start..end %}` for integer ranges:
 
-```php
-<!-- Template file -->
+```html
 <select name="year">
-{% for year in 2020..2025 %}
-    <option value="{year}">{year}</option>
+{% for year in 2020..2030 %}
+    <option value="{{year}}">{{year}}</option>
 {% endfor %}
 </select>
 ```
 
-## Advanced Features
+---
 
-### Template Caching
+## Inline CSS & JavaScript Safety
 
-Enable caching for better performance:
+This is the core improvement of v1.3.0. With double-brace syntax, **all CSS and JavaScript is completely safe**:
+
+### Inline `<style>` Block
+
+```html
+<style>
+    /* All CSS rules are safe — { } are never parsed */
+    .hero {
+        background: {{bgColor}};   /* dynamic value ✅ */
+        color: #fff;
+    }
+    .card {
+        border-radius: 0.5rem;
+        padding: 1rem;
+    }
+</style>
+```
+
+### Inline `<script>` Block
+
+Variables can be injected into `<script>` blocks using `{{variable}}`.  Plain JavaScript objects and control flow are completely safe:
+
+```html
+<script>
+    // Plain JS — completely safe ✅
+    var config = { debug: false, timeout: 5000 };
+
+    // PHP values injected via {{variable}} ✅
+    var apiUrl  = "{{apiUrl}}";
+    var userId  = {{userId}};
+    var appName = "{{appName}}";
+
+    // JavaScript control flow — safe ✅
+    if (config.debug) {
+        console.log("Debug mode on");
+    }
+
+    function handleResponse(data) {
+        if (data.ok) { processResult(data); }
+    }
+</script>
+```
+
+### Inline `style` Attribute
+
+Dynamic values work naturally in `style` attributes:
+
+```html
+<div style="background-color: {{themeColor}}; font-size: {{fontSize}}px;">
+    {{content}}
+</div>
+```
+
+### HTML Event Handlers
+
+```html
+<button onclick="handleClick({{item.id}}, '{{item.name}}')">
+    {{item.label}}
+</button>
+```
+
+---
+
+## Caching
+
+Enable caching for production performance:
 
 ```php
-// Enable caching (default: enabled)
+// Enable caching (default: enabled via Config/Template.php)
 $this->template->enableCache(true);
 
 // Clear cache manually
 $this->template->clearCache();
 
-// Force clear even in production
+// Force-clear even if auto-clear is disabled
 $this->template->clearCache(true);
 ```
 
-Configure caching in `Config/Template.php`:
+Configure in `Config/Template.php`:
 
 ```php
 class Template
 {
-    public bool $enableCache = true;           // Enable/disable caching
-    public int $cacheLifetime = 3600;         // Cache lifetime in seconds
-    public string $cacheDir = 'templates';     // Cache subdirectory
-    public bool $autoClearInDevelopment = true; // Auto-clear in dev mode
+    public bool $enableCache            = true;
+    public int  $cacheLifetime          = 3600;   // 1 hour
+    public string $cacheDir             = 'templates';
+    public bool $autoClearInDevelopment = false;
 }
 ```
 
-### Error Handling
+---
 
-The template system includes built-in error handling:
+## Controller Integration
 
-```php
-// This will render an error template and exit
-$this->template->exception('Something went wrong');
-
-// Custom error template
-$this->template->exception('Database error', 'error/database');
-```
-
-### Security Features
-
-The template system includes security measures:
-
-- **Safe Variable Extraction**: Only extracts variables with safe names (alphanumeric + underscore)
-- **Input Validation**: Validates template data types
-- **Error Isolation**: Prevents template errors from crashing the application
-
-## Configuration
-
-### Template Configuration
-
-Customize the template system in `Config/Template.php`:
+### Basic Usage
 
 ```php
-class Template
+class ArticleController extends Controller
 {
-    // Caching settings
-    public bool $enableCache = true;
-    public int $cacheLifetime = 3600;
-    public string $cacheDir = 'templates';
-    public bool $autoClearInDevelopment = true;
-
-    // Additional settings can be added here
-}
-```
-
-### Views Directory Structure
-
-Organize your templates in `App/Views/`:
-
-```
-App/Views/
-├── layouts/
-│   └── main.php          # Main layout template
-├── partials/
-│   └── header.php        # Reusable header partial
-├── pages/
-│   ├── home.php         # Home page template
-│   └── about.php        # About page template
-└── error/
-    └── default.php       # Default error template
-```
-
-## Best Practices
-
-### 1. Template Organization
-
-- Keep templates focused on presentation only
-- Use layouts for common HTML structure
-- Create partials for reusable components
-- Organize templates by feature/page
-
-### 2. Performance Optimization
-
-- Enable caching in production
-- Use appropriate cache lifetimes
-- Avoid complex logic in templates
-- Minimize database calls in templates
-
-### 3. Security Considerations
-
-- Never trust user data in templates
-- Validate all template variables
-- Use the built-in security features
-- Avoid executing user-controlled code
-
-### 4. Maintainability
-
-- Use consistent naming conventions
-- Comment complex template logic
-- Keep templates readable and well-structured
-- Use meaningful variable names
-
-## Integration with Controllers
-
-### Basic Controller Integration
-
-```php
-class UserController extends Controller
-{
-    public function profile($userId)
+    public function show(int $id): void
     {
-        $user = $this->model('User')->find($userId);
-        $posts = $this->model('Post')->getByUserId($userId);
+        $article = $this->model('Article')->find($id);
 
-        return $this->render('user/profile', [
-            'user' => $user,
-            'posts' => $posts,
-            'title' => 'User Profile'
+        $this->render('articles/show', [
+            'article' => $article,
+            'title'   => $article->title,
         ]);
     }
 }
 ```
 
-### Layout Integration
+### Method Chaining
 
 ```php
-// Controller
-$data = [
-    'title' => 'My Page',
-    'content' => $this->render('pages/content', $pageData, true)
-];
-
-return $this->render('layouts/main', $data);
+$html = $this->template
+    ->setTemplate('user/profile')
+    ->setData([
+        'user'  => $user,
+        'posts' => $userPosts,
+    ])
+    ->enableCache(false)
+    ->render('', [], true);   // true = return string
 ```
 
+### Layout Composition
+
 ```php
-<!-- Layout template (layouts/main.php) -->
+// Render inner content first
+$content = $this->template->render('pages/home', $pageData, true);
+
+// Inject into layout
+$this->template->render('layouts/main', [
+    'title'   => 'Home',
+    'content' => $content,
+]);
+```
+
+```html
+<!-- layouts/main.php -->
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{title}</title>
+    <title>{{title}}</title>
+    <link rel="stylesheet" href="{{assetsUrl}}css/styles.css">
 </head>
 <body>
-    <header><!-- Header content --></header>
-    <main>{content}</main>
-    <footer><!-- Footer content --></footer>
+    {!! content !!}
 </body>
 </html>
 ```
 
+---
+
+## Configuration
+
+### `Config/Template.php`
+
+```php
+class Template
+{
+    /** Enable compiled template caching */
+    public bool $enableCache = true;
+
+    /** Cache lifetime in seconds (default: 1 hour) */
+    public int $cacheLifetime = 3600;
+
+    /** Cache subdirectory inside Cache/ */
+    public string $cacheDir = 'templates';
+
+    /** Auto-clear cache in development mode */
+    public bool $autoClearInDevelopment = false;
+}
+```
+
+---
+
+## Migration from v1.2.x
+
+The only **breaking change** in v1.3.0 is the variable delimiter.
+
+| Old syntax (v1.2.x) | New syntax (v1.3.0) |
+| --- | --- |
+| `{variable}` | `{{variable}}` |
+| `{user.name}` | `{{user.name}}` |
+| `{name\|upper}` | `{{name\|upper}}` |
+| `{items}…{/items}` (block loop) | `{{items}}…{{/items}}` |
+| `{% if %}` | unchanged ✅ |
+| `{% foreach %}` | unchanged ✅ |
+| `{% for %}` | unchanged ✅ |
+
+### Migration Steps
+
+1. **Find and replace** in all template files (`App/Views/**/*.php`):
+   - Replace `{(` with `{{(` — careful not to double-replace
+   - A safe approach: `sed -i 's/{\([a-zA-Z_][^}]*\)}/{{​\1}}/g' *.php`
+
+2. **Verify** control flow tags (`{% if %}`, `{% foreach %}`, `{% for %}`) — these are unchanged.
+
+3. **Clear the template cache** after deploying:
+
+   ```php
+   $this->template->clearCache(true);
+   ```
+
+### Backward Compatibility
+
+The `{% %}` control flow tags are **unchanged** and fully backward-compatible.
+
+---
+
 ## Troubleshooting
 
-### Common Issues
+### Variable not replaced
 
-1. **Template not found**: Check file path and extension (.php required)
-2. **Variables not displaying**: Ensure variable names match exactly
-3. **Syntax errors in templates**: Check template syntax carefully
-4. **Caching issues**: Clear cache or disable temporarily for debugging
+- Check that the variable name in `{{variable}}` exactly matches the key passed in the data array.
+- Nested access requires the full dot path: `{{user.profile.name}}`, not `{{profile.name}}`.
+- Use `{# debug: data = … #}` comments during development to annotate expected values.
 
-### Debug Mode
+### Inline style / script looks wrong
 
-Enable debug mode to see template errors:
+- Variables inside `<style>` blocks can only be used in **property values**, not in selectors.
+- Variables inside `<script>` blocks are resolved when the block is restored after parsing. Use `{{variable}}` (double braces) — not `{variable}`.
 
-```php
-// In development
-$this->template->enableCache(false); // Disable caching for debugging
-```
-
-### Logging
-
-The template system logs errors and warnings:
+### Cache stale after template change
 
 ```php
-// Errors are logged automatically
-// Check your logs directory for template-related errors
+$this->template->clearCache(true);  // force-clear
 ```
 
-## Examples
+Or disable caching during development:
 
-### Web-Accessible Examples
+```php
+$this->template->enableCache(false);
+```
 
-Visit the following URLs to see interactive template examples:
+### Literal `{{` in output
 
-- **Examples Index**: `/examples` - Overview of all available examples
-- **Basic Template**: `/examples/basic` - Simple variable replacement
-- **Conditional Logic**: `/examples/conditional` - If/else statements
-- **Foreach Loops**: `/examples/foreach` - Array iteration
-- **Nested Data**: `/examples/nested` - Accessing nested properties
-- **Blog Post**: `/examples/blog` - Complex multi-feature template
-- **Dashboard**: `/examples/dashboard` - Advanced features showcase
-- **Product Page**: `/examples/product` - E-commerce template example
+Use the escaped tag syntax:
 
-### Code Examples
-
-See `examples/template_examples.php` for comprehensive usage examples including:
-
-- Basic template rendering
-- Advanced conditional logic
-- Complex nested loops
-- Caching strategies
-- Error handling
-- Performance optimization
-
-## Migration from Older Versions
-
-If upgrading from an older version of Phuse:
-
-1. **Template syntax** remains the same - no changes needed
-2. **Caching** is now enabled by default - adjust `Config/Template.php` if needed
-3. **Error handling** is more robust - existing error templates will continue to work
-4. **Performance** improvements are automatic
-
-The template system is designed to be backward compatible while providing enhanced features and better performance.
+```html
+@{{variable}}  →  renders as  {{variable}}
+```

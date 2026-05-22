@@ -332,4 +332,28 @@ class Examples extends Controller
 
         $this->render('examples/components', $data);
     }
+
+    /**
+     * Inline CSS & JS safety demo — v1.3.0 feature
+     * Shows that single { } in CSS/JS pass through unchanged while {{variables}} are injected.
+     *
+     * @return void
+     */
+    public function inlineAssets(): void
+    {
+        $data = [
+            'title'        => 'Inline CSS & JS Safety Demo',
+            'description'  => 'Demonstrates that {{ }} double-brace syntax leaves inline CSS and JS completely safe.',
+            'primaryColor' => '#0d6efd',
+            'textColor'    => '#f8fafc',
+            'bgColor'      => '#1e293b',
+            'siteName'     => 'PHUSE Framework',
+            'version'      => '1.3.0',
+            'apiUrl'       => '/api/v1',
+            'userId'       => 42,
+            'year'         => date('Y'),
+        ];
+
+        $this->render('examples/inline_assets', $data);
+    }
 }

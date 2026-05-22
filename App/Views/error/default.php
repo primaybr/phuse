@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <title>Oops! Something is not right</title>
-  <link rel="stylesheet" href="{assetsUrl}css/styles.css">
+  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css">
 </head>
 
 <body class="d-flex align-items-center justify-content-center min-vh-100">
@@ -14,7 +14,7 @@
       <div class="error-details">
         <p>
           Sorry, an error has occurred:<br/>
-          {message}
+          {{message}}
         </p>
       </div>
       <a href="#" onclick="history.back()" class="btn btn-outline-primary">Go Back</a>

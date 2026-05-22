@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dashboard Example - Phuse Template System</title>
-  <link rel="stylesheet" href="{assetsUrl}css/styles.css">
+  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css">
 </head>
 
 <body>
@@ -21,10 +21,10 @@
         <div class="card border-danger p-3 mb-4">
           <h6 class="mb-3">🎯 Advanced Features Demonstrated:</h6>
           <ul class="mb-0 text-secondary">
-            <li><code class="highlight">&lbrace;stats.total_users&rbrace;</code> - Nested object access</li>
-            <li><code class="highlight">&lbrace;% foreach recent_activity as activity %&rbrace;</code> - Complex data iteration</li>
-            <li><code class="highlight">&lbrace;notification.type&rbrace;</code> - Conditional styling with dynamic classes</li>
-            <li><code class="highlight">&lbrace;user.role&rbrace;</code> - Role-based content display</li>
+            <li><code>{{stats.total_users}}</code> — Nested object access</li>
+            <li><code>{% foreach recent_activity as activity %}</code> — Complex data iteration</li>
+            <li><code>{{notification.type}}</code> — Conditional styling with dynamic classes</li>
+            <li><code>{{user.role}}</code> — Role-based content display</li>
           </ul>
         </div>
 
@@ -32,7 +32,7 @@
           <div class="col">
             <div class="card text-center p-4 border-primary">
               <div class="text-primary small fw-bold mb-2">System Statistics</div>
-              <div class="h2 text-primary mb-1">{stats.total_users}</div>
+              <div class="h2 text-primary mb-1">{{stats.total_users}}</div>
               <div class="text-muted small">Total Users</div>
             </div>
           </div>
@@ -40,7 +40,7 @@
           <div class="col">
             <div class="card text-center p-4 border-primary">
               <div class="text-primary small fw-bold mb-2">Active Sessions</div>
-              <div class="h2 text-primary mb-1">{stats.active_sessions}</div>
+              <div class="h2 text-primary mb-1">{{stats.active_sessions}}</div>
               <div class="text-muted small">Currently Online</div>
             </div>
           </div>
@@ -48,7 +48,7 @@
           <div class="col">
             <div class="card text-center p-4 border-primary">
               <div class="text-primary small fw-bold mb-2">Pending Orders</div>
-              <div class="h2 text-primary mb-1">{stats.pending_orders}</div>
+              <div class="h2 text-primary mb-1">{{stats.pending_orders}}</div>
               <div class="text-muted small">Awaiting Processing</div>
             </div>
           </div>
@@ -56,8 +56,8 @@
           <div class="col">
             <div class="card text-center p-4 border-primary">
               <div class="text-primary small fw-bold mb-2">User Profile</div>
-              <div class="h2 text-primary mb-1">{user.name}</div>
-              <div class="text-muted small">{user.role|title} Account</div>
+              <div class="h2 text-primary mb-1">{{user.name}}</div>
+              <div class="text-muted small">{{user.role|title}} Account</div>
             </div>
           </div>
         </div>
@@ -66,8 +66,8 @@
           <h6 class="text-primary mb-3">📋 Recent Activity</h6>
           {% foreach recent_activity as activity %}
           <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
-            <span class="text-primary fw-bold">{activity.action}</span>
-            <span class="text-info small">{activity.time}</span>
+            <span class="text-primary fw-bold">{{activity.action}}</span>
+            <span class="text-info small">{{activity.time}}</span>
           </div>
           {% endforeach %}
         </div>
@@ -79,7 +79,7 @@
             <span class="me-3">
               {% if notification.type == 'warning' %}⚠️{% elseif notification.type == 'error' %}❌{% else %}ℹ️{% endif %}
             </span>
-            <span class="text-secondary">{notification.message}</span>
+            <span class="text-secondary">{{notification.message}}</span>
           </div>
           {% endforeach %}
         </div>
@@ -90,7 +90,7 @@
       </div>
 
       <div class="card-footer text-center text-secondary py-3">
-        <p class="mb-0">Phuse Framework Template System &copy; {year}</p>
+        <p class="mb-0">Phuse Framework Template System &copy; {{year}}</p>
       </div>
     </div>
   </div>

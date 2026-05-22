@@ -11,11 +11,25 @@ use Core\Log as Log;
 use Core\Cache\TemplateCache;
 use Core\Security\CSRF;
 /**
- * Template Parser Class
+ * Template Parser Class — PHUSE v1.3.0
  *
- * This class handles template rendering with support for variable replacement,
- * conditional statements, loops, and caching. It provides a flexible template
- * system for PHP applications.
+ * Handles template rendering with a Twig/Blade-inspired syntax that is safe
+ * around inline CSS and JavaScript.
+ *
+ * Quick syntax reference:
+ *   {{variable}}                   Output a variable (HTML-safe context)
+ *   {{user.profile.name}}          Dot-notation nested access
+ *   {{name|upper}}                 Filter
+ *   {{name|substr:0:1|upper}}      Chained filters with parameters
+ *   {!! htmlContent !!}            Raw / unescaped HTML output
+ *   {# comment #}                  Template comment (stripped from output)
+ *   @{{variable}}                  Escaped tag — renders as literal {{variable}}
+ *   {% if condition %}…{% endif %}        Conditional block
+ *   {% foreach items as item %}…{% endforeach %}  Loop
+ *   {% for i in 1..10 %}…{% endfor %}    Numeric range loop
+ *
+ * Single curly braces { } are NOT parsed, so CSS rules and JavaScript
+ * code inside templates are completely safe.
  *
  * @package Core\Template
  * @author  Prima Yoga

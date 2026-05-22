@@ -1,16 +1,99 @@
+### v1.3.0 (2026-05-22)
+
+#### Core/Template — Double-Brace Syntax Overhaul
+
+**Breaking change**: Variable placeholders changed from single `{variable}` to double `{{variable}}`, matching the syntax used by **Twig** and **Laravel Blade**. Control-flow tags (`{% if %}`, `{% foreach %}`, `{% for %}`) are unchanged.
+
+##### Why
+
+Single curly braces conflicted with inline CSS (`.class { color: red; }`) and inline JavaScript (`var obj = { key: val };`), corrupting templates that contained styles or scripts. Double braces eliminate all conflicts — only `{{ }}` triggers parsing.
+
+##### New variable syntax
+
+- **`{{variable}}`** — scalar variable output (replaces `{variable}`)
+- **`{{user.profile.age}}`** — dot-notation nested access (replaces `{user.profile.age}`)
+- **`{{name|upper}}`** — filter (replaces `{name|upper}`)
+- **`{{name|substr:0:1|upper}}`** — chained filters with params (unchanged behaviour, new delimiter)
+
+##### New v1.3.0 syntax additions
+
+- **`{!! variable !!}`** — Raw / unescaped HTML output (Laravel Blade parity). Use for trusted rich-text content only.
+- **`{# comment #}`** — Template comments stripped entirely from output (Twig parity). Supports multi-line.
+- **`@{{variable}}`** — Escaped output tag — renders as the literal text `{{variable}}` without substitution (Blade `@{{ }}` parity).
+
+##### Parser pipeline improvements
+
+- `parseComments()` — strips `{# … #}` blocks before any other processing
+- `parseRawOutput()` — resolves `{!! var !!}` expressions
+- `parseEscapedSyntax()` / `restoreEscapedSyntax()` — protects `@{{…}}` blocks so they survive the full pipeline
+- `parseArray()` — block-style array loop updated to `{{var}}…{{/var}}` delimiter; removed the old `str_replace(['{','}'],'',…)` hack that could corrupt CSS/JS inside loop bodies
+- `restoreHtmlBlocks()` — updated to resolve `{{key}}` (was `{key}`) in `<script>` blocks on restore
+- `parseForeach()` / `processNestedForeach()` — loop variable replacements now use `{{loopVar}}` keys
+- `parseFor()` — numeric loop replacement updated to `{{i}}`
+- All filter and nested-property regexes updated to match `{{…}}` double-brace delimiters
+
+##### Inline CSS & JavaScript safety (the core fix)
+
+```html
+<style>
+  /* ✅ CSS rules with { } are 100% safe — never parsed */
+  .btn { color: red; border-radius: 0.25rem; }
+  .hero { background: {{bgColor}}; }   /* dynamic value still works */
+</style>
+
+<script>
+  // ✅ JS objects and control flow are completely safe
+  var cfg = { debug: false };
+  if (cfg.debug) { console.log("ok"); }
+
+  // ✅ Inject PHP values with {{variable}}
+  var apiUrl = "{{apiUrl}}";
+</script>
+```
+
+##### Migration from v1.2.x
+
+| Old | New |
+| --- | --- |
+| `{variable}` | `{{variable}}` |
+| `{user.name}` | `{{user.name}}` |
+| `{name\|upper}` | `{{name\|upper}}` |
+| `{items}…{/items}` | `{{items}}…{{/items}}` |
+| `{% if %}` | unchanged |
+| `{% foreach %}` | unchanged |
+
+#### New example: Inline CSS & JS Safety
+
+- Added `App/Views/examples/inline_assets.php` — live demonstration of single-brace CSS/JS safety, new syntax features, and dynamic value injection into style attributes and script blocks
+- Accessible at `/examples/inline-assets`
+
+#### Documentation
+
+- `docs/template-system.md` fully rewritten for v1.3.0 syntax with Twig/Blade comparison table, migration guide, inline CSS/JS safety section, and troubleshooting
+
+#### Tests
+
+- `tests/Core/TemplateTest.php` updated — all template strings use `{{variable}}` syntax
+- New test cases: inline CSS preservation, inline JS preservation, JS variable injection inside `<script>` tags, `{# comment #}` stripping, `{!! raw !!}` output, `@{{escaped}}` literal output, filter chaining, numeric for loop
+
+---
+
 ### v1.2.0a (2026-05-18)
 
 #### Core/Http/Request.php
+
 - **`extractResponseCode()` Scope Fix**: `$http_response_header` is a PHP local variable set only in the scope where `fopen()` runs — it was never accessible inside `extractResponseCode()`, causing it to always return the fallback `200`. The headers array is now passed as a parameter from the calling scope. This was the root cause of all HTTP response code detection being broken (401 checks, token refresh triggering, CMS token expiry detection)
 - **`refreshRequest()` — `json_decode` fix**: Session token (`sesstoken`) is stored as a JSON string; the method was accessing it as an object without decoding first, causing property lookups to always fail and the refresh to throw before even attempting
 - **`refreshRequest()` — refresh body fix**: The refresh endpoint receives the full token JSON (matching `Token.php`), not just `{"refresh_token":"..."}` — only `access_token` presence is now required before attempting the call
 - **`updateSessionWithNewToken()` — session storage fix**: New token is now stored as `json_encode()`d string; previously stored as a raw PHP object, which broke subsequent JSON decoding of the session token
 
 #### Core/Http/URI.php
+
 - **`redirect()` relative path support**: Method no longer rejects non-absolute URLs — relative paths are resolved to absolute URLs using the current scheme and host before validation, allowing controller redirects like `redirect('/admin/login')` to work correctly
 - **`redirect()` loopback allowance**: Added explicit `$isLoopback` check so redirects to `127.*` / `::1` addresses are permitted (previously blocked by the private IP filter)
 
 #### Core/Template/ParserTrait.php
+
 - **`restoreHtmlBlocks()` script variable substitution**: Protected `<script>` blocks are now processed for template variable substitution on restore — variables like `{adminUrl}`, `{apiUrl}` inside `<script>` tags now resolve correctly instead of being left as literal placeholders
 
 ---
@@ -18,6 +101,7 @@
 ### v1.2.0 (2026-05-15)
 
 #### Database Layer
+
 - **Critical Query Parameter Fix**: Rewrote parameter binding in `BuildersTrait` to use unique placeholder names (`param_N`, `where_N`) — eliminates bind conflicts when the same column appears in multiple clauses or queries
 - **`!=` Operator Support**: Added `!=` to the comparison operators list in query builders
 - **PostgreSQL Driver Overhaul**: `PgSQL` now has its own `compile()` and `resetQuery()` implementations; `resetQuery()` also clears the binds array to prevent cross-query parameter leakage
@@ -29,6 +113,7 @@
 - **`whereNull` / `whereNotNull` Fix**: Both now call `whereQuery()` instead of `where()` to avoid unintended parameter binding
 
 #### ORM / Model
+
 - **Audit Fields**: Added `created_by`, `updated_by`, `deleted_by` column support with configurable nullable column properties (`createdByColumn`, `updatedByColumn`, `deletedByColumn`)
 - **`setCurrentUser()` / `getCurrentUser()`**: New methods to set the current user ID for automatic audit trail population on insert and update
 - **`primaryKey` Visibility**: Changed from `public` to `protected` to prevent accidental external mutation
@@ -38,6 +123,7 @@
 - **Detailed Error Logging**: PDOException code, message, file, and line are now logged on save/query failure; update errors include the SQL and bound params
 
 #### Template System
+
 - **Filter Chaining**: Filters can now be chained with `|` — e.g. `{name|substr:0:1|upper}`
 - **Parameterized Filters**: Filters now accept colon-delimited parameters with quoted string support — e.g. `{date|date:'M d, Y'}`
 - **New `substr` Filter**: `{variable|substr:start:length}` for substring extraction
@@ -49,6 +135,7 @@
 - **Condition Filter Support**: Condition evaluation now resolves `variable|count` expressions and handles arrays (non-empty = `true`) and objects in conditions
 
 #### Utilities
+
 - **`Str` Formatting Methods**: Added seven new static methods to `Core\Utilities\Text\Str`:
   - `formatBytes(int $bytes, int $precision)` — human-readable file sizes (B/KB/MB/GB/TB)
   - `formatNumber($number, int $decimals)` — thousands-separated number formatting
@@ -59,20 +146,24 @@
   - `formatPhone(string $phone, string $format)` — configurable phone number formatting
 
 #### Core / Config
+
 - **Lazy URI Loading**: `Config` no longer instantiates `URI` in the constructor; it is created on demand via `getURI()` — prevents HTTP context errors during CLI or early bootstrap
 - **Config Validation**: Added check that the config file returns an array; throws a clear exception if not
 - **PHP Compatibility**: Removed `readonly` from `Config` properties for PHP 8.2/8.3 cross-version compatibility
 
 #### Session
+
 - **Idempotent Initialization**: `Session` constructor and `ensureSessionStarted()` now check `session_status()` before calling `session_start()` — eliminates "session already active" warnings in environments that start sessions early
 - **Fallback Save Path**: When the configured session save path is missing or not writable, the session falls back to a writable subdirectory under `sys_get_temp_dir()`
 
 #### Cache
+
 - **Named Cache Directories**: `FileCache` now accepts a `cacheType` constructor argument passed from `CacheManager`, so each named cache (`query`, `templates`, etc.) writes to its own subdirectory
 - **`CacheConfig` Key Fix**: Corrected subdirectory key `'template'` → `'templates'` to match the rest of the framework
 - **`FileCache::clear()` Fix**: Fixed inverted deletion condition and switched to `DIRECTORY_SEPARATOR` for cross-platform path correctness; deleted file count is now accurate
 
 #### HTTP
+
 - **`Input::post()` Array Fix**: When a POST value is itself an array, `post()` now calls `sanitizeArray()` instead of `sanitize()`, preventing a type error on multi-value fields (e.g. checkboxes)
 
 ---

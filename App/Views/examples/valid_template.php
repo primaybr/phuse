@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Simple Template Example - Phuse Template System</title>
-  <link rel="stylesheet" href="{assetsUrl}css/styles.css">
+  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css">
 </head>
 
 <body>
@@ -20,16 +20,16 @@
       <div class="card-body p-4">
         <div class="card p-5 text-center border-left-success mb-4">
           <h2 class="display-4 font-weight-light mb-4">Simple Template</h2>
-          <p class="text-success h4 mb-0">{message}</p>
+          <p class="text-success h4 mb-0">{{message}}</p>
         </div>
 
         <div class="alert alert-success mt-4">
-          <strong>Basic Template:</strong> This simple template demonstrates the most basic functionality of the Phuse template system using the <span class="highlight"><message></span> variable.
+          <strong>Basic Template:</strong> This simple template demonstrates the most basic functionality of the Phuse template system using the <code>{{message}}</code> variable.
         </div>
       </div>
 
       <div class="card-footer text-center text-secondary py-3">
-        <p class="mb-0">Phuse Framework Template System &copy; {year}</p>
+        <p class="mb-0">Phuse Framework Template System &copy; {{year}}</p>
       </div>
     </div>
   </div>
