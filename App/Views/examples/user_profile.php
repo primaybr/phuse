@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Nested Data Example - Phuse Template System</title>
-  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css">
+  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=139">
+  <script>(function(){try{var t=localStorage.getItem('phuse-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})()</script>
 </head>
 <body>
   <div class="container py-2">
@@ -43,7 +44,7 @@
             </div>
           </div>
           <div class="card p-3">
-            <h6 class="text-success mb-3">🛠️ Skills &amp; Technologies</h6>
+            <h6 class="text-success mb-3"><i class="pi pi-code me-1"></i> Skills &amp; Technologies</h6>
             {% foreach user.skills as skill %}
               <span class="badge bg-success me-1 mb-1">{{skill}}</span>
             {% endforeach %}
@@ -51,11 +52,11 @@
         </div>
         {% endforeach %}
         <div class="card p-3 border-left-info">
-          <h6 class="mb-2">🔍 Nested Data Access Syntax:</h6>
+          <h6 class="mb-2"><i class="pi pi-search me-1"></i> Nested Data Access Syntax:</h6>
           <ul class="mb-0 text-secondary">
-            <li><code>{{user.profile.age}}</code> — Access nested object property</li>
-            <li><code>{{user.skills}}</code> — Access array property</li>
-            <li><code>{{users}}</code> — Loop through array of objects</li>
+            <li><code>{{user.profile.age}}</code> - Access nested object property</li>
+            <li><code>{{user.skills}}</code> - Access array property</li>
+            <li><code>{{users}}</code> - Loop through array of objects</li>
           </ul>
         </div>
 
@@ -70,6 +71,6 @@
     </div>
   </div>
 
-
+  <script src="{{assetsUrl}}js/scripts.js?v=136"></script>
 </body>
 </html>

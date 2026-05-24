@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{title}} - Phuse Template System</title>
-  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css">
+  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=139">
+  <script>(function(){try{var t=localStorage.getItem('phuse-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})()</script>
 </head>
 
 <body>
@@ -39,6 +40,6 @@
     </div>
   </div>
 
-
+  <script src="{{assetsUrl}}js/scripts.js?v=136"></script>
 </body>
 </html>

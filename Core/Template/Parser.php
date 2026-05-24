@@ -11,7 +11,7 @@ use Core\Log as Log;
 use Core\Cache\TemplateCache;
 use Core\Security\CSRF;
 /**
- * Template Parser Class — PHUSE v1.2.1
+ * Template Parser Class - PHUSE v1.2.3
  *
  * Handles template rendering with a Twig/Blade-inspired syntax that is safe
  * around inline CSS and JavaScript.
@@ -23,7 +23,7 @@ use Core\Security\CSRF;
  *   {{name|substr:0:1|upper}}      Chained filters with parameters
  *   {!! htmlContent !!}            Raw / unescaped HTML output
  *   {# comment #}                  Template comment (stripped from output)
- *   @{{variable}}                  Escaped tag — renders as literal {{variable}}
+ *   @{{variable}}                  Escaped tag - renders as literal {{variable}}
  *   {% if condition %}…{% endif %}        Conditional block
  *   {% foreach items as item %}…{% endforeach %}  Loop
  *   {% for i in 1..10 %}…{% endfor %}    Numeric range loop

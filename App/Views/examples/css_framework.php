@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CSS Framework Examples - Phuse Framework</title>
-  <link rel="stylesheet" href="{assetsUrl}css/styles.css">
+  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=139">
+  <script>(function(){try{var t=localStorage.getItem('phuse-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})()</script>
 </head>
 
 <body>
@@ -13,7 +14,7 @@
       <div class="col-12">
         <div class="card shadow">
           <div class="card-header bg-primary text-white">
-            <h1 class="h3 mb-0">🎨 Phuse CSS Framework Examples</h1>
+            <h1 class="h3 mb-0"><i class="pi pi-layers me-1"></i> Phuse CSS Framework Examples</h1>
           </div>
           <div class="card-body">
             <p class="lead text-secondary mb-4">
@@ -22,7 +23,7 @@
 
             <!-- Grid System Examples -->
             <section class="mb-5">
-              <h2 class="h4 text-primary mb-3">📱 Grid System</h2>
+              <h2 class="h4 text-primary mb-3"><i class="pi pi-grid me-1"></i> Grid System</h2>
 
               <h5 class="text-secondary mb-3">Basic Grid (Equal Columns)</h5>
               <div class="row g-3 mb-4">
@@ -99,7 +100,7 @@
 
             <!-- Component Examples -->
             <section class="mb-5">
-              <h2 class="h4 text-primary mb-3">🧩 Components</h2>
+              <h2 class="h4 text-primary mb-3"><i class="pi pi-layers me-1"></i> Components</h2>
 
               <h5 class="text-secondary mb-3">Enhanced Alerts (Dark Theme Optimized)</h5>
               <div class="mb-4">
@@ -142,7 +143,7 @@
 
             <!-- Utility Examples -->
             <section class="mb-5">
-              <h2 class="h4 text-primary mb-3">🎯 Utilities</h2>
+              <h2 class="h4 text-primary mb-3"><i class="pi pi-filter me-1"></i> Utilities</h2>
 
               <h5 class="text-secondary mb-3">Modern Spacing Scale</h5>
               <div class="row g-3 mb-4">
@@ -201,7 +202,7 @@
 
             <!-- Dark Theme Features -->
             <section class="mb-5">
-              <h2 class="h4 text-primary mb-3">🌙 Dark Theme Optimizations</h2>
+              <h2 class="h4 text-primary mb-3"><i class="pi pi-eye me-1"></i> Dark Theme Optimizations</h2>
 
               <div class="row g-4">
                 <div class="col-lg-6">
@@ -233,7 +234,7 @@
 
             <!-- CSS Variables Demo -->
             <section class="mb-5">
-              <h2 class="h4 text-primary mb-3">🎨 CSS Variables (Phuse System)</h2>
+              <h2 class="h4 text-primary mb-3"><i class="pi pi-code me-1"></i> CSS Variables (Phuse System)</h2>
 
               <div class="card">
                 <div class="card-body">
@@ -262,7 +263,7 @@
 
             <!-- Performance Note -->
             <div class="alert alert-info">
-              <h6 class="alert-heading mb-2">⚡ Performance Optimized</h6>
+              <h6 class="alert-heading mb-2"><i class="pi pi-zap me-1"></i> Performance Optimized</h6>
               <p class="mb-0">
                 The Phuse CSS Framework is optimized for performance with modern CSS techniques,
                 efficient selectors, and minimal footprint while maintaining full Bootstrap 5+ compatibility.
@@ -279,5 +280,6 @@
       </div>
     </div>
   </div>
+  <script src="{{assetsUrl}}js/scripts.js?v=136"></script>
 </body>
-</html></content>
+</html>

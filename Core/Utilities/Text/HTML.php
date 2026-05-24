@@ -230,9 +230,9 @@ class HTML
         $js = preg_replace_callback(
             '/(\'[^\'\\\\]*(?:\\\\.[^\'\\\\]*)*\'|"[^"\\\\]*(?:\\\\.[^"\\\\]*)*")|\/\/[^\n]*/s',
             static function (array $matches): string {
-                // $matches[1] is non-empty only when a string literal was matched — keep it.
-                // Otherwise we matched a // comment — remove it.
-                return $matches[1] !== '' ? $matches[1] : '';
+                // $matches[1] is set and non-empty only when a string literal was matched.
+                // When the // comment branch matches, group 1 is unset - coalesce to ''.
+                return ($matches[1] ?? '') !== '' ? $matches[1] : '';
             },
             $js
         );

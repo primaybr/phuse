@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Core\Template;
 
 /**
- * ParserTrait — PHUSE Template Engine v1.2.1
+ * ParserTrait - PHUSE Template Engine v1.2.3
  *
  * Syntax overview (familiar to Twig & Laravel Blade users):
  *
@@ -109,7 +109,10 @@ trait ParserTrait
             '~\{!!\s*([a-zA-Z_][a-zA-Z0-9_.]*)\s*!!\}~',
             function (array $matches) use ($data): string {
                 $value = $this->resolveNestedProperty($data, trim($matches[1]));
-                return $value !== null ? (string) $value : $matches[0];
+                if ($value === null || is_array($value) || is_object($value)) {
+                    return $matches[0];
+                }
+                return (string) $value;
             },
             $template
         );
@@ -321,13 +324,13 @@ trait ParserTrait
      */
     protected function parseNestedProperties(string $template, array $data): string
     {
-        // Only match {{ … }} — single braces are ignored entirely
+        // Only match {{ … }} - single braces are ignored entirely
         $pattern = '~\{\{([^{}]+)\}\}~';
 
         return preg_replace_callback($pattern, function (array $matches) use ($data): string {
             $expression = trim($matches[1]);
 
-            // Skip filter expressions — already processed by parseFilters()
+            // Skip filter expressions - already processed by parseFilters()
             if (strpos($expression, '|') !== false) {
                 return $matches[0];
             }
@@ -344,8 +347,8 @@ trait ParserTrait
 
             $value = $this->resolveNestedProperty($data, $expression);
 
-            // Unresolved — leave the placeholder intact (do NOT strip braces)
-            if ($value === null) {
+            // Unresolved or non-scalar - leave the placeholder intact
+            if ($value === null || is_array($value) || is_object($value)) {
                 return $matches[0];
             }
 
@@ -408,7 +411,7 @@ trait ParserTrait
     }
 
     /**
-     * Resolves an expression — either a quoted literal or a variable path.
+     * Resolves an expression - either a quoted literal or a variable path.
      */
     protected function resolveExpressionValue(string $expression, array $data): string
     {
@@ -422,6 +425,9 @@ trait ParserTrait
         }
 
         $value = $this->resolveNestedProperty($data, $expression);
+        if (is_array($value) || is_object($value)) {
+            return '';
+        }
         return (string) $value;
     }
 
@@ -530,7 +536,7 @@ trait ParserTrait
                 $str .= strtr($match[1], $arr);
             }
 
-            // Store the rendered block — no brace-stripping, CSS/JS safe
+            // Store the rendered block - no brace-stripping, CSS/JS safe
             $replace[$match[0]] = $str;
         }
 
@@ -543,16 +549,19 @@ trait ParserTrait
      * Processing pipeline:
      *  1. Protect @{{…}} escaped tags
      *  2. Strip {# … #} comments
-     *  3. Pre-process script src attributes
-     *  4. Protect <style>, <script>, <code>, <pre> blocks
-     *  5. Process {!! raw !!} output
-     *  6. Replace scalar & array placeholders via strtr
-     *  7. Parse {% if %} / {% foreach %} / {% for %} control flow
-     *  8. Parse {{var|filter}} filter expressions
-     *  9. Parse {{nested.property}} dot-notation
-     * 10. Restore pre-processed attributes
-     * 11. Restore protected HTML blocks (with variable substitution in scripts)
-     * 12. Restore escaped @{{}} tags as literal {{}}
+     *  3. Process {!! raw !!} output
+     *  4. Replace scalar & array placeholders via strtr
+     *  5. Parse {% if %} / {% foreach %} / {% for %} control flow
+     *  6. Parse {{var|filter}} filter expressions
+     *  7. Parse {{nested.property}} dot-notation
+     *  8. Restore escaped @{{}} tags as literal {{}}
+     *
+     * Note: HTML block protection has been removed. Since v1.2.1 uses double-brace
+     * {{}} syntax, single { } in CSS and JavaScript are completely safe and no
+     * longer require protection. Variables inside <style> and <script> blocks are
+     * now processed naturally along with the rest of the template. Template syntax
+     * literals inside <pre>/<code> examples must use HTML entities (&#123; &#125;)
+     * or @{{}} escaping to prevent accidental substitution.
      *
      * @param string $template
      * @param array  $data
@@ -562,25 +571,17 @@ trait ParserTrait
     {
         $this->data = $data;
 
-        // Step 1 — protect escaped syntax @{{…}}
+        // Step 1 - protect escaped syntax @{{…}}
         $escapedBlocks = [];
         $template = $this->parseEscapedSyntax($template, $escapedBlocks);
 
-        // Step 2 — strip comments {# … #}
+        // Step 2 - strip comments {# … #}
         $template = $this->parseComments($template);
 
-        // Step 3 — pre-process script src attributes
-        $processedBlocks = [];
-        $template = $this->preProcessAttributes($template, $processedBlocks);
-
-        // Step 4 — protect <style>, <script>, <code>, <pre> blocks
-        $protectedBlocks = [];
-        $template = $this->protectHtmlBlocks($template, $protectedBlocks);
-
-        // Step 5 — raw output {!! var !!}
+        // Step 3 - raw output {!! var !!}
         $template = $this->parseRawOutput($template, $this->data);
 
-        // Step 6 — build replacement map and apply strtr
+        // Step 4 - build replacement map and apply strtr
         $replace = [];
         if ($data) {
             foreach ($data as $key => $val) {
@@ -594,22 +595,16 @@ trait ParserTrait
         unset($data);
         $template = strtr($template, $replace);
 
-        // Step 7 — control flow (foreach / if / for / while)
+        // Step 5 - control flow (foreach / if / for / while)
         $template = $this->parseConditionals($template);
 
-        // Step 8 — filters  {{var|filter}}
+        // Step 6 - filters  {{var|filter}}
         $template = $this->parseFilters($template, $this->data);
 
-        // Step 9 — nested properties  {{user.profile.age}}
+        // Step 7 - nested properties  {{user.profile.age}}
         $template = $this->parseNestedProperties($template, $this->data);
 
-        // Step 10 — restore pre-processed attributes
-        $template = $this->restorePreProcessedAttributes($template, $processedBlocks);
-
-        // Step 11 — restore protected HTML blocks
-        $template = $this->restoreHtmlBlocks($template, $protectedBlocks);
-
-        // Step 12 — restore escaped @{{}} → {{}}
+        // Step 8 - restore escaped @{{}} → {{}}
         $template = $this->restoreEscapedSyntax($template, $escapedBlocks);
 
         return $template;
@@ -833,6 +828,10 @@ trait ParserTrait
 
             // Apply filters with current loop data context
             $loopData         = array_merge($this->data, [$loopVar => $value]);
+
+            // Process {!! raw !!} output inside loop iterations
+            $processedContent = $this->parseRawOutput($processedContent, $loopData);
+
             $processedContent = $this->parseFilters($processedContent, $loopData);
 
             // Process nested foreach loops

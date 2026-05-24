@@ -198,7 +198,7 @@ protected ?string $updatedByColumn = 'modified_by'; // custom column name
 
 #### 1. **Basic CRUD Operations**
 ```php
-// Create — returns int (auto-increment) or string (UUID)
+// Create - returns int (auto-increment) or string (UUID)
 $userId = $user->save([
     'name' => 'John Doe',
     'email' => 'john@example.com',

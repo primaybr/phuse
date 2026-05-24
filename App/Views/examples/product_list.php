@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Foreach Loop Example - Phuse Template System</title>
-  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css">
+  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=139">
+  <script>(function(){try{var t=localStorage.getItem('phuse-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})()</script>
 </head>
 
 <body>
@@ -37,7 +38,7 @@
 
           <div class="col-md-4">
             <div class="card p-4 text-center border-success">
-              <h6 class="text-success mb-3">📊 Statistics</h6>
+              <h6 class="text-success mb-3"><i class="pi pi-zap me-1"></i> Statistics</h6>
               <p class="mb-2"><strong>Total Products:</strong></p>
               <span class="badge bg-success fs-6 mb-3">{{products_count}}</span>
               <p class="mb-2"><strong>Average Price:</strong></p>
@@ -61,6 +62,6 @@
     </div>
   </div>
 
-
+  <script src="{{assetsUrl}}js/scripts.js?v=136"></script>
 </body>
 </html>

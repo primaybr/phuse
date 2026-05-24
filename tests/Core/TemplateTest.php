@@ -199,7 +199,7 @@ class TemplateTest extends TestCase
     }
 
     // -----------------------------------------------------------------------
-    // Inline CSS & JS safety — single { } must pass through unchanged
+    // Inline CSS & JS safety - single { } must pass through unchanged
     // -----------------------------------------------------------------------
 
     public function testInlineCssIsPreserved(): void
@@ -524,7 +524,7 @@ multiline comment #}Hello!';
     public function testClearCache(): void
     {
         // clearCache() without $force=true returns false unless autoClearInDevelopment is on.
-        // This is by design — use clearCache(true) to force-clear.
+        // This is by design - use clearCache(true) to force-clear.
         $this->parser->enableCache(true);
         $this->parser->parseData('Hello {{name}}!', ['name' => 'Cache']);
         $result = $this->parser->clearCache();

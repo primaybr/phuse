@@ -181,7 +181,6 @@ class Request
             }
 
             $this->httpResponseCode = $this->extractResponseCode($http_response_header ?? []);
-
         } catch (\Exception $e) {
             $this->logger->write("HTTP request failed for URL: {$requestUrl}", 'error', [
                 'method' => $method,
@@ -289,7 +288,7 @@ class Request
         }
 
         try {
-            // Attempt to refresh the token — send full token JSON as body (backend expects the whole token object)
+            // Attempt to refresh the token - send full token JSON as body (backend expects the whole token object)
             $newTokenResponse = $this->setContentType('application/json')
                 ->setHeader("Authorization: Bearer " . $token->access_token)
                 ->request('POST', $this->apiExternalUrl . '/auth/refresh', [
@@ -315,7 +314,6 @@ class Request
 
             // Re-execute the original request with new token
             return $this->executeRequestWithNewToken($method, $url, $data);
-
         } catch (\Exception $e) {
             throw new \RuntimeException('Token refresh process failed: ' . $e->getMessage(), 0, $e);
         }
@@ -376,7 +374,6 @@ class Request
             }
 
             $this->httpResponseCode = $this->extractResponseCode($http_response_header ?? []);
-
         } catch (\Exception $e) {
             throw new \RuntimeException("HTTP request with refreshed token failed: " . $e->getMessage(), 0, $e);
         }
@@ -502,17 +499,17 @@ class Request
 
             $this->setHeader(
                 "Content-type: " . $this->options['content_type'] . " \r\n" .
-                "Content-Length: " . strlen($this->options['content']) . "\r\n" .
-                (isset($this->options['header']) ? $this->options['header'] . "\r\n" : "") .
-                (isset($this->options['referer']) ? "Referer: " . $this->options['referer'] . "\r\n" : "") .
-                (isset($this->options['uid']) ? "uid: " . $this->options['uid'] . "\r\n" : "") .
-                (isset($this->options['token']) ? "token: " . $this->options['token'] . "\r\n" : "") .
-                (isset($this->options['Auth']) ? "Auth: " . $this->options['Auth'] . "\r\n" : "")
+                    "Content-Length: " . strlen($this->options['content']) . "\r\n" .
+                    (isset($this->options['header']) ? $this->options['header'] . "\r\n" : "") .
+                    (isset($this->options['referer']) ? "Referer: " . $this->options['referer'] . "\r\n" : "") .
+                    (isset($this->options['uid']) ? "uid: " . $this->options['uid'] . "\r\n" : "") .
+                    (isset($this->options['token']) ? "token: " . $this->options['token'] . "\r\n" : "") .
+                    (isset($this->options['Auth']) ? "Auth: " . $this->options['Auth'] . "\r\n" : "")
             );
         } else {
             $this->setHeader(
                 (isset($this->options['content_type']) ? "Content-type: " . $this->options['content_type'] . " \r\n" : "") .
-                (isset($this->options['header']) ? $this->options['header'] . "\r\n" : "")
+                    (isset($this->options['header']) ? $this->options['header'] . "\r\n" : "")
             );
         }
 

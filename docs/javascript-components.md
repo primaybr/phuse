@@ -1,104 +1,86 @@
-# JavaScript Components - Bootstrap 5.3.8 Compatibility
+# JavaScript Components
 
-The Phuse framework includes complete Bootstrap 5.3.8 JavaScript component compatibility, implemented as lightweight, dependency-free modules within the Phuse JavaScript library.
+Phuse provides a full set of Bootstrap 5.3.8-compatible JavaScript components, implemented as **static methods** on the `Phuse` class. No jQuery, no external dependencies - all components auto-initialize via `data-*` attributes on DOM ready.
 
-## Components Overview
+## Components
 
-Phuse provides the following Bootstrap-compatible components:
-- [Alert](#alert-component)
-- [Button](#button-component)
-- [Carousel](#carousel-component)
-- [Offcanvas](#offcanvas-component)
-- [Popover](#popover-component)
-- [ScrollSpy](#scrollspy-component)
-- [Tooltip](#tooltip-component)
+- [Alert](#alert)
+- [Button](#button)
+- [Carousel](#carousel)
+- [Modal](#modal)
+- [Offcanvas](#offcanvas)
+- [Popover](#popover)
+- [ScrollSpy](#scrollspy)
+- [Tooltip](#tooltip)
+- [Toast](#toast)
+- [Accordion](#accordion)
 
-## Alert Component
+## Data-Attribute API
 
-Dismissible alert notifications with smooth animations.
+All components are driven by `data-*` attributes - no JavaScript required for typical use.
 
-### HTML Usage
+| Attribute | Purpose |
+| --- | --- |
+| `data-toggle="modal"` | Open a modal |
+| `data-toggle="offcanvas"` | Open an offcanvas panel |
+| `data-toggle="popover"` | Toggle a popover |
+| `data-toggle="tooltip"` | Activate tooltip on hover |
+| `data-toggle="button"` | Toggle active state on a button |
+| `data-toggle="tab"` | Switch tab pane |
+| `data-dismiss="modal"` | Close the nearest modal |
+| `data-dismiss="offcanvas"` | Close the nearest offcanvas |
+| `data-dismiss="alert"` | Dismiss the nearest alert |
+| `data-target="#id"` | Target element by ID |
+| `data-slide="prev/next"` | Carousel navigation |
+| `data-slide-to="N"` | Jump carousel to slide N |
+| `data-spy="scroll"` | Mark element as ScrollSpy target |
+| `data-backdrop="static"` | Disable backdrop-click dismiss on modal |
+
+## Alert
+
+Dismissible alert banners. Clicking the `btn-close` button fades and removes the alert.
+
 ```html
 <div class="alert alert-primary alert-dismissible fade show" role="alert">
-  <strong>Primary Alert:</strong> This is a primary alert with a dismissible close button.
-  <button type="button" class="btn-close" data-dismiss="alert" aria-label="Close"></button>
-</div>
-
-<div class="alert alert-success alert-dismissible fade show" role="alert">
-  <strong>Success Alert:</strong> Operation completed successfully.
-  <button type="button" class="btn-close" data-dismiss="alert" aria-label="Close"></button>
+  <strong>Primary:</strong> Alert message here.
+  <button type="button" class="btn-close" data-dismiss="alert" aria-label="Close">
+    <i class="pi pi-x"></i>
+  </button>
 </div>
 ```
 
-### JavaScript API
-```javascript
-// Programmatic alert dismissal
-const alertElement = document.querySelector('.alert');
-const alert = new Phuse.alert(alertElement);
-alert.close();
+**Variants**: `alert-primary` `alert-success` `alert-warning` `alert-danger` `alert-info`
+
+**Programmatic:**
+
+```js
+Phuse.alert(closeButtonEl).close();
 ```
 
-### CSS Classes
-- `.alert`: Base alert styles
-- `.alert-primary/.alert-success/etc.`: Alert variants
-- `.alert-dismissible`: Supports dismissible functionality
-- `.fade`: Enables fade animations
-- `.show`: Shows the alert
+## Button
 
-## Button Component
+Toggles an `.active` class on buttons. Optionally syncs a hidden checkbox or radio input.
 
-Interactive button states with toggle functionality.
-
-### HTML Usage
 ```html
-<button type="button" class="btn btn-primary" data-toggle="button">Primary Button</button>
-<button type="button" class="btn btn-secondary" data-toggle="button">Secondary Button</button>
-
-<!-- Button group -->
-<div class="btn-group" role="group">
-  <input type="radio" class="btn-check" name="options" id="option1" autocomplete="off" checked>
-  <label class="btn btn-outline-primary" for="option1">Radio 1</label>
-
-  <input type="radio" class="btn-check" name="options" id="option2" autocomplete="off">
-  <label class="btn btn-outline-primary" for="option2">Radio 2</label>
-</div>
+<button type="button" class="btn btn-primary" data-toggle="button">Toggle me</button>
 ```
 
-### JavaScript API
-```javascript
-// Toggle button state programmatically
-const button = new Phuse.button();
-button.toggle(element);
+**Programmatic:**
+
+```js
+Phuse.button().toggle(element);
 ```
 
-### CSS Classes
-- `.btn`: Base button styles
-- `.btn-primary/.btn-secondary/etc.`: Button variants
-- `.active`: Active/toggled state
+## Carousel
 
-## Carousel Component
+Cycled slide show with prev/next controls, indicator dots, and persistent slide index via WeakMap state.
 
-Image and content slider with navigation and indicators.
-
-### HTML Usage
 ```html
-<div class="carousel">
+<div id="my-carousel" class="carousel">
   <div class="carousel-inner">
-    <div class="carousel-item active">
-      <div style="height: 200px; background: linear-gradient(45deg, var(--primary), var(--primary-dark));">
-        Slide 1
-      </div>
-    </div>
-    <div class="carousel-item">
-      <div style="height: 200px; background: linear-gradient(45deg, var(--success), var(--success-dark));">
-        Slide 2
-      </div>
-    </div>
-    <div class="carousel-item">
-      <div style="height: 200px; background: linear-gradient(45deg, var(--info), var(--primary));">
-        Slide 3
-      </div>
-    </div>
+    <div class="carousel-item active">Slide 1</div>
+    <div class="carousel-item">Slide 2</div>
+    <div class="carousel-item">Slide 3</div>
   </div>
   <button class="carousel-control-prev" type="button" data-slide="prev">
     <span class="carousel-control-prev-icon"></span>
@@ -114,237 +96,301 @@ Image and content slider with navigation and indicators.
 </div>
 ```
 
-### JavaScript API
-```javascript
-const carousel = new Phuse.carousel(carouselElement);
+**Programmatic:**
 
-// Navigation methods
-carousel.next();
-carousel.prev();
-carousel.goTo(index);
+```js
+const c = Phuse.carousel(document.getElementById('my-carousel'));
+c.next();       // advance one slide
+c.prev();       // go back one slide
+c.goTo(2);      // jump to slide index 2
 ```
 
-### CSS Classes
-- `.carousel`: Main carousel container
-- `.carousel-inner`: Slides container
-- `.carousel-item`: Individual slides
-- `.active`: Current slide
-- `.carousel-control-prev/.carousel-control-next`: Navigation buttons
-- `.carousel-indicators`: Indicator dots
-- `.fade`: Slide transition animation
+> The carousel uses a **WeakMap** to persist the current slide index across multiple handler calls - the index is never reset when the next/prev button is clicked.
 
-## Offcanvas Component
+## Modal
 
-Sliding sidebar panels with backdrop overlay.
+Full-featured dialog overlay with animated backdrop, scroll lock, Escape key support, and optional static backdrop.
 
-### HTML Usage
 ```html
-<button class="btn btn-primary" type="button" data-toggle="offcanvas" data-target="#demo-offcanvas">
-  Open Offcanvas
-</button>
+<!-- Trigger -->
+<button class="btn btn-primary" data-toggle="modal" data-target="#my-modal">Open</button>
 
-<div class="offcanvas offcanvas-end" tabindex="-1" id="demo-offcanvas">
-  <div class="offcanvas-header">
-    <h5 class="offcanvas-title">Offcanvas Menu</h5>
-    <button type="button" class="btn-close" data-dismiss="offcanvas"></button>
-  </div>
-  <div class="offcanvas-body">
-    <p>Content goes here...</p>
+<!-- Modal -->
+<div class="modal fade" id="my-modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Title</h5>
+        <button class="btn-close" data-dismiss="modal" aria-label="Close">
+          <i class="pi pi-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Modal content goes here.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary">Confirm</button>
+      </div>
+    </div>
   </div>
 </div>
 ```
 
-### JavaScript API
-```javascript
-const offcanvas = new Phuse.offcanvas(offcanvasElement);
-offcanvas.show();
-offcanvas.hide();
+**Sizes** - add class to `.modal`:
+
+| Class | Max-width |
+| --- | --- |
+| `.modal-sm` | 300 px |
+| *(default)* | 560 px |
+| `.modal-lg` | 800 px |
+| `.modal-xl` | 1140 px |
+
+**Static backdrop** - disables Escape key and click-outside:
+
+```html
+<div class="modal fade" data-backdrop="static" id="confirm-modal" ...>
 ```
 
-### Position Classes
-- `.offcanvas-start`: Left side (default)
-- `.offcanvas-end`: Right side
-- `.offcanvas-top`: Top side
-- `.offcanvas-bottom`: Bottom side
+**Programmatic:**
 
-### CSS Classes
-- `.offcanvas`: Main container
-- `.offcanvas-header`: Header section
-- `.offcanvas-body`: Content area
-- `.offcanvas-backdrop`: Background overlay
+```js
+const m = Phuse.modal(document.getElementById('my-modal'));
+m.show();
+m.hide();
+```
 
-## Popover Component
+## Offcanvas
 
-Rich content overlays triggered by clicks.
+Panel that slides in from the left or right edge of the screen with a dimmed backdrop.
 
-### HTML Usage
 ```html
-<button class="btn btn-primary" type="button" data-toggle="popover"
+<!-- Trigger -->
+<button class="btn btn-primary" data-toggle="offcanvas" data-target="#my-panel">Open</button>
+
+<!-- Panel -->
+<div class="offcanvas offcanvas-end" id="my-panel" tabindex="-1">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Panel Title</h5>
+    <button class="btn-close" data-dismiss="offcanvas" aria-label="Close">
+      <i class="pi pi-x"></i>
+    </button>
+  </div>
+  <div class="offcanvas-body">
+    Panel content here.
+  </div>
+</div>
+```
+
+**Position classes:**
+
+| Class | Edge |
+| --- | --- |
+| `.offcanvas-end` | Right |
+| `.offcanvas-start` | Left |
+| `.offcanvas-top` | Top |
+| `.offcanvas-bottom` | Bottom |
+
+**Programmatic:**
+
+```js
+const oc = Phuse.offcanvas(document.getElementById('my-panel'));
+oc.show();
+oc.hide();
+```
+
+## Popover
+
+Rich content overlay shown on click. Closes when clicking anywhere outside the popover.
+
+```html
+<button class="btn btn-primary" data-toggle="popover"
         title="Popover Title"
-        data-content="This is a popover with some content inside.">
+        data-content="Body content displayed inside the popover.">
   Click for Popover
 </button>
 ```
 
-### JavaScript API
-```javascript
-const popover = new Phuse.popover(element);
-popover.show();
-popover.hide();
+**Programmatic:**
+
+```js
+const p = Phuse.popover(element);
+p.show();
+p.hide();
+p.toggle();
 ```
 
-### CSS Classes
-- `.popover`: Main popover container
-- `.popover-arrow`: Arrow element
-- `.popover-header`: Title area
-- `.popover-body`: Content area
+## ScrollSpy
 
-## ScrollSpy Component
+Highlights the matching nav link as the user scrolls through a content pane. The scrollable element itself (not `window`) is observed.
 
-Navigation highlighting based on scroll position.
-
-### HTML Usage
 ```html
-<nav>
-  <ul class="nav nav-pills flex-column">
-    <li class="nav-item">
-      <a class="nav-link" href="#item-1">Item 1</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="#item-2">Item 2</a>
-    </li>
-  </ul>
+<nav id="spy-nav">
+  <a class="nav-link" href="#section-1">Section 1</a>
+  <a class="nav-link" href="#section-2">Section 2</a>
 </nav>
 
-<div data-spy="scroll" data-target="#navbar">
-  <h4 id="item-1">Item 1</h4>
+<div data-spy="scroll" data-target="#spy-nav" data-offset="0"
+     style="height:300px; overflow-y:scroll;">
+  <h4 id="section-1">Section 1</h4>
   <p>Content...</p>
-
-  <h4 id="item-2">Item 2</h4>
+  <h4 id="section-2">Section 2</h4>
   <p>Content...</p>
 </div>
 ```
 
-### JavaScript API
-```javascript
-const spy = new Phuse.scrollSpy(element, {
-  offset: 100 // scroll offset
-});
+ScrollSpy is auto-initialized on DOM ready for every `[data-spy="scroll"]` element.
+
+**Programmatic:**
+
+```js
+const spy = Phuse.scrollSpy(scrollableElement);
+spy.update(); // re-check active position
 ```
 
-### CSS Classes
-- `.active`: Active navigation link
+## Tooltip
 
-## Tooltip Component
+Lightweight hover tooltip supporting four placements. Color variant is automatically inherited from the trigger button's class.
 
-Hover-activated information displays.
-
-### HTML Usage
 ```html
-<button class="btn btn-primary"
-        data-toggle="tooltip"
-        data-placement="top"
-        title="This is a tooltip">
-  Hover me
+<!-- Default (top) placement -->
+<button class="btn btn-primary" data-toggle="tooltip" title="Tooltip text">Hover me</button>
+
+<!-- With explicit placement -->
+<button class="btn btn-danger" data-toggle="tooltip" data-placement="bottom" title="Danger tip">
+  Danger
 </button>
 ```
 
-### JavaScript API
-```javascript
-const tooltip = new Phuse.tooltip(element);
-tooltip.show();
-tooltip.hide();
+**Placement values:** `top` (default) · `bottom` · `left` · `right`
+
+**Color variants** - automatically applied from the trigger's button class:
+
+| Button class | Tooltip color |
+| --- | --- |
+| `btn-primary` | Primary blue |
+| `btn-success` | Green |
+| `btn-danger` | Red |
+| `btn-warning` | Orange |
+| `btn-info` | Cyan |
+| *(none / outline)* | Dark charcoal (default) |
+
+**Programmatic:**
+
+```js
+const t = Phuse.tooltip(element);
+t.show();
+t.hide();
 ```
 
-### Placement Options
-- `top` (default)
-- `bottom`
-- `left`
-- `right`
+> Tooltips use **`mouseover`/`mouseout`** (not `mouseenter`/`mouseleave`) in event delegation because the latter do not bubble to the document level.
 
-### CSS Classes
-- `.tooltip`: Main tooltip container
-- `.tooltip-arrow`: Arrow element
-- `.tooltip-inner`: Content area
+## Toast
 
-## Implementation Details
+Fixed top-right notification stack. Auto-dismisses after 4 seconds.
 
-### Auto-Initialization
+```js
+Phuse.toast('Operation completed!', 'success');
+Phuse.toast('An error occurred.',   'error');
+Phuse.toast('Heads up!',            'info');
+Phuse.toast('Check your input.',    'warning');
 
-Phuse components are automatically initialized when the DOM is ready:
-
-```javascript
-// Manual initialization
-document.addEventListener('DOMContentLoaded', () => {
-  Phuse.init();
-});
+// Custom duration (ms)
+Phuse.toast('Saved.', 'success', 6000);
 ```
 
-### Event Delegation
+**Types:**
 
-Components use efficient event delegation for better performance:
+| Type | Color | Icon |
+| --- | --- | --- |
+| `success` | Green | `pi-check-circle` |
+| `error` | Red | `pi-x-circle` |
+| `warning` | Orange | `pi-alert-triangle` |
+| `info` | Cyan | `pi-info` |
 
-```javascript
-// Delegate click events
-Phuse.on('click', '[data-toggle="modal"]', function() {
-  const target = document.querySelector(this.dataset.target);
-  if (target) {
-    const modal = new Phuse.modal(target);
-    modal.show();
-  }
-});
+All toasts slide in from the right and stack vertically. The container is created on first use and removed when empty.
+
+## Accordion
+
+Collapsible panels with animated `max-height` transitions. Operates independently per item by default.
+
+```html
+<div class="accordion">
+
+  <!-- Expanded by default -->
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button" type="button">Item #1</button>
+    </h2>
+    <div class="accordion-body">
+      Content shown by default.
+    </div>
+  </div>
+
+  <!-- Collapsed by default -->
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed" type="button">Item #2</button>
+    </h2>
+    <div class="accordion-body"
+         style="max-height:0;padding-top:0;padding-bottom:0;overflow:hidden;">
+      Hidden content revealed on click.
+    </div>
+  </div>
+
+</div>
 ```
 
-### Accessibility
+> **Important**: collapsed bodies require the inline style `max-height:0;padding-top:0;padding-bottom:0;overflow:hidden;` to prevent border-box padding from leaking through.
 
-All components include proper ARIA attributes and keyboard navigation support.
+**Programmatic:**
 
-### Browser Support
-
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
-
-## Migration from Bootstrap
-
-### Code Changes
-
-**Bootstrap 5:**
-```javascript
-const popover = new bootstrap.Popover(element, options);
+```js
+Phuse.accordion(buttonElement).toggle();
 ```
 
-**Phuse:**
-```javascript
-const popover = new Phuse.popover(element);
+## Close Buttons
+
+All `btn-close` buttons must include `<i class="pi pi-x"></i>` to display the pi icon:
+
+```html
+<button type="button" class="btn-close" data-dismiss="modal" aria-label="Close">
+  <i class="pi pi-x"></i>
+</button>
 ```
 
-### HTML Changes
+## Programmatic Initialization
 
-Most HTML markup remains the same, with a few naming convention differences:
+Components auto-initialize on `DOMContentLoaded`. To manually trigger:
 
-| Bootstrap | Phuse |
-|-----------|-------|
+```js
+Phuse.init();
+```
+
+To initialize a single component after dynamic DOM insertion:
+
+```js
+// All methods are static - call directly
+Phuse.modal(el).show();
+Phuse.toast('Hello!', 'info');
+Phuse.accordion(btn).toggle();
+```
+
+## Migration from Bootstrap 5
+
+| Bootstrap 5 | Phuse |
+| --- | --- |
 | `data-bs-toggle` | `data-toggle` |
 | `data-bs-target` | `data-target` |
 | `data-bs-dismiss` | `data-dismiss` |
+| `new bootstrap.Modal(el)` | `Phuse.modal(el)` |
+| `new bootstrap.Tooltip(el)` | `Phuse.tooltip(el)` |
+| `new bootstrap.Toast(el)` | `Phuse.toast(message, type)` |
 
-## Performance Features
+## Live Demo
 
-- **Lightweight**: No external dependencies beyond Phuse core
-- **Memory Efficient**: Automatic cleanup and garbage collection
-- **Optimized Event Handling**: Smart event delegation
-- **Efficient Animations**: Hardware-accelerated CSS transitions
-
-## Examples and Demos
-
-View live component examples at `/examples/components` or check the interactive examples in the `App/Views/examples/components.php` file.
-
-## Contributing
-
-All components follow consistent coding patterns and include comprehensive error handling. Refer to the `Phuse` class in `scripts.js` for implementation details.
+Visit `/examples/components` for an interactive demonstration of all components with code snippets.
 
 ---
 
-*For CSS styling details, see the [CSS Framework Documentation](css-framework.md).*"
+*For CSS variables and component styles, see the [CSS Framework documentation](css-framework.md).*

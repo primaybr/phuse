@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{title}} - Phuse Template System</title>
-  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css">
+  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=139">
+  <script>(function(){try{var t=localStorage.getItem('phuse-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})()</script>
 </head>
 
 <body>
@@ -46,7 +47,7 @@
         </div>
 
         <div class="alert alert-info mt-4">
-          <h6 class="alert-heading mb-2">💡 Template System Features:</h6>
+          <h6 class="alert-heading mb-2"><i class="pi pi-info me-1"></i> Template System Features:</h6>
           <p class="mb-0">
             These examples showcase all major template features including variable replacement (<code>{{variable}}</code>),
             conditional logic (<code>{% if %}</code>), loops (<code>{% foreach %}</code>),
@@ -61,6 +62,6 @@
     </div>
   </div>
 
-
+  <script src="{{assetsUrl}}js/scripts.js?v=136"></script>
 </body>
 </html>

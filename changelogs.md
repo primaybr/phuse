@@ -1,42 +1,239 @@
+# Changelog
+
+### v1.2.3 (2026-05-24)
+
+#### JavaScript Components - Complete Overhaul
+
+Full rewrite of `Public/assets/js/scripts.js`. All components are now **static methods** on the `Phuse` class (not constructors) and use a shared **WeakMap state store** to persist data across multiple handler calls on the same element.
+
+##### WeakMap State Store
+
+```js
+static _store = new WeakMap();
+static _get(el)       { return this._store.get(el) || {}; }
+static _set(el, data) { this._store.set(el, { ...this._get(el), ...data }); }
+```
+
+Prevents stale closure data and carousel index resets on every click.
+
+##### Carousel
+
+- Persistent slide index stored per element via WeakMap - clicking prev/next no longer resets to slide 0
+- `goTo(index)`, `next()`, `prev()` API
+- Indicator dots stay in sync with active slide
+- Carousel arrow icons added to CSS (SVG `background-image` on `.carousel-control-prev-icon` / `.carousel-control-next-icon`)
+
+##### Offcanvas
+
+- Dynamic `#phuse-offcanvas-backdrop` created on `show()`, removed on `hide()`
+- Fade-in/out via `opacity` transition
+- Body scroll locked (`overflow: hidden`) while open
+- `data-toggle="offcanvas"` + `data-target="#id"` on trigger; `data-dismiss="offcanvas"` on close button
+
+##### Popover
+
+- `e.stopPropagation()` prevents the document listener from closing the popover immediately on open
+- `data-popover-open` attribute tracks open state
+- Closes on outside click via document listener
+- Positioned below trigger with off-screen width measurement
+
+##### Tooltip
+
+- Fixed event delegation: `mouseenter`/`mouseleave` do not bubble - switched to `mouseover`/`mouseout`
+- **Color variants**: reads trigger button's class (`btn-danger`, `btn-success`, etc.) and applies `tooltip-{variant}` class - matching CSS variants set the tooltip background color
+- `data-placement` attribute (top/bottom/left/right)
+- Saves/restores native `title` attribute to suppress browser native tooltip
+
+##### Toast
+
+- Fixed top-right `#phuse-toast-container` (`position:fixed; top:1rem; right:1rem; z-index:9999`)
+- Four types: `success`, `error`, `warning`, `info` - all with white text and pi icon in header
+- Slide-in animation (`translateX(110%)` → `translateX(0)`)
+- Auto-dismiss after 4 seconds; `×` close button removes toast immediately
+- `Phuse.toast(message, type, duration)` static API
+
+##### Accordion
+
+- Correct DOM traversal: `button.closest('.accordion-item').querySelector('.accordion-body')`
+- `collapsed` class controls arrow rotation and header color via CSS
+- `open()` restores inline padding before animating `max-height`; `close()` zeros padding alongside `max-height` to prevent border-box bleed-through
+- CSS: `.accordion-body` gets `overflow: hidden; transition: max-height .3s ease`
+- Initially-collapsed bodies require `style="max-height:0;padding-top:0;padding-bottom:0;overflow:hidden;"`
+
+##### Modal (new - full implementation)
+
+Previously a bare show/hide. Now a complete implementation:
+
+- Dynamic `#phuse-modal-backdrop` with `.fade` → `.show` opacity transition
+- Body scroll locked while open
+- **Click-outside close**: click on `.modal` overlay (not `.modal-dialog`) hides the modal
+- **Escape key**: `keydown` listener attached on `show()`, removed on `hide()`
+- **Static backdrop**: `data-backdrop="static"` disables both click-outside and Escape key
+- Three modal sizes via class on `.modal`: default (560 px), `.modal-lg` (800 px), `.modal-xl` (1140 px), `.modal-sm` (300 px)
+- Backdrop element removed from DOM after closing animation
+
+```html
+<!-- Basic -->
+<div class="modal fade" id="my-modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Title</h5>
+        <button class="btn-close" data-dismiss="modal"><i class="pi pi-x"></i></button>
+      </div>
+      <div class="modal-body">Content here.</div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Static backdrop (no Esc / click-outside) -->
+<div class="modal fade" data-backdrop="static" ...>...</div>
+```
+
+##### Tabs
+
+- Removed deprecated global `event` object - `show(targetId, triggerEl)` now receives the trigger element directly from the click handler
+
+##### ScrollSpy
+
+- Removed erroneous `new` keyword - `Phuse.scrollSpy(el)` is a static method, not a constructor
+- Listens on the scrollable element itself (not `window`)
+- Queries nav links from `data-target` nav element
+
+#### CSS Fixes
+
+- **Carousel arrows**: Added SVG `background-image` to `.carousel-control-prev-icon` and `.carousel-control-next-icon`
+- **Accordion body**: Added `overflow: hidden; transition: max-height .3s ease` to `.accordion-body`
+- **Tooltip variants**: New CSS rules `.tooltip-primary`, `.tooltip-success`, `.tooltip-danger`, `.tooltip-warning`, `.tooltip-info` - each sets `.tooltip-inner { background-color: … }`
+- **Global `.btn-close`**: Replaced scoped `.alert .btn-close` with a global rule (`display:inline-flex`, `width/height:1.75rem`, `border-radius`, hover background); scoped rule retained only for `position:absolute` in alerts. All `btn-close` buttons now contain `<i class="pi pi-x"></i>`
+- **Toast info text**: Changed info toast text from `#000` to `#fff`
+
+#### Template Parser Fixes
+
+- **`parseRawOutput()`**: Returns the original match when resolved value is `null`, array, or object - prevents `Array to string conversion` warning
+- **`parseNestedProperties()`**: Same guard before `(string)` cast
+- **`resolveExpressionValue()`**: Returns empty string when value is array or object
+
+#### New Assets
+
+- `Public/assets/images/headphones.svg` - flat SVG headphone illustration for product page placeholder
+- Asset version query strings (`?v=…`) added to all view files for reliable cache-busting
+
+#### Components Page (`/examples/components`)
+
+Complete rewrite of `App/Views/examples/components.php`:
+
+- Ten sections: Alert, Button, Carousel, Modal, Offcanvas, Popover, Tooltip, ScrollSpy, Toast, Accordion
+- Pi icons on all section headings
+- `<pre class="code-block">` snippets for every component
+- All `btn-close` elements use `<i class="pi pi-x"></i>`
+- Proper escaped HTML in code snippets (no template substitution inside `<pre>`)
+
+#### Emoji Removal
+
+All remaining emoji characters removed from view files and controllers; replaced with `<i class="pi pi-…">` icon elements.
+
+---
+
+### v1.2.2 (2026-02-24)
+
+#### CSS Framework - Flat/Modern Rewrite + Icon System
+
+Complete overhaul of `Public/assets/css/styles.css` with a flat, professional, light-first design system.
+
+##### Design System
+
+- **Design tokens**: All CSS custom properties use the `--ps-` prefix (Phuse System). Light-first with full dark mode via `[data-theme=dark]` attribute.
+- **Color palette**: Primary `#2563EB`, Success `#16A34A`, Danger `#DC2626`, Warning `#D97706`, Info `#0891B2`
+- **Flat aesthetic**: No gradients, minimal shadows, clean 1px borders, `border-radius: 6px`, system font stack
+
+##### Icon System (`.pi`)
+
+New CSS-based hollow SVG icon system - no icon fonts, no external files, no extra HTTP requests.
+
+**50+ icons** covering: navigation, users, files, status, dev tools, time & location.
+
+```html
+<!-- Two-class pattern: base + icon name -->
+<i class="pi pi-home"></i>
+<i class="pi pi-check text-success"></i>
+<i class="pi pi-download me-1"></i>Download
+
+<!-- Size utilities -->
+<i class="pi pi-star pi-2x"></i>   <!-- 2rem -->
+<i class="pi pi-star pi-lg"></i>   <!-- 1.25rem -->
+```
+
+**How it works**: Each `.pi-name` class applies a URL-encoded inline SVG via `mask-image`. The `background-color: currentColor` provides the actual rendered color, so icons inherit their color from the surrounding text.
+
+Available sizes: `pi-xs`, `pi-sm`, `pi-lg`, `pi-xl`, `pi-2x`, `pi-3x`, `pi-4x`
+
+##### Template Engine - `protectHtmlBlocks` Removed
+
+- Removed `protectHtmlBlocks()` / `restoreHtmlBlocks()` from `parseTemplate()` pipeline - no longer needed since double-brace `{{}}` syntax never conflicts with CSS/JS single `{}`.
+- This eliminates the `___PROTECTED_CODE_0___` placeholder bug caused by nested `<code>` inside `<pre>` blocks.
+- Parser pipeline simplified from 12 steps to 8 steps.
+- **`parseForeach()` fix**: Added `parseRawOutput()` call inside loop iterations so `{!! var !!}` works correctly inside `{% foreach %}` blocks.
+
+##### New Example: Icon System
+
+- Added `App/Views/examples/icons.php` - live demonstration of all icons, sizes, colors, and button usage
+- Accessible at `/examples/icons`
+
+##### Inline Assets Example Fix
+
+- `App/Views/examples/inline_assets.php` - all template syntax shown as code examples now correctly uses HTML entities (`&#123;&#123;var&#125;&#125;`) to prevent parser substitution.
+- Added `userName` to `inlineAssets()` controller data for live demo completeness.
+
+#### Tests
+
+- All 44 existing tests continue to pass (no breaking changes to parser API)
+
+---
+
 ### v1.2.1 (2026-05-22)
 
-#### Core/Template — Double-Brace Syntax Overhaul
+#### Core/Template - Double-Brace Syntax Overhaul
 
 **Breaking change**: Variable placeholders changed from single `{variable}` to double `{{variable}}`, matching the syntax used by **Twig** and **Laravel Blade**. Control-flow tags (`{% if %}`, `{% foreach %}`, `{% for %}`) are unchanged.
 
 ##### Why
 
-Single curly braces conflicted with inline CSS (`.class { color: red; }`) and inline JavaScript (`var obj = { key: val };`), corrupting templates that contained styles or scripts. Double braces eliminate all conflicts — only `{{ }}` triggers parsing.
+Single curly braces conflicted with inline CSS (`.class { color: red; }`) and inline JavaScript (`var obj = { key: val };`), corrupting templates that contained styles or scripts. Double braces eliminate all conflicts - only `{{ }}` triggers parsing.
 
 ##### New variable syntax
 
-- **`{{variable}}`** — scalar variable output (replaces `{variable}`)
-- **`{{user.profile.age}}`** — dot-notation nested access (replaces `{user.profile.age}`)
-- **`{{name|upper}}`** — filter (replaces `{name|upper}`)
-- **`{{name|substr:0:1|upper}}`** — chained filters with params (unchanged behaviour, new delimiter)
+- **`{{variable}}`** - scalar variable output (replaces `{variable}`)
+- **`{{user.profile.age}}`** - dot-notation nested access (replaces `{user.profile.age}`)
+- **`{{name|upper}}`** - filter (replaces `{name|upper}`)
+- **`{{name|substr:0:1|upper}}`** - chained filters with params (unchanged behaviour, new delimiter)
 
 ##### New v1.2.1 syntax additions
 
-- **`{!! variable !!}`** — Raw / unescaped HTML output (Laravel Blade parity). Use for trusted rich-text content only.
-- **`{# comment #}`** — Template comments stripped entirely from output (Twig parity). Supports multi-line.
-- **`@{{variable}}`** — Escaped output tag — renders as the literal text `{{variable}}` without substitution (Blade `@{{ }}` parity).
+- **`{!! variable !!}`** - Raw / unescaped HTML output (Laravel Blade parity). Use for trusted rich-text content only.
+- **`{# comment #}`** - Template comments stripped entirely from output (Twig parity). Supports multi-line.
+- **`@{{variable}}`** - Escaped output tag - renders as the literal text `{{variable}}` without substitution (Blade `@{{ }}` parity).
 
 ##### Parser pipeline improvements
 
-- `parseComments()` — strips `{# … #}` blocks before any other processing
-- `parseRawOutput()` — resolves `{!! var !!}` expressions
-- `parseEscapedSyntax()` / `restoreEscapedSyntax()` — protects `@{{…}}` blocks so they survive the full pipeline
-- `parseArray()` — block-style array loop updated to `{{var}}…{{/var}}` delimiter; removed the old `str_replace(['{','}'],'',…)` hack that could corrupt CSS/JS inside loop bodies
-- `restoreHtmlBlocks()` — updated to resolve `{{key}}` (was `{key}`) in `<script>` blocks on restore
-- `parseForeach()` / `processNestedForeach()` — loop variable replacements now use `{{loopVar}}` keys
-- `parseFor()` — numeric loop replacement updated to `{{i}}`
+- `parseComments()` - strips `{# … #}` blocks before any other processing
+- `parseRawOutput()` - resolves `{!! var !!}` expressions
+- `parseEscapedSyntax()` / `restoreEscapedSyntax()` - protects `@{{…}}` blocks so they survive the full pipeline
+- `parseArray()` - block-style array loop updated to `{{var}}…{{/var}}` delimiter; removed the old `str_replace(['{','}'],'',…)` hack that could corrupt CSS/JS inside loop bodies
+- `restoreHtmlBlocks()` - updated to resolve `{{key}}` (was `{key}`) in `<script>` blocks on restore
+- `parseForeach()` / `processNestedForeach()` - loop variable replacements now use `{{loopVar}}` keys
+- `parseFor()` - numeric loop replacement updated to `{{i}}`
 - All filter and nested-property regexes updated to match `{{…}}` double-brace delimiters
 
 ##### Inline CSS & JavaScript safety (the core fix)
 
 ```html
 <style>
-  /* ✅ CSS rules with { } are 100% safe — never parsed */
+  /* ✅ CSS rules with { } are 100% safe - never parsed */
   .btn { color: red; border-radius: 0.25rem; }
   .hero { background: {{bgColor}}; }   /* dynamic value still works */
 </style>
@@ -64,16 +261,16 @@ Single curly braces conflicted with inline CSS (`.class { color: red; }`) and in
 
 #### New example: Inline CSS & JS Safety
 
-- Added `App/Views/examples/inline_assets.php` — live demonstration of single-brace CSS/JS safety, new syntax features, and dynamic value injection into style attributes and script blocks
+- Added `App/Views/examples/inline_assets.php` - live demonstration of single-brace CSS/JS safety, new syntax features, and dynamic value injection into style attributes and script blocks
 - Accessible at `/examples/inline-assets`
 
 #### Documentation
 
 - `docs/template-system.md` fully rewritten for v1.2.1 syntax with Twig/Blade comparison table, migration guide, inline CSS/JS safety section, and troubleshooting
 
-#### Tests
+#### Test Suite
 
-- `tests/Core/TemplateTest.php` updated — all template strings use `{{variable}}` syntax
+- `tests/Core/TemplateTest.php` updated - all template strings use `{{variable}}` syntax
 - New test cases: inline CSS preservation, inline JS preservation, JS variable injection inside `<script>` tags, `{# comment #}` stripping, `{!! raw !!}` output, `@{{escaped}}` literal output, filter chaining, numeric for loop
 
 ---
@@ -82,19 +279,19 @@ Single curly braces conflicted with inline CSS (`.class { color: red; }`) and in
 
 #### Core/Http/Request.php
 
-- **`extractResponseCode()` Scope Fix**: `$http_response_header` is a PHP local variable set only in the scope where `fopen()` runs — it was never accessible inside `extractResponseCode()`, causing it to always return the fallback `200`. The headers array is now passed as a parameter from the calling scope. This was the root cause of all HTTP response code detection being broken (401 checks, token refresh triggering, CMS token expiry detection)
-- **`refreshRequest()` — `json_decode` fix**: Session token (`sesstoken`) is stored as a JSON string; the method was accessing it as an object without decoding first, causing property lookups to always fail and the refresh to throw before even attempting
-- **`refreshRequest()` — refresh body fix**: The refresh endpoint receives the full token JSON (matching `Token.php`), not just `{"refresh_token":"..."}` — only `access_token` presence is now required before attempting the call
-- **`updateSessionWithNewToken()` — session storage fix**: New token is now stored as `json_encode()`d string; previously stored as a raw PHP object, which broke subsequent JSON decoding of the session token
+- **`extractResponseCode()` Scope Fix**: `$http_response_header` is a PHP local variable set only in the scope where `fopen()` runs - it was never accessible inside `extractResponseCode()`, causing it to always return the fallback `200`. The headers array is now passed as a parameter from the calling scope. This was the root cause of all HTTP response code detection being broken (401 checks, token refresh triggering, CMS token expiry detection)
+- **`refreshRequest()` - `json_decode` fix**: Session token (`sesstoken`) is stored as a JSON string; the method was accessing it as an object without decoding first, causing property lookups to always fail and the refresh to throw before even attempting
+- **`refreshRequest()` - refresh body fix**: The refresh endpoint receives the full token JSON (matching `Token.php`), not just `{"refresh_token":"..."}` - only `access_token` presence is now required before attempting the call
+- **`updateSessionWithNewToken()` - session storage fix**: New token is now stored as `json_encode()`d string; previously stored as a raw PHP object, which broke subsequent JSON decoding of the session token
 
 #### Core/Http/URI.php
 
-- **`redirect()` relative path support**: Method no longer rejects non-absolute URLs — relative paths are resolved to absolute URLs using the current scheme and host before validation, allowing controller redirects like `redirect('/admin/login')` to work correctly
+- **`redirect()` relative path support**: Method no longer rejects non-absolute URLs - relative paths are resolved to absolute URLs using the current scheme and host before validation, allowing controller redirects like `redirect('/admin/login')` to work correctly
 - **`redirect()` loopback allowance**: Added explicit `$isLoopback` check so redirects to `127.*` / `::1` addresses are permitted (previously blocked by the private IP filter)
 
 #### Core/Template/ParserTrait.php
 
-- **`restoreHtmlBlocks()` script variable substitution**: Protected `<script>` blocks are now processed for template variable substitution on restore — variables like `{adminUrl}`, `{apiUrl}` inside `<script>` tags now resolve correctly instead of being left as literal placeholders
+- **`restoreHtmlBlocks()` script variable substitution**: Protected `<script>` blocks are now processed for template variable substitution on restore - variables like `{adminUrl}`, `{apiUrl}` inside `<script>` tags now resolve correctly instead of being left as literal placeholders
 
 ---
 
@@ -102,7 +299,7 @@ Single curly braces conflicted with inline CSS (`.class { color: red; }`) and in
 
 #### Database Layer
 
-- **Critical Query Parameter Fix**: Rewrote parameter binding in `BuildersTrait` to use unique placeholder names (`param_N`, `where_N`) — eliminates bind conflicts when the same column appears in multiple clauses or queries
+- **Critical Query Parameter Fix**: Rewrote parameter binding in `BuildersTrait` to use unique placeholder names (`param_N`, `where_N`) - eliminates bind conflicts when the same column appears in multiple clauses or queries
 - **`!=` Operator Support**: Added `!=` to the comparison operators list in query builders
 - **PostgreSQL Driver Overhaul**: `PgSQL` now has its own `compile()` and `resetQuery()` implementations; `resetQuery()` also clears the binds array to prevent cross-query parameter leakage
 - **Connection Tracking**: `Connection` now tracks bound parameters internally via `$boundParams`; `arrayBind()` correctly handles colon-prefixed parameter keys; `execute()` merges tracked and passed params
@@ -117,18 +314,18 @@ Single curly braces conflicted with inline CSS (`.class { color: red; }`) and in
 - **Audit Fields**: Added `created_by`, `updated_by`, `deleted_by` column support with configurable nullable column properties (`createdByColumn`, `updatedByColumn`, `deletedByColumn`)
 - **`setCurrentUser()` / `getCurrentUser()`**: New methods to set the current user ID for automatic audit trail population on insert and update
 - **`primaryKey` Visibility**: Changed from `public` to `protected` to prevent accidental external mutation
-- **Nullable Timestamp Columns**: `createdAtColumn`, `updatedAtColumn`, `deletedAtColumn` are now nullable — set to `null` to disable individual timestamp fields
+- **Nullable Timestamp Columns**: `createdAtColumn`, `updatedAtColumn`, `deletedAtColumn` are now nullable - set to `null` to disable individual timestamp fields
 - **`where()` Smart Detection**: Operator/value swap now only triggers when the second argument is an actual SQL operator string, preventing false positives with UUID values
 - **Debug Properties**: Added `lastDebugQuery` and `lastDebugBinds` public properties for error reporting without echoing to output
 - **Detailed Error Logging**: PDOException code, message, file, and line are now logged on save/query failure; update errors include the SQL and bound params
 
 #### Template System
 
-- **Filter Chaining**: Filters can now be chained with `|` — e.g. `{name|substr:0:1|upper}`
-- **Parameterized Filters**: Filters now accept colon-delimited parameters with quoted string support — e.g. `{date|date:'M d, Y'}`
+- **Filter Chaining**: Filters can now be chained with `|` - e.g. `{name|substr:0:1|upper}`
+- **Parameterized Filters**: Filters now accept colon-delimited parameters with quoted string support - e.g. `{date|date:'M d, Y'}`
 - **New `substr` Filter**: `{variable|substr:start:length}` for substring extraction
 - **New `date` Filter**: `{variable|date:'Y-m-d'}` supporting both Unix timestamps and date strings
-- **Nested `{% if %}` Block Support**: Replaced regex-based if parsing with a proper nesting-aware parser (`parseNestedIfBlocks` / `findTopLevelIfBlocks`) — nested conditionals no longer break the outer block
+- **Nested `{% if %}` Block Support**: Replaced regex-based if parsing with a proper nesting-aware parser (`parseNestedIfBlocks` / `findTopLevelIfBlocks`) - nested conditionals no longer break the outer block
 - **`{% else %}` in Loop Conditionals**: `{% if %}...{% else %}...{% endif %}` blocks inside `{% foreach %}` loops now correctly render the else branch
 - **Filter Order Fix**: Filters are now parsed after `{% foreach %}` processing using `$this->data`, ensuring loop variables are available to filters
 - **Filters Inside Loops**: Filters are now also applied to content inside foreach loop iterations
@@ -137,23 +334,23 @@ Single curly braces conflicted with inline CSS (`.class { color: red; }`) and in
 #### Utilities
 
 - **`Str` Formatting Methods**: Added seven new static methods to `Core\Utilities\Text\Str`:
-  - `formatBytes(int $bytes, int $precision)` — human-readable file sizes (B/KB/MB/GB/TB)
-  - `formatNumber($number, int $decimals)` — thousands-separated number formatting
-  - `formatCurrency($amount, string $currency, int $decimals)` — currency with symbol
-  - `formatPercentage($value, int $decimals)` — percentage formatting
-  - `formatDatetime($datetime, string $format)` — flexible datetime formatting
-  - `slug(string $text)` — URL-safe slug generation
-  - `formatPhone(string $phone, string $format)` — configurable phone number formatting
+  - `formatBytes(int $bytes, int $precision)` - human-readable file sizes (B/KB/MB/GB/TB)
+  - `formatNumber($number, int $decimals)` - thousands-separated number formatting
+  - `formatCurrency($amount, string $currency, int $decimals)` - currency with symbol
+  - `formatPercentage($value, int $decimals)` - percentage formatting
+  - `formatDatetime($datetime, string $format)` - flexible datetime formatting
+  - `slug(string $text)` - URL-safe slug generation
+  - `formatPhone(string $phone, string $format)` - configurable phone number formatting
 
 #### Core / Config
 
-- **Lazy URI Loading**: `Config` no longer instantiates `URI` in the constructor; it is created on demand via `getURI()` — prevents HTTP context errors during CLI or early bootstrap
+- **Lazy URI Loading**: `Config` no longer instantiates `URI` in the constructor; it is created on demand via `getURI()` - prevents HTTP context errors during CLI or early bootstrap
 - **Config Validation**: Added check that the config file returns an array; throws a clear exception if not
 - **PHP Compatibility**: Removed `readonly` from `Config` properties for PHP 8.2/8.3 cross-version compatibility
 
 #### Session
 
-- **Idempotent Initialization**: `Session` constructor and `ensureSessionStarted()` now check `session_status()` before calling `session_start()` — eliminates "session already active" warnings in environments that start sessions early
+- **Idempotent Initialization**: `Session` constructor and `ensureSessionStarted()` now check `session_status()` before calling `session_start()` - eliminates "session already active" warnings in environments that start sessions early
 - **Fallback Save Path**: When the configured session save path is missing or not writable, the session falls back to a writable subdirectory under `sys_get_temp_dir()`
 
 #### Cache
@@ -169,6 +366,7 @@ Single curly braces conflicted with inline CSS (`.class { color: red; }`) and in
 ---
 
 ### v1.1.6 (2026-03-11)
+
 - **Cross-Platform Routing Compatibility**: Enhanced routing system to support both domain-based and subdirectory-based access patterns
   - **Dynamic URL Generation**: Automatic detection of access type (domain vs localhost/subdirectory)
   - **Windows/Linux Compatibility**: Proper handling of directory separators across different operating systems
@@ -182,6 +380,7 @@ Single curly braces conflicted with inline CSS (`.class { color: red; }`) and in
   - **Documentation**: Updated routing documentation with cross-platform examples
 
 ### v1.1.5 (2025-11-19)
+
 - **Core Http URI**: Updated core URI handling for local development
 - **Core Parser**: Enhanced parsing tag for `<script>` elements
 - **Theme Variable Integration**: Integrated all Bootstrap 5.3.8 CSS variables with Phuse-specific `--ps-` prefix
@@ -196,6 +395,7 @@ Single curly braces conflicted with inline CSS (`.class { color: red; }`) and in
   - **Theme Switching Examples**: HTML and JavaScript examples for dynamic theme switching
 
 ### v1.1.4 (2025-11-17)
+
 - **Complete Bootstrap JavaScript Components Integration**: Full Bootstrap 5.3.8 JavaScript compatibility with Phuse-specific implementations
   - **Alert Component**: Dismissible alert notifications with fade animations and auto-cleanup
     - Supports all Bootstrap alert types (primary, success, warning, danger, info)
@@ -273,6 +473,7 @@ Single curly braces conflicted with inline CSS (`.class { color: red; }`) and in
   - Migration guides for existing applications
 
 ### v1.1.3 (2025-11-12)
+
 - **Complete CSS Framework Modernization**: Bootstrap 5+ compatible framework with dark theme optimization
   - **Modern Grid System**: Complete Bootstrap 5+ grid implementation with gap-based spacing
     - **12-Column Responsive Grid**: Full breakpoint support (xs, sm, md, lg, xl, xxl)
@@ -319,6 +520,7 @@ Single curly braces conflicted with inline CSS (`.class { color: red; }`) and in
   - **Asset Management**: Proper CSS file serving and caching
 
 ### v1.1.2 (2025-11-12)
+
 - **Text Utilities System Overhaul**: Complete reorganization and enhancement of text processing utilities
   - **Relocated Core Classes**: Moved all text utilities from `Core/Text/` to `Core/Utilities/Text/` for better organization
   - **Enhanced String Utilities (Str)**: Comprehensive improvements to string manipulation and generation
@@ -357,6 +559,7 @@ Single curly braces conflicted with inline CSS (`.class { color: red; }`) and in
   - **Performance Tips**: Optimization recommendations for production use
 
 ### v1.1.1 (2025-11-12)
+
 - **Complete ORM System Overhaul**: Modern Active Record implementation with enterprise features
   - Comprehensive Model class with relationships (hasOne, hasMany, belongsTo, belongsToMany)
   - Eager loading with `with()` method for relationship optimization
@@ -401,6 +604,7 @@ Single curly braces conflicted with inline CSS (`.class { color: red; }`) and in
   - Troubleshooting and best practices
 
 ### v1.1.0 (2025-11-10)
+
 - **Refactor Exception System**: Complete overhaul with modern PHP practices and framework integration
   - New BaseException class with type categorization, severity levels, and context data
   - Enhanced Handler class with Core\Log integration and improved error categorization
@@ -452,6 +656,7 @@ Single curly braces conflicted with inline CSS (`.class { color: red; }`) and in
   - Provided real-world scenarios including e-commerce, dashboards, and blog templates
 
 ### v1.0.3 (2025-10-21)
+
 - Added comprehensive Dependency Injection (DI) Container system with automatic dependency resolution
 - Implemented Middleware System with stack-based processing and request/response modification
 - Added unified Cache System with multiple drivers (File, Memory) and advanced features
@@ -462,10 +667,12 @@ Single curly braces conflicted with inline CSS (`.class { color: red; }`) and in
 - Improved code organization and separation of concerns across the framework
 
 ### v1.0.2a (2025-10-21)
+
 - Removed Versioning information on code files
 - Fixed session issue on local machine
 
 ### v1.0.2 (2025-09-13)
+
 - Added Database Query Caching system
 - Added Template Caching for improved performance
 - Enhanced cache configuration options

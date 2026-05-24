@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Product Page Example - Phuse Template System</title>
-  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css">
+  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=139">
+  <script>(function(){try{var t=localStorage.getItem('phuse-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})()</script>
 </head>
 
 <body>
@@ -19,12 +20,12 @@
 
       <div class="card-body p-4">
         <div class="card border-danger p-3 mb-4">
-          <h6 class="mb-3">🎯 Conditional Features Demonstrated:</h6>
+          <h6 class="mb-3"><i class="pi pi-zap me-1"></i> Conditional Features Demonstrated:</h6>
           <ul class="mb-0 text-secondary">
-            <li><code>{% if user_preferences.show_prices %}</code> — Conditional price display</li>
-            <li><code>{{product.in_stock ? 'in-stock' : 'out-of-stock'}}</code> — Dynamic class assignment</li>
-            <li><code>{% if product.in_stock %}</code> — Conditional button display</li>
-            <li><code>{{product.image}}</code> — Image with fallback handling</li>
+            <li><code>{% if user_preferences.show_prices %}</code> - Conditional price display</li>
+            <li><code>{{product.in_stock ? 'in-stock' : 'out-of-stock'}}</code> - Dynamic class assignment</li>
+            <li><code>{% if product.in_stock %}</code> - Conditional button display</li>
+            <li><code>{{product.image}}</code> - Image with fallback handling</li>
           </ul>
         </div>
 
@@ -55,11 +56,11 @@
 
               <div class="alert {% if product.in_stock %}alert-success{% else %}alert-danger{% endif %} text-center mb-4">
                 {% if product.in_stock %}
-                  ✅ In Stock ({{product.stock_quantity}} available)
+                  <i class="pi pi-check-circle me-1"></i> In Stock ({{product.stock_quantity}} available)
                 {% endif %}
 
                 {% if not product.in_stock %}
-                  ❌ Out of Stock
+                  <i class="pi pi-x-circle me-1"></i> Out of Stock
                 {% endif %}
               </div>
 
@@ -85,14 +86,14 @@
               </div>
 
               {% if product.in_stock %}
-                <button class="btn btn-success w-100">🛒 Add to Cart</button>
+                <button class="btn btn-success w-100"><i class="pi pi-plus me-1"></i> Add to Cart</button>
               {% endif %}
             </div>
           </div>
         </div>
 
         <div class="card p-4 mt-4">
-          <h6 class="text-primary mb-3">🔗 Related Products</h6>
+          <h6 class="text-primary mb-3"><i class="pi pi-link me-1"></i> Related Products</h6>
           {% foreach related_products as related %}
           <div class="card p-3 mb-2 border-left-primary">
             <div class="d-flex justify-content-between align-items-center">
@@ -114,6 +115,6 @@
     </div>
   </div>
 
-
+  <script src="{{assetsUrl}}js/scripts.js?v=136"></script>
 </body>
 </html>

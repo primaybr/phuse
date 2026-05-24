@@ -1,6 +1,6 @@
 # PHUSE Template System
 
-> **v1.2.1** — Syntax overhauled to double-brace `{{variable}}` — see [Migration from v1.2.0](#migration-from-v120) if upgrading.
+> **v1.2.3** - Dark mode overhaul: all alert variants consistent in dark theme, `bg-tertiary` utility added, CSS icon system expanded. See [What Changed in v1.2.2](#what-changed-in-v122) for the double-brace parser changes.
 
 The PHUSE template engine is a fast, zero-dependency engine with a syntax that is immediately familiar to **Twig** and **Laravel Blade** users.  Single curly braces `{ }` are **never** parsed, so inline CSS rules and JavaScript code pass through the template completely unchanged.
 
@@ -24,7 +24,8 @@ The PHUSE template engine is a fast, zero-dependency engine with a syntax that i
 14. [Controller Integration](#controller-integration)
 15. [Configuration](#configuration)
 16. [Migration from v1.2.0](#migration-from-v120)
-17. [Troubleshooting](#troubleshooting)
+17. [What Changed in v1.2.2](#what-changed-in-v122)
+18. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -38,7 +39,7 @@ The PHUSE template engine is a fast, zero-dependency engine with a syntax that i
 | `{{name\|substr:0:1\|upper}}` | Chained filters with params |
 | `{!! htmlContent !!}` | Raw / unescaped HTML output |
 | `{# comment #}` | Template comment (stripped) |
-| `@{{variable}}` | Escaped — outputs literal `{{variable}}` |
+| `@{{variable}}` | Escaped - outputs literal `{{variable}}` |
 | `{% if condition %}…{% endif %}` | Conditional block |
 | `{% if … %}…{% else %}…{% endif %}` | If / else |
 | `{% foreach items as item %}…{% endforeach %}` | Loop over array |
@@ -53,7 +54,7 @@ The PHUSE template engine is a fast, zero-dependency engine with a syntax that i
 The old `{variable}` syntax (single curly braces) conflicted with CSS and JavaScript because both languages use `{ }` extensively:
 
 ```css
-/* ❌ OLD — single-brace parser could corrupt this */
+/* ❌ OLD - single-brace parser could corrupt this */
 .button {
   background-color: #007bff;
   color: white;
@@ -61,7 +62,7 @@ The old `{variable}` syntax (single curly braces) conflicted with CSS and JavaSc
 ```
 
 ```javascript
-// ❌ OLD — also affected inline JS objects
+// ❌ OLD - also affected inline JS objects
 var config = { debug: true, version: "1.0" };
 if (x) { doSomething(); }
 ```
@@ -71,7 +72,7 @@ if (x) { doSomething(); }
 By switching to `{{variable}}` (double braces), **only `{{ }}` triggers parsing**. Single `{ }` are completely ignored:
 
 ```css
-/* ✅ NEW — CSS is 100% safe inside templates */
+/* ✅ NEW - CSS is 100% safe inside templates */
 .button {
   background-color: #007bff;
   color: {{primaryColor}};   /* dynamic value still works */
@@ -79,7 +80,7 @@ By switching to `{{variable}}` (double braces), **only `{{ }}` triggers parsing*
 ```
 
 ```javascript
-// ✅ NEW — JS objects and control flow are completely safe
+// ✅ NEW - JS objects and control flow are completely safe
 var config = { debug: true };
 if (x) { doSomething(); }
 
@@ -124,7 +125,7 @@ $this->render('user/profile', [
 
 ## Nested / Dot-Notation Access
 
-Access nested arrays and objects with dot notation — works to any depth:
+Access nested arrays and objects with dot notation - works to any depth:
 
 ```html
 <p>{{user.name}}</p>
@@ -148,7 +149,7 @@ Works with **arrays**, **objects**, and any combination of the two via `get*()` 
 
 ## Filters
 
-Apply transformations with the pipe operator — identical to Twig syntax:
+Apply transformations with the pipe operator - identical to Twig syntax:
 
 ```html
 {{name|upper}}               <!-- ALICE -->
@@ -223,10 +224,10 @@ $data = [
 
 ## Template Comments
 
-Comments are stripped entirely at parse time — they do **not** appear in the rendered HTML, not even as `<!-- HTML comments -->`:
+Comments are stripped entirely at parse time - they do **not** appear in the rendered HTML, not even as `<!-- HTML comments -->`:
 
 ```html
-{# This section needs updating — ticket #123 #}
+{# This section needs updating - ticket #123 #}
 <h1>{{title}}</h1>
 
 {# TODO: add breadcrumb navigation here #}
@@ -246,7 +247,7 @@ Multi-line comments are supported:
 
 ## Escaped Output Tag
 
-Use `@{{variable}}` to output the **literal text** `{{variable}}` — useful when writing template documentation inside a template itself:
+Use `@{{variable}}` to output the **literal text** `{{variable}}` - useful when writing template documentation inside a template itself:
 
 ```html
 <!-- Blade-style escaping -->
@@ -269,7 +270,7 @@ $data = ['name' => 'Alice'];
 
 ## Conditional Statements
 
-Use `{% if %}…{% endif %}` — identical to Twig's control flow tags:
+Use `{% if %}…{% endif %}` - identical to Twig's control flow tags:
 
 ```html
 {% if logged_in %}
@@ -333,7 +334,7 @@ Iterate over arrays with `{% foreach … as … %}`:
 {% foreach posts as post %}
     <li>
         <strong>{{post.title|capitalize}}</strong>
-        — {{post.created_at|date:'M d, Y'}}
+        - {{post.created_at|date:'M d, Y'}}
         {% if post.published %}
             <span class="badge">Published</span>
         {% else %}
@@ -392,7 +393,7 @@ This is the core improvement of v1.2.1. With double-brace syntax, **all CSS and 
 
 ```html
 <style>
-    /* All CSS rules are safe — { } are never parsed */
+    /* All CSS rules are safe - { } are never parsed */
     .hero {
         background: {{bgColor}};   /* dynamic value ✅ */
         color: #fff;
@@ -410,7 +411,7 @@ Variables can be injected into `<script>` blocks using `{{variable}}`.  Plain Ja
 
 ```html
 <script>
-    // Plain JS — completely safe ✅
+    // Plain JS - completely safe ✅
     var config = { debug: false, timeout: 5000 };
 
     // PHP values injected via {{variable}} ✅
@@ -418,7 +419,7 @@ Variables can be injected into `<script>` blocks using `{{variable}}`.  Plain Ja
     var userId  = {{userId}};
     var appName = "{{appName}}";
 
-    // JavaScript control flow — safe ✅
+    // JavaScript control flow - safe ✅
     if (config.debug) {
         console.log("Debug mode on");
     }
@@ -579,10 +580,10 @@ The only **breaking change** in v1.2.1 is the variable delimiter.
 ### Migration Steps
 
 1. **Find and replace** in all template files (`App/Views/**/*.php`):
-   - Replace `{(` with `{{(` — careful not to double-replace
+   - Replace `{(` with `{{(` - careful not to double-replace
    - A safe approach: `sed -i 's/{\([a-zA-Z_][^}]*\)}/{{​\1}}/g' *.php`
 
-2. **Verify** control flow tags (`{% if %}`, `{% foreach %}`, `{% for %}`) — these are unchanged.
+2. **Verify** control flow tags (`{% if %}`, `{% foreach %}`, `{% for %}`) - these are unchanged.
 
 3. **Clear the template cache** after deploying:
 
@@ -593,6 +594,43 @@ The only **breaking change** in v1.2.1 is the variable delimiter.
 ### Backward Compatibility
 
 The `{% %}` control flow tags are **unchanged** and fully backward-compatible.
+
+---
+
+## What Changed in v1.2.2
+
+### `protectHtmlBlocks` removed
+
+The `protectHtmlBlocks()` / `restoreHtmlBlocks()` pipeline steps have been **removed**. They were originally added to prevent CSS `{ }` and JS `{ }` from being parsed as template variables, but that was only necessary with the old single-brace `{variable}` syntax. Double braces `{{variable}}` never conflict with single-brace CSS/JS, so the protection layer is unnecessary.
+
+**Side-effect fixed**: nested `<code>` inside `<pre>` blocks was producing visible `___PROTECTED_CODE_0___` placeholder text in the rendered output. That bug is gone.
+
+**Impact on templates**: no changes required. CSS and JS continue to be safe exactly as before. Variables in `<style>` and `<script>` blocks still resolve correctly.
+
+### `{!! var !!}` now works inside `{% foreach %}` loops
+
+Previously, raw output tags inside loops were rendered literally. Fixed in `parseForeach()` by calling `parseRawOutput()` on each loop iteration after variable substitution.
+
+```html
+{% foreach features as feature %}
+  <p>{!! feature.description !!}</p>   <!-- now works correctly -->
+{% endforeach %}
+```
+
+### Code display in templates: use HTML entities
+
+Because HTML block protection is gone, any `{{variable}}` or `{% tag %}` syntax that appears inside displayed code blocks (e.g. `<div class="code-block">`) will be processed by the parser. Use HTML entities for literal display:
+
+| Display | Source |
+| --- | --- |
+| `{{name}}` | `&#123;&#123;name&#125;&#125;` |
+| `{# comment #}` | `&#123;# comment #&#125;` |
+| `{!! var !!}` | `&#123;!! var !!&#125;` |
+| `@{{name}}` | `&#64;&#123;&#123;name&#125;&#125;` |
+
+### Icon system added (`.pi`)
+
+v1.2.2 ships a CSS icon system in `Public/assets/css/styles.css`. See `/examples/icons` for the full catalogue.
 
 ---
 
@@ -607,7 +645,7 @@ The `{% %}` control flow tags are **unchanged** and fully backward-compatible.
 ### Inline style / script looks wrong
 
 - Variables inside `<style>` blocks can only be used in **property values**, not in selectors.
-- Variables inside `<script>` blocks are resolved when the block is restored after parsing. Use `{{variable}}` (double braces) — not `{variable}`.
+- Variables inside `<script>` blocks are resolved when the block is restored after parsing. Use `{{variable}}` (double braces) - not `{variable}`.
 
 ### Cache stale after template change
 

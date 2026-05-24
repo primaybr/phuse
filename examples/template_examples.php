@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * PHUSE FRAMEWORK — TEMPLATE SYSTEM EXAMPLES (v1.2.1)
+ * PHUSE FRAMEWORK - TEMPLATE SYSTEM EXAMPLES (v1.2.1)
  *
  * Demonstrates the double-brace {{variable}} syntax introduced in v1.2.1.
  * Single { } are no longer parsed, so inline CSS and JavaScript are safe.
@@ -15,7 +15,7 @@ declare(strict_types=1);
  *   {{name|substr:0:1|upper}}        Chained filters
  *   {!! htmlContent !!}              Raw / unescaped HTML
  *   {# This is a comment #}          Template comment (stripped)
- *   @{{variable}}                    Escaped — outputs literal {{variable}}
+ *   @{{variable}}                    Escaped - outputs literal {{variable}}
  *   {% if condition %}…{% endif %}   Conditional block
  *   {% foreach items as item %}…{% endforeach %}  Loop
  *   {% for i in 1..10 %}…{% endfor %}             Numeric range loop
@@ -30,7 +30,7 @@ use Core\Template\Parser;
 use Core\Cache\TemplateCache;
 
 // ---------------------------------------------------------------------------
-// EXAMPLE 1 — Basic Variable Replacement
+// EXAMPLE 1 - Basic Variable Replacement
 // ---------------------------------------------------------------------------
 /**
  * The simplest usage: pass scalar values and reference them with {{variable}}.
@@ -56,14 +56,14 @@ function example_basic_variables(): void
 }
 
 // ---------------------------------------------------------------------------
-// EXAMPLE 2 — Nested / Dot-Notation Access
+// EXAMPLE 2 - Nested / Dot-Notation Access
 // ---------------------------------------------------------------------------
 /**
  * Access nested arrays and objects with dot notation inside {{…}}.
  *
- *   {{user.name}}               — one level deep
- *   {{user.profile.city}}       — two levels deep
- *   {{user.address.geo.lat}}    — unlimited depth
+ *   {{user.name}}               - one level deep
+ *   {{user.profile.city}}       - two levels deep
+ *   {{user.address.geo.lat}}    - unlimited depth
  */
 function example_nested_access(): void
 {
@@ -86,7 +86,7 @@ function example_nested_access(): void
 }
 
 // ---------------------------------------------------------------------------
-// EXAMPLE 3 — Filters
+// EXAMPLE 3 - Filters
 // ---------------------------------------------------------------------------
 /**
  * Pipe filters work exactly like Twig:
@@ -121,7 +121,7 @@ function example_filters(): void
 }
 
 // ---------------------------------------------------------------------------
-// EXAMPLE 4 — Raw HTML Output  {!! var !!}
+// EXAMPLE 4 - Raw HTML Output  {!! var !!}
 // ---------------------------------------------------------------------------
 /**
  * Use {!! var !!} to output trusted HTML without escaping.
@@ -146,10 +146,10 @@ function example_raw_output(): void
 }
 
 // ---------------------------------------------------------------------------
-// EXAMPLE 5 — Template Comments  {# … #}
+// EXAMPLE 5 - Template Comments  {# … #}
 // ---------------------------------------------------------------------------
 /**
- * Comments are stripped entirely — they never appear in the rendered output,
+ * Comments are stripped entirely - they never appear in the rendered output,
  * not even as HTML comments.
  */
 function example_comments(): void
@@ -157,7 +157,7 @@ function example_comments(): void
     $parser = new Parser();
 
     $template = <<<'TPL'
-{# Page title section — keep in sync with SEO meta #}
+{# Page title section - keep in sync with SEO meta #}
 <h1>{{title}}</h1>
 
 {# TODO: add breadcrumb nav here #}
@@ -176,10 +176,10 @@ TPL;
 }
 
 // ---------------------------------------------------------------------------
-// EXAMPLE 6 — Escaped Output  @{{variable}}
+// EXAMPLE 6 - Escaped Output  @{{variable}}
 // ---------------------------------------------------------------------------
 /**
- * Use @{{variable}} to output the literal text {{variable}} — useful when
+ * Use @{{variable}} to output the literal text {{variable}} - useful when
  * writing documentation or showing template syntax inside a template.
  * Mirrors Laravel Blade's @{{ }} mechanism.
  */
@@ -198,10 +198,10 @@ function example_escaped_output(): void
 }
 
 // ---------------------------------------------------------------------------
-// EXAMPLE 7 — Conditional Statements  {% if %}
+// EXAMPLE 7 - Conditional Statements  {% if %}
 // ---------------------------------------------------------------------------
 /**
- * Control flow uses {% %} tags — identical to Twig.
+ * Control flow uses {% %} tags - identical to Twig.
  *
  *   {% if condition %}…{% endif %}
  *   {% if condition %}…{% else %}…{% endif %}
@@ -241,11 +241,11 @@ TPL;
 }
 
 // ---------------------------------------------------------------------------
-// EXAMPLE 8 — Foreach Loops  {% foreach %}
+// EXAMPLE 8 - Foreach Loops  {% foreach %}
 // ---------------------------------------------------------------------------
 /**
  *   {% foreach items as item %}
- *     {{item.name}} — {{item.price}}
+ *     {{item.name}} - {{item.price}}
  *   {% endforeach %}
  *
  * Filters, nested foreach, and if/else blocks are all supported inside loops.
@@ -256,7 +256,7 @@ function example_foreach_loops(): void
 
     $template = <<<'TPL'
 {% foreach products as product %}
-  {{product.name|capitalize}} — ${{product.price}}
+  {{product.name|capitalize}} - ${{product.price}}
   {% if product.in_stock %}[In Stock]{% else %}[Out of Stock]{% endif %}
 {% endforeach %}
 TPL;
@@ -275,7 +275,7 @@ TPL;
 }
 
 // ---------------------------------------------------------------------------
-// EXAMPLE 9 — Numeric For Loop  {% for %}
+// EXAMPLE 9 - Numeric For Loop  {% for %}
 // ---------------------------------------------------------------------------
 /**
  *   {% for i in 1..5 %}{{i}} {% endfor %}
@@ -296,7 +296,7 @@ function example_for_loop(): void
 }
 
 // ---------------------------------------------------------------------------
-// EXAMPLE 10 — Inline CSS & JavaScript Safety
+// EXAMPLE 10 - Inline CSS & JavaScript Safety
 // ---------------------------------------------------------------------------
 /**
  * This is the primary motivation for the v1.2.1 syntax change.
@@ -305,7 +305,7 @@ function example_for_loop(): void
  * and JS objects like  var cfg = { debug: true };  would confuse the parser.
  *
  * With the new {{variable}} syntax, single { } pass through completely
- * unchanged — only {{ }} triggers variable substitution.
+ * unchanged - only {{ }} triggers variable substitution.
  */
 function example_inline_assets_safety(): void
 {
@@ -326,7 +326,7 @@ function example_inline_assets_safety(): void
 </div>
 
 <script>
-  // Plain JS objects — completely untouched
+  // Plain JS objects - completely untouched
   var config = { debug: false, version: "1.0" };
 
   // Dynamic values from PHP via {{variable}}
@@ -364,7 +364,7 @@ TPL;
 }
 
 // ---------------------------------------------------------------------------
-// EXAMPLE 11 — Method Chaining (Fluent Interface)
+// EXAMPLE 11 - Method Chaining (Fluent Interface)
 // ---------------------------------------------------------------------------
 function example_method_chaining(): void
 {
@@ -394,7 +394,7 @@ function example_method_chaining(): void
 }
 
 // ---------------------------------------------------------------------------
-// EXAMPLE 12 — Error Handling
+// EXAMPLE 12 - Error Handling
 // ---------------------------------------------------------------------------
 function example_error_handling(): void
 {
@@ -427,7 +427,7 @@ function example_error_handling(): void
 // Run all examples from CLI
 // ---------------------------------------------------------------------------
 if (php_sapi_name() === 'cli') {
-    echo "\nPHUSE Template System Examples — v1.2.1\n";
+    echo "\nPHUSE Template System Examples - v1.2.1\n";
     echo str_repeat('=', 50) . "\n\n";
 
     example_basic_variables();
@@ -443,14 +443,14 @@ if (php_sapi_name() === 'cli') {
     example_error_handling();
 
     echo "\n🌐 Web examples:\n";
-    echo "  /examples              — Example index\n";
-    echo "  /examples/basic        — Basic variable replacement\n";
-    echo "  /examples/conditional  — If/else logic\n";
-    echo "  /examples/foreach      — Array iteration\n";
-    echo "  /examples/nested       — Nested data access\n";
-    echo "  /examples/blog         — Blog post template\n";
-    echo "  /examples/dashboard    — Admin dashboard\n";
-    echo "  /examples/product      — E-commerce product page\n";
-    echo "  /examples/inline-assets — Inline CSS/JS safety demo ✨ NEW\n";
+    echo "  /examples              - Example index\n";
+    echo "  /examples/basic        - Basic variable replacement\n";
+    echo "  /examples/conditional  - If/else logic\n";
+    echo "  /examples/foreach      - Array iteration\n";
+    echo "  /examples/nested       - Nested data access\n";
+    echo "  /examples/blog         - Blog post template\n";
+    echo "  /examples/dashboard    - Admin dashboard\n";
+    echo "  /examples/product      - E-commerce product page\n";
+    echo "  /examples/inline-assets - Inline CSS/JS safety demo ✨ NEW\n";
     echo "\n📖 Docs: docs/template-system.md\n";
 }

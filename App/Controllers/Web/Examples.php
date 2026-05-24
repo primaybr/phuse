@@ -87,6 +87,12 @@ class Examples extends Controller
                     'description' => 'Complete Bootstrap 5.3.8 compatible components: Alert, Carousel, Offcanvas, Popover, ScrollSpy, Tooltip',
                     'url' => $this->baseUrl . '/examples/components',
                     'template' => 'components'
+                ],
+                [
+                    'name' => 'Icon System',
+                    'description' => 'Flat hollow SVG icon system (.pi .pi-name) - 50+ icons via CSS mask, no external fonts required',
+                    'url' => $this->baseUrl . '/examples/icons',
+                    'template' => 'icons'
                 ]
             ],
             'baseUrl' => $this->baseUrl,
@@ -292,7 +298,7 @@ class Examples extends Controller
                 'name' => 'Wireless Bluetooth Headphones',
                 'price' => 89.99,
                 'description' => 'High-quality wireless headphones with noise cancellation and 30-hour battery life.',
-                'image' => '/images/products/headphones.jpg',
+                'image' => $this->assetsUrl . 'images/headphones.svg',
                 'in_stock' => true,
                 'stock_quantity' => 25,
                 'category' => 'Electronics',
@@ -334,7 +340,7 @@ class Examples extends Controller
     }
 
     /**
-     * Inline CSS & JS safety demo — v1.2.1 feature
+     * Inline CSS & JS safety demo - v1.2.1 feature
      * Shows that single { } in CSS/JS pass through unchanged while {{variables}} are injected.
      *
      * @return void
@@ -348,12 +354,30 @@ class Examples extends Controller
             'textColor'    => '#f8fafc',
             'bgColor'      => '#1e293b',
             'siteName'     => 'PHUSE Framework',
-            'version'      => '1.2.1',
+            'version'      => '1.2.3',
             'apiUrl'       => '/api/v1',
             'userId'       => 42,
+            'userName'     => 'Demo User',
             'year'         => date('Y'),
         ];
 
         $this->render('examples/inline_assets', $data);
+    }
+
+    /**
+     * Icon System demo - v1.2.3 feature
+     * Shows the flat hollow SVG icon system (.pi .pi-name) using CSS mask-image.
+     *
+     * @return void
+     */
+    public function icons(): void
+    {
+        $data = [
+            'title'       => 'Icon System - Phuse Icons (pi)',
+            'description' => 'Flat hollow SVG icons as CSS classes. No icon font, no external files - pure CSS mask-image.',
+            'year'        => date('Y'),
+        ];
+
+        $this->render('examples/icons', $data);
     }
 }
