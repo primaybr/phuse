@@ -281,7 +281,15 @@ class Request
      */
     private function refreshRequest(string $method, string $url, array|string $data = []): self
     {
-        $token = json_decode($this->session->get('sesstoken'));
+        $sesstoken = $this->session->get('sesstoken');
+        if (empty($sesstoken)) {
+            // No session token — mob-api unreachable or user not logged in; degrade gracefully
+            $this->httpResponseCode = 401;
+            if (is_resource($this->stream)) { fclose($this->stream); }
+            $this->stream = null;
+            return $this;
+        }
+        $token = json_decode($sesstoken);
 
         if (!$token || !isset($token->access_token)) {
             throw new \RuntimeException('No valid token available for refresh');
