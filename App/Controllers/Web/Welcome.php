@@ -29,11 +29,55 @@ class Welcome extends Controller
      */
     public function index(): void
     {
-        // Define some sample data
-		$data = [
-			'date' => date('Y')
-		];
-				
+        $data = [
+            'date'    => date('Y'),
+            'version' => '1.2.3',
+
+            // Core feature cards shown on the welcome page
+            'features' => [
+                [
+                    'icon'        => 'pi-layers',
+                    'title'       => 'MVC Architecture',
+                    'description' => 'Clean separation of Models, Views, and Controllers keeps code organised and testable.',
+                ],
+                [
+                    'icon'        => 'pi-database',
+                    'title'       => 'Active Record ORM',
+                    'description' => 'Relationships, eager loading, soft deletes, scopes, and automatic validation out of the box.',
+                ],
+                [
+                    'icon'        => 'pi-arrow-right',
+                    'title'       => 'Smart Routing',
+                    'description' => 'Clean URL routing with automatic detection for domain and subdirectory deployments.',
+                ],
+                [
+                    'icon'        => 'pi-code',
+                    'title'       => 'Template Engine',
+                    'description' => 'Twig/Blade-inspired <code>{{variable}}</code> syntax. Inline CSS and JS are always safe.',
+                ],
+                [
+                    'icon'        => 'pi-zap',
+                    'title'       => 'Query Caching',
+                    'description' => 'Intelligent query result caching with automatic invalidation on data changes.',
+                ],
+                [
+                    'icon'        => 'pi-shield',
+                    'title'       => 'Security Built-in',
+                    'description' => 'CSRF protection, XSS-safe HTML generation, input sanitisation, and secure sessions.',
+                ],
+            ],
+
+            // Quick-links shown in the "Try it out" section
+            'examples' => [
+                ['label' => 'Template Examples',  'url' => '/examples',              'badge' => 'Index'],
+                ['label' => 'Inline CSS/JS Safety','url' => '/examples/inline-assets','badge' => 'New'],
+                ['label' => 'Dashboard Demo',      'url' => '/examples/dashboard',    'badge' => 'UI'],
+                ['label' => 'E-commerce Page',     'url' => '/examples/product',      'badge' => 'UI'],
+                ['label' => 'CSS Framework',       'url' => '/examples/css-framework','badge' => 'Styles'],
+                ['label' => 'JS Components',       'url' => '/examples/components',   'badge' => 'JS'],
+            ],
+        ];
+
         $this->render('default/welcome', $data);
     }
 

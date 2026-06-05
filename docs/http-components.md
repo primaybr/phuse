@@ -70,7 +70,7 @@ $name = $input->get('name');
 
 #### `post(string $name = '', bool $sanitize = true): string|array`
 
-Retrieves POST parameters from the HTTP request. When `$sanitize` is `true` (default), scalar values are sanitized with `sanitize()` and array values (e.g. multi-select checkboxes) are sanitized with `sanitizeArray()` — no type error on array inputs (fixed in v1.2.0).
+Retrieves POST parameters from the HTTP request. When `$sanitize` is `true` (default), scalar values are sanitized with `sanitize()` and array values (e.g. multi-select checkboxes) are sanitized with `sanitizeArray()` - no type error on array inputs (fixed in v1.2.0).
 
 ```php
 // Get all POST parameters (sanitized)
@@ -215,7 +215,7 @@ The class includes a comprehensive collection of HTTP status codes:
 
 ## Core\Http\Session
 
-Provides session management with validation and cleanup. The constructor and internal helpers check `session_status()` before calling `session_start()`, making initialization idempotent — safe to instantiate in environments that start sessions early (v1.2.0). If the configured session save path is missing or not writable, a fallback directory under `sys_get_temp_dir()` is used automatically.
+Provides session management with validation and cleanup. The constructor and internal helpers check `session_status()` before calling `session_start()`, making initialization idempotent - safe to instantiate in environments that start sessions early (v1.2.0). If the configured session save path is missing or not writable, a fallback directory under `sys_get_temp_dir()` is used automatically.
 
 ### Usage
 
@@ -224,7 +224,7 @@ use Core\Http\Session;
 
 $session = new Session();
 
-// Safe to instantiate more than once — no "session already active" warnings
+// Safe to instantiate more than once - no "session already active" warnings
 $session2 = new Session();
 ```
 

@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{title} - Phuse Template System</title>
-  <link rel="stylesheet" href="{assetsUrl}css/styles.css">
+  <title>{{title}} - Phuse Template System</title>
+  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=139">
+  <script>(function(){try{var t=localStorage.getItem('phuse-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})()</script>
 </head>
 
 <body>
@@ -12,8 +13,8 @@
   <div class="card shadow mx-auto max-width-lg">
       <div class="card-header bg-secondary text-white p-4">
         <div class="text-center mb-2">
-          <h1 class="display-5 fw-bold">{title}</h1>
-          <p class="lead mb-0">{description}</p>
+          <h1 class="display-5 fw-bold">{{title}}</h1>
+          <p class="lead mb-0">{{description}}</p>
         </div>
       </div>
 
@@ -32,10 +33,10 @@
           <div class="col-12 col-md-6 col-lg-4">
             <div class="card h-100 border-primary">
               <div class="card-body d-flex flex-column">
-                <h5 class="card-title text-primary mb-3">{example.name}</h5>
-                <p class="card-text text-secondary flex-grow-1">{example.description}</p>
+                <h5 class="card-title text-primary mb-3">{{example.name}}</h5>
+                <p class="card-text text-secondary flex-grow-1">{{example.description}}</p>
                 <div class="mt-auto">
-                  <a href="{example.url}" class="btn btn-primary w-100">
+                  <a href="{{example.url}}" class="btn btn-primary w-100">
                     View Example
                   </a>
                 </div>
@@ -46,21 +47,21 @@
         </div>
 
         <div class="alert alert-info mt-4">
-          <h6 class="alert-heading mb-2">💡 Template System Features:</h6>
+          <h6 class="alert-heading mb-2"><i class="pi pi-info me-1"></i> Template System Features:</h6>
           <p class="mb-0">
-            These examples showcase all major template features including variable replacement (<span class="highlight">&lbrace;variable&rbrace;</span>),
-            conditional logic (<span class="highlight">&lbrace;% if %&rbrace;</span>), loops (<span class="highlight">&lbrace;% foreach %&rbrace;</span>),
-            and nested data access.
+            These examples showcase all major template features including variable replacement (<code>{{variable}}</code>),
+            conditional logic (<code>{% if %}</code>), loops (<code>{% foreach %}</code>),
+            filters (<code>{{name|upper}}</code>), and safe inline CSS/JS.
           </p>
         </div>
       </div>
 
       <div class="card-footer text-center text-secondary py-3">
-        <p class="mb-0">Phuse Framework Template System &copy; {year}</p>
+        <p class="mb-0">Phuse Framework Template System &copy; {{year}}</p>
       </div>
     </div>
   </div>
 
-
+  <script src="{{assetsUrl}}js/scripts.js?v=136"></script>
 </body>
 </html>

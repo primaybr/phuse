@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320" fill="none">
+  <!-- Background -->
+  <rect width="400" height="320" rx="12" fill="#F1F5F9"/>
+
+  <!-- Subtle grid pattern -->
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#E2E8F0" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="400" height="320" fill="url(#grid)"/>
+
+  <!-- Headphone band arc -->
+  <path d="M 120 160 C 120 90 280 90 280 160"
+        stroke="#2563EB" stroke-width="14" stroke-linecap="round" fill="none"/>
+
+  <!-- Left ear cup -->
+  <rect x="90" y="155" width="50" height="72" rx="16" fill="#2563EB"/>
+  <rect x="98" y="163" width="34" height="56" rx="10" fill="#1D4ED8"/>
+  <!-- Left cushion -->
+  <ellipse cx="115" cy="191" rx="14" ry="21" fill="#3B82F6" opacity="0.5"/>
+
+  <!-- Right ear cup -->
+  <rect x="260" y="155" width="50" height="72" rx="16" fill="#2563EB"/>
+  <rect x="268" y="163" width="34" height="56" rx="10" fill="#1D4ED8"/>
+  <!-- Right cushion -->
+  <ellipse cx="285" cy="191" rx="14" ry="21" fill="#3B82F6" opacity="0.5"/>
+
+  <!-- Left slider bar -->
+  <rect x="112" y="148" width="8" height="18" rx="4" fill="#94A3B8"/>
+  <!-- Right slider bar -->
+  <rect x="280" y="148" width="8" height="18" rx="4" fill="#94A3B8"/>
+
+  <!-- Sound waves (right side) -->
+  <path d="M 316 176 Q 328 191 316 206" stroke="#2563EB" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.5"/>
+  <path d="M 324 168 Q 342 191 324 214" stroke="#2563EB" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.3"/>
+
+  <!-- Product label -->
+  <rect x="120" y="256" width="160" height="32" rx="8" fill="#2563EB"/>
+  <text x="200" y="277" font-family="system-ui, -apple-system, sans-serif" font-size="13"
+        font-weight="600" fill="white" text-anchor="middle" letter-spacing="0.5">Wireless Headphones</text>
+</svg>

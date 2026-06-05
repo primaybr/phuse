@@ -225,9 +225,20 @@ class HTML
      */
     private function minifySimpleJS(string $js): string
     {
-        // Basic JS minification - remove comments and extra whitespace
-        $js = preg_replace('/\/\/.*$/m', '', $js);
+        // Remove single-line // comments without touching // inside string literals.
+        // Strategy: scan for string literals first and preserve them, strip everything else.
+        $js = preg_replace_callback(
+            '/(\'[^\'\\\\]*(?:\\\\.[^\'\\\\]*)*\'|"[^"\\\\]*(?:\\\\.[^"\\\\]*)*")|\/\/[^\n]*/s',
+            static function (array $matches): string {
+                // $matches[1] is set and non-empty only when a string literal was matched.
+                // When the // comment branch matches, group 1 is unset - coalesce to ''.
+                return ($matches[1] ?? '') !== '' ? $matches[1] : '';
+            },
+            $js
+        );
+        // Remove block comments /* ... */
         $js = preg_replace('/\/\*[^*]*\*+([^\/*][^*]*\*+)*\//s', '', $js);
+        // Compact whitespace around operators and braces
         $js = preg_replace('/\s*([{}:;,>+~=!])\s*/', '$1', $js);
         $js = preg_replace('/\s+/', ' ', $js);
         return trim($js);

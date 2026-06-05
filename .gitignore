@@ -9,4 +9,5 @@ composer.json
 .phpunit.cache
 .mcp.json
 .claude/
-
+.playwright-mcp/
+.github/
