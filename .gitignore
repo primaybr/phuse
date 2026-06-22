@@ -11,3 +11,4 @@ composer.json
 .claude/
 .playwright-mcp/
 .github/
+.markdownlint.json

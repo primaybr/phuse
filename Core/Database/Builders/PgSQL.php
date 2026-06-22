@@ -15,6 +15,29 @@ class PgSQL implements BuildersInterface
     }
 
     /**
+     * Override to use PostgreSQL double-quote identifier quoting.
+     */
+    protected function quoteIdentifier(string $field): string
+    {
+        $parts = explode('.', $field);
+        return implode('.', array_map(
+            fn($p) => '"' . preg_replace('/[^a-zA-Z0-9_]/', '', $p) . '"',
+            $parts
+        ));
+    }
+
+    /**
+     * Override insertIgnore to use PostgreSQL ON CONFLICT DO NOTHING syntax.
+     * The trait default generates MySQL INSERT IGNORE which is not valid in PostgreSQL.
+     */
+    public function insertIgnore(array $data): self
+    {
+        $this->insert($data);
+        $this->queryInsert .= ' ON CONFLICT DO NOTHING';
+        return $this;
+    }
+
+    /**
      * Add ORDER BY RANDOM() for PostgreSQL
      *
      * @return self
@@ -50,7 +73,9 @@ class PgSQL implements BuildersInterface
      */
     public function dateFormat(string $field, string $format = 'YYYY-MM-DD'): self
     {
-        $this->querySelect .= ", TO_CHAR({$field}, '{$format}')";
+        $qf = $this->quoteIdentifier($field);
+        $ph = $this->bindValue($format);
+        $this->querySelect .= ", TO_CHAR({$qf}, {$ph})";
         return $this;
     }
 
@@ -63,7 +88,9 @@ class PgSQL implements BuildersInterface
      */
     public function fullTextSearch(string $field, string $searchTerm): self
     {
-        $this->queryWhere .= " {$field} @@ plainto_tsquery('english', '{$searchTerm}')";
+        $qf = $this->quoteIdentifier($field);
+        $ph = $this->bindValue($searchTerm);
+        $this->queryWhere .= " {$qf} @@ plainto_tsquery('english', {$ph})";
         return $this;
     }
 
@@ -76,7 +103,9 @@ class PgSQL implements BuildersInterface
      */
     public function jsonExtract(string $field, string $path): self
     {
-        $this->querySelect .= ", {$field} -> '{$path}'";
+        $qf = $this->quoteIdentifier($field);
+        $safePath = preg_replace('/[^a-zA-Z0-9_]/', '', $path);
+        $this->querySelect .= ", {$qf} -> '{$safePath}'";
         return $this;
     }
 
@@ -89,9 +118,11 @@ class PgSQL implements BuildersInterface
      */
     public function jsonExtractPath(string $field, string $path): self
     {
+        $qf = $this->quoteIdentifier($field);
         $pathParts = explode('.', $path);
-        $jsonPath = "'" . implode("','", $pathParts) . "'";
-        $this->querySelect .= ", {$field} #> ARRAY[{$jsonPath}]";
+        $sanitizedParts = array_map(fn($p) => preg_replace('/[^a-zA-Z0-9_]/', '', $p), $pathParts);
+        $jsonPath = "'" . implode("','", $sanitizedParts) . "'";
+        $this->querySelect .= ", {$qf} #> ARRAY[{$jsonPath}]";
         return $this;
     }
 
@@ -105,10 +136,13 @@ class PgSQL implements BuildersInterface
      */
     public function jsonContains(string $field, $value, string $path = ''): self
     {
+        $qf = $this->quoteIdentifier($field);
+        $ph = $this->bindValue($value);
         if ($path) {
-            $this->queryWhere .= " {$field} -> '{$path}' ? '{$value}'";
+            $safePath = preg_replace('/[^a-zA-Z0-9_]/', '', $path);
+            $this->queryWhere .= " {$qf} -> '{$safePath}' ? {$ph}";
         } else {
-            $this->queryWhere .= " {$field} ? '{$value}'";
+            $this->queryWhere .= " {$qf} ? {$ph}";
         }
         return $this;
     }
@@ -123,8 +157,10 @@ class PgSQL implements BuildersInterface
      */
     public function stringAgg(string $field, string $separator = ',', string $alias = ''): self
     {
+        $qf = $this->quoteIdentifier($field);
+        $safeSep = preg_replace('/[^a-zA-Z0-9\s,.\-_|\/]/', '', $separator);
         $aliasSql = $alias ? " AS {$alias}" : '';
-        $this->querySelect .= ", STRING_AGG({$field}, '{$separator}'){$aliasSql}";
+        $this->querySelect .= ", STRING_AGG({$qf}, '{$safeSep}'){$aliasSql}";
         return $this;
     }
 
@@ -137,7 +173,9 @@ class PgSQL implements BuildersInterface
      */
     public function coalesce(string $field, $defaultValue): self
     {
-        $this->querySelect .= ", COALESCE({$field}, '{$defaultValue}')";
+        $qf = $this->quoteIdentifier($field);
+        $ph = $this->bindValue($defaultValue);
+        $this->querySelect .= ", COALESCE({$qf}, {$ph})";
         return $this;
     }
 
@@ -151,12 +189,16 @@ class PgSQL implements BuildersInterface
      */
     public function caseWhen(string $field, array $cases, $default = null): self
     {
-        $caseSql = " CASE {$field}";
+        $qf = $this->quoteIdentifier($field);
+        $caseSql = " CASE {$qf}";
         foreach ($cases as $value => $result) {
-            $caseSql .= " WHEN '{$value}' THEN '{$result}'";
+            $phVal = $this->bindValue($value);
+            $phRes = $this->bindValue($result);
+            $caseSql .= " WHEN {$phVal} THEN {$phRes}";
         }
         if ($default !== null) {
-            $caseSql .= " ELSE '{$default}'";
+            $phDef = $this->bindValue($default);
+            $caseSql .= " ELSE {$phDef}";
         }
         $caseSql .= " END";
         $this->querySelect .= ", {$caseSql}";
@@ -172,7 +214,9 @@ class PgSQL implements BuildersInterface
      */
     public function regexp(string $field, string $pattern): self
     {
-        $this->queryWhere .= " {$field} ~ '{$pattern}'";
+        $qf = $this->quoteIdentifier($field);
+        $ph = $this->bindValue($pattern);
+        $this->queryWhere .= " {$qf} ~ {$ph}";
         return $this;
     }
 
@@ -185,7 +229,9 @@ class PgSQL implements BuildersInterface
      */
     public function arrayContains(string $field, $value): self
     {
-        $this->queryWhere .= " '{$value}' = ANY({$field})";
+        $qf = $this->quoteIdentifier($field);
+        $ph = $this->bindValue($value);
+        $this->queryWhere .= " {$ph} = ANY({$qf})";
         return $this;
     }
 
@@ -198,7 +244,9 @@ class PgSQL implements BuildersInterface
      */
     public function ilike(string $field, string $value): self
     {
-        $this->queryWhere .= " {$field} ILIKE '{$value}'";
+        $qf = $this->quoteIdentifier($field);
+        $ph = $this->bindValue($value);
+        $this->queryWhere .= " {$qf} ILIKE {$ph}";
         return $this;
     }
 

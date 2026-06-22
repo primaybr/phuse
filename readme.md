@@ -183,6 +183,44 @@ Phuse is an open-source project, and you are welcome to contribute to its develo
 
 ## Latest Changes
 
+### v1.2.4 (2026-06-22)
+
+#### Database Builder — SQL Injection Security Fixes
+
+- **`quoteIdentifier()`** — new protected helper in `BuildersTrait`; sanitizes column/table identifiers (strips non-`[a-zA-Z0-9_]` chars, wraps in backticks for MySQL, double-quotes for PostgreSQL)
+
+- **`bindValue()`** — new private helper; registers values as `:qb_N` PDO bound parameters instead of interpolating them into the SQL string
+
+- **Identifier + value injection fixed** across all advanced query methods in `BuildersTrait`, `MySQL`, and `PgSQL`: `month()`, `year()`, `day()`, `whereJsonContains()`, `dateFormat()`, `jsonExtract()`, `jsonExtractPath()`, `jsonContains()`, `caseWhen()`, `regexp()`, `fullTextSearch()`, `stringAgg()`, `groupConcat()`, `ifNull()`, `coalesce()`, `arrayContains()`, `ilike()`
+
+- **`PgSQL::quoteIdentifier()`** — overrides trait default to use double-quote style required by PostgreSQL
+
+- **`PgSQL::insertIgnore()`** — overrides trait's MySQL-only `INSERT IGNORE` with PostgreSQL's `ON CONFLICT DO NOTHING`
+
+- **`orderBy()` accumulation** — multiple `->orderBy()` calls now append `, field dir` instead of overwriting the clause
+
+#### ORM / Model
+
+- **`get()` single-record fix** — detection no longer relies on `isset($result['id'])`; now correctly handles any primary key name
+
+- **`Model::on(Connection, table)`** — static factory to share a connection across models inside a transaction
+
+- **`withoutTimestamps()`** — disable auto-stamping per query
+
+- **`whereRaw(sql, binds)`** — raw parameterized WHERE fragment for complex conditions
+
+- **`distinct()`** — now deferred via `$isDistinct` flag to prevent double-DISTINCT when combined with `select()`
+
+- **`orderBy()` default direction** — second argument now defaults to `'DESC'`
+
+- **`clearQueryCache()`** — automatically called after every successful write (`save`, `update`, `delete`)
+
+#### CSS
+
+- **New icons**: `.pi-pencil`, `.pi-archive`, `.pi-message`, `.pi-sparkle`
+
+- **Dark mode palette** — refined to a darker, less blue-shifted tone set for improved visual comfort
+
 ### v1.2.3 (2026-05-24)
 
 #### JavaScript Components - Complete Overhaul

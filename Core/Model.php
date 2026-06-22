@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 namespace Core;
+
 use Core\Database as Database;
 use Core\Config as Config;
 use Core\Database\Builders\Builders as Builders;
@@ -28,7 +29,7 @@ class Model
     private const DEFAULT_RETURN_TYPE = 'array';
     private const DEFAULT_FIELDS = '*';
     private const DEFAULT_PRIMARY_KEY = 'id';
-    
+
     // Audit field constants
     private const CREATED_AT_COLUMN = 'created_at';
     private const UPDATED_AT_COLUMN = 'updated_at';
@@ -56,30 +57,30 @@ class Model
     public bool $byPassWhere = false;
     protected string $primaryKey = self::DEFAULT_PRIMARY_KEY;
 
-	// ORM Features
-	protected bool $timestamps = true;
-	protected bool $softDeletes = false;
-	protected ?string $createdAtColumn = self::CREATED_AT_COLUMN;
-	protected ?string $updatedAtColumn = self::UPDATED_AT_COLUMN;
-	protected ?string $deletedAtColumn = self::DELETED_AT_COLUMN;
-	protected ?string $createdByColumn = self::CREATED_BY_COLUMN;
-	protected ?string $updatedByColumn = self::UPDATED_BY_COLUMN;
-	protected ?string $deletedByColumn = self::DELETED_BY_COLUMN;
-	protected array $casts = [];
-	protected array $fillable = [];
-	protected array $guarded = [];
-	protected array $hidden = [];
-	protected array $visible = [];
-	protected array $relationships = [];
-	protected array $events = [];
-	protected array $globalScopes = [];
+    // ORM Features
+    protected bool $timestamps = true;
+    protected bool $softDeletes = false;
+    protected ?string $createdAtColumn = self::CREATED_AT_COLUMN;
+    protected ?string $updatedAtColumn = self::UPDATED_AT_COLUMN;
+    protected ?string $deletedAtColumn = self::DELETED_AT_COLUMN;
+    protected ?string $createdByColumn = self::CREATED_BY_COLUMN;
+    protected ?string $updatedByColumn = self::UPDATED_BY_COLUMN;
+    protected ?string $deletedByColumn = self::DELETED_BY_COLUMN;
+    protected array $casts = [];
+    protected array $fillable = [];
+    protected array $guarded = [];
+    protected array $hidden = [];
+    protected array $visible = [];
+    protected array $relationships = [];
+    protected array $events = [];
+    protected array $globalScopes = [];
     protected ?string $currentUser = null; // Current user ID for audit fields
 
-	// Validation properties
-	protected array $validationRules = [];
-	protected array $validationMessages = [];
-	protected bool $validateOnSave = true;
-	protected bool $validateOnUpdate = true;
+    // Validation properties
+    protected array $validationRules = [];
+    protected array $validationMessages = [];
+    protected bool $validateOnSave = true;
+    protected bool $validateOnUpdate = true;
 
     /**
      * @var ConnectionPool|null Shared connection pool instance
@@ -87,32 +88,52 @@ class Model
     private static ?ConnectionPool $connectionPool = null;
 
     /**
+     * Whether this instance obtained its connection from the pool and must return it.
+     * False when the connection was injected via Model::on() — the caller owns it.
+     */
+    private bool $ownedByPool = true;
+
+    /** Whether the next executeGet() should prepend DISTINCT to the SELECT clause. */
+    private bool $isDistinct = false;
+
+    /**
      * Initializes the model with the specified table and database.
+     *
+     * Pass a $connection to reuse an existing Connection (e.g. to share a transaction).
+     * When a connection is injected the pool is not touched and the destructor will not
+     * return the connection — the caller that owns the connection is responsible for that.
      *
      * @param string $table The name of the table.
      * @param string $database The name of the database configuration to use.
+     * @param Database\Connection|null $connection Optional existing connection to reuse.
      */
-    public function __construct(string $table, string $database = 'default')
+    public function __construct(string $table, string $database = 'default', ?Database\Connection $connection = null)
     {
         $this->dbconfig = $this->setDatabase($database);
         if (empty($this->dbconfig->driver) || empty($this->dbconfig->host) || empty($this->dbconfig->port) || empty($this->dbconfig->database) || empty($this->dbconfig->username)) {
             throw DatabaseException::connectionError('Database configuration is incomplete');
         }
 
-        // Initialize connection pool if not already done
-        if (self::$connectionPool === null) {
-            self::$connectionPool = new ConnectionPool((array) $this->dbconfig);
-        }
+        if ($connection !== null) {
+            // Reuse injected connection — do not touch the pool
+            $this->db = $connection;
+            $this->ownedByPool = false;
+        } else {
+            // Initialize connection pool if not already done
+            if (self::$connectionPool === null) {
+                self::$connectionPool = new ConnectionPool((array) $this->dbconfig);
+            }
 
-        // Get connection from pool
-        try {
-            $this->db = self::$connectionPool->getConnection();
-        } catch (\Exception $e) {
-            throw DatabaseException::connectionError('Database connection could not be established', [
-                'driver' => $this->dbconfig->driver,
-                'host' => $this->dbconfig->host,
-                'database' => $this->dbconfig->database
-            ], 0, $e);
+            // Get connection from pool
+            try {
+                $this->db = self::$connectionPool->getConnection();
+            } catch (\Exception $e) {
+                throw DatabaseException::connectionError('Database connection could not be established', [
+                    'driver' => $this->dbconfig->driver,
+                    'host' => $this->dbconfig->host,
+                    'database' => $this->dbconfig->database
+                ], 0, $e);
+            }
         }
 
         $this->table = $this->dbconfig->prefix . $table;
@@ -129,13 +150,40 @@ class Model
     }
 
     /**
-     * Destructor - Return connection to pool
+     * Destructor - Return connection to pool (only when we own it)
      */
     public function __destruct()
     {
-        if (self::$connectionPool && $this->db) {
+        if ($this->ownedByPool && self::$connectionPool && $this->db) {
             self::$connectionPool->returnConnection($this->db);
         }
+    }
+
+    /**
+     * Create a Model instance that shares an existing Connection without acquiring
+     * a new one from the pool. Use this to run multiple queries on the same connection
+     * — most importantly inside a transaction where all statements must share one handle.
+     *
+     * The provided connection is NOT returned to the pool when this instance is destroyed;
+     * the Model that originally obtained it from the pool remains responsible for that.
+     *
+     * @param Database\Connection $conn An open connection (e.g. from another Model's ->db).
+     * @param string $table The table this Model should target.
+     * @param string $database The database config key (default: 'default').
+     */
+    public static function on(Database\Connection $conn, string $table, string $database = 'default'): self
+    {
+        return new self($table, $database, $conn);
+    }
+
+    /**
+     * Disable automatic created_at / updated_at stamping for this query.
+     * Use when the target table has non-standard timestamp column names or none at all.
+     */
+    public function withoutTimestamps(): self
+    {
+        $this->timestamps = false;
+        return $this;
     }
 
     /**
@@ -156,7 +204,7 @@ class Model
             'max_connections' => 0,
         ];
     }
-    
+
     /**
      * Selects the database configuration.
      *
@@ -209,33 +257,34 @@ class Model
 
         return $this;
     }
-	
-	/**
+
+    /**
      * Sets the primary key for the model.
      *
      * @param string $primaryKey The primary key field name.
      * @return self
      */
-	public function setPrimaryKey(string $primaryKey = ''): self
-	{
-		$this->primaryKey = empty($primaryKey) ? $this->primaryKey : $primaryKey;
-		
-		return $this;
-	}
-	
-	/**
+    public function setPrimaryKey(string $primaryKey = ''): self
+    {
+        $this->primaryKey = empty($primaryKey) ? $this->primaryKey : $primaryKey;
+
+        return $this;
+    }
+
+    /**
      * Sets the SELECT clause for the query.
      *
      * @param string|array $fields The fields to select.
      * @return self
      */
-	public function select(string|array $fields = '*'): self
-	{
-		$this->builder->select($fields);
-		
-		return $this;
-	}
-	
+    public function select(string|array $fields = '*'): self
+    {
+        $this->fields = is_array($fields) ? implode(', ', $fields) : $fields;
+        $this->builder->select($this->fields);
+
+        return $this;
+    }
+
     /**
      * Adds a WHERE clause to the query.
      * 
@@ -255,25 +304,25 @@ class Model
     {
         // The builder automatically handles operator/value detection
         $this->builder->where($key, $value, $type);
-        
+
         return $this;
     }
-	
-	/**
+
+    /**
      * Adds a WHERE IN clause to the query.
      *
      * @param array $data The values to check against.
      * @param bool $not Indicates whether to use NOT IN instead of IN.
      * @return self
      */
-	public function whereIn(array $data = [], bool $not = false): self
+    public function whereIn(array $data = [], bool $not = false): self
     {
-        $this->builder->whereIn($data,$not);
-        
+        $this->builder->whereIn($data, $not);
+
         return $this;
     }
-	
-	/**
+
+    /**
      * Adds an OR WHERE clause to the query.
      *
      * @param string $key The field to apply the condition to.
@@ -281,27 +330,47 @@ class Model
      * @param string $type The operator to use for the condition.
      * @return self
      */
-	public function orWhere(string $key = '', string $value = '', string $type = '='): self
+    public function orWhere(string $key = '', string $value = '', string $type = '='): self
     {
         $this->builder->orWhere($key, $value, $type);
-        
+
         return $this;
     }
-	
-	/**
+
+    /**
      * Adds a raw WHERE query to the query.
      *
      * @param string $query The raw query to use.
      * @return self
      */
-	public function whereQuery(string $query): self
+    public function whereQuery(string $query): self
     {
         $this->builder->whereQuery($query);
-        
+
         return $this;
     }
-	
-	/**
+
+    /**
+     * Adds a raw parameterized WHERE condition with its own bind values.
+     *
+     * Use when the ORM's where() / orWhere() cannot express the required logic,
+     * e.g. OR conditions that must be grouped in parentheses:
+     *   ->whereRaw('(title ILIKE :s1 OR body ILIKE :s2)', [':s1' => '%foo%', ':s2' => '%foo%'])
+     *
+     * @param string $sql   Raw SQL fragment (no WHERE keyword) — included verbatim.
+     * @param array  $binds Named bind parameters referenced inside $sql.
+     * @return self
+     */
+    public function whereRaw(string $sql, array $binds = []): self
+    {
+        $this->builder->whereQuery($sql);
+        foreach ($binds as $key => $value) {
+            $this->builder->binds[$key] = $value;
+        }
+        return $this;
+    }
+
+    /**
      * Adds a JOIN clause to the query.
      *
      * @param string $table The table to join with.
@@ -309,39 +378,39 @@ class Model
      * @param string $type The type of join (e.g., INNER, LEFT, RIGHT).
      * @return self
      */
-	public function join(string $table, string $cond, string $type): self
-	{
-		$this->builder->join($table,$cond,$type);
-		
-		return $this;
-	}
-	
-	/**
+    public function join(string $table, string $cond, string $type): self
+    {
+        $this->builder->join($table, $cond, $type);
+
+        return $this;
+    }
+
+    /**
      * Adds an ORDER BY clause to the query.
      *
      * @param string $key The field to order by.
      * @param string $order The order direction (ASC or DESC).
      * @return self
      */
-	public function orderBy(string $key, string $order): self
-	{
-		$this->builder->orderBy($key,$order);
-		
-		return $this;
-	}
-	
-	/**
+    public function orderBy(string $key, string $order = 'DESC'): self
+    {
+        $this->builder->orderBy($key, $order);
+
+        return $this;
+    }
+
+    /**
      * Adds a GROUP BY clause to the query.
      *
      * @param string $groupby The field to group by.
      * @return self
      */
-	public function groupBy(string $groupby): self
-	{
-		$this->builder->groupBy($groupby);
+    public function groupBy(string $groupby): self
+    {
+        $this->builder->groupBy($groupby);
 
-		return $this;
-	}
+        return $this;
+    }
 
 
 
@@ -368,7 +437,7 @@ class Model
 
         return $this;
     }
-    
+
     /**
      * Indicates that duplicate records should be ignored during insertion.
      *
@@ -377,7 +446,7 @@ class Model
     public function ignoreDuplicate(): self
     {
         $this->ignoreDuplicate = true;
-        
+
         return $this;
     }
 
@@ -394,11 +463,11 @@ class Model
         $query = $this->builder->select('')->count()->compile($reset);
         $this->db->query($query);
         $this->db->arrayBind($this->builder->binds);
-        
+
         if ($reset) {
             $this->builder->binds = [];
         }
-        
+
         if ($this->db->execute()) {
             $count = $this->db->result('column');
             return reset($count);
@@ -426,18 +495,18 @@ class Model
 
         return false;
     }
-	
-	/**
+
+    /**
      * Resets the query parameters.
      *
      * @return self
      */
-	public function resetQuery() :self
-	{
-		$this->builder->resetQuery();
-		
-		return $this;
-	}
+    public function resetQuery(): self
+    {
+        $this->builder->resetQuery();
+
+        return $this;
+    }
 
     /**
      * Adds a SUM aggregation to the query.
@@ -484,7 +553,7 @@ class Model
      */
     public function distinct(): self
     {
-        $this->builder->distinct();
+        $this->isDistinct = true;
         return $this;
     }
 
@@ -588,7 +657,6 @@ class Model
                 }
 
                 $this->builder->binds = [];
-
             } catch (\Exception $e) {
                 $this->rollback();
                 $results['errors'][] = 'Exception in chunk: ' . $e->getMessage();
@@ -666,7 +734,6 @@ class Model
                 }
 
                 $this->commit();
-
             } catch (\Exception $e) {
                 $this->rollback();
                 $results['errors'][] = 'Exception in chunk: ' . $e->getMessage();
@@ -724,7 +791,6 @@ class Model
                 }
 
                 $this->commit();
-
             } catch (\Exception $e) {
                 $this->rollback();
                 $results['errors'][] = 'Exception in chunk: ' . $e->getMessage();
@@ -1045,6 +1111,17 @@ class Model
             return $this->queryCache->clear();
         }
         return false;
+    }
+
+    /**
+     * Clear all query cache after a write operation.
+     * Cache keys are MD5 hashes of SQL+params so there is no reliable way to
+     * invalidate only the affected table — clearing the full query cache is the
+     * correct strategy here.
+     */
+    private function clearQueryCache(): void
+    {
+        $this->queryCache?->clear();
     }
 
     // ===== ORM FEATURES =====
@@ -1577,7 +1654,7 @@ class Model
 
         // Set timestamps
         $data = $this->setTimestamps($data, $update);
-        
+
         // Include soft delete condition for updates
         if ($update && $this->softDeletes) {
             $this->whereNull($this->deletedAtColumn);
@@ -1596,37 +1673,36 @@ class Model
                 $this->builder->insert($data);
             }
         }
-        
+
         // Store binds BEFORE compile() resets them
         $bindsForExecution = $this->builder->binds;
-        
+
         // Debug: Log binds before execution
         error_log("Model save: Binds array = " . json_encode($bindsForExecution));
-        
+
         // Now compile the query
         $query = $this->builder->compile();
 
-        if(strtolower($this->dbconfig->driver) === 'pgsql')
-        {
-            $this->db->query($query.' RETURNING '. $this->primaryKey);
-        }
-        else
-        {
+        if (strtolower($this->dbconfig->driver) === 'pgsql') {
+            $this->db->query($query . ' RETURNING ' . $this->primaryKey);
+        } else {
             $this->db->query($query);
         }
 
         $this->db->arrayBind($bindsForExecution);
-        
+
         $this->builder->binds = [];
 
         try {
             if ($this->db->execute()) {
+                $this->clearQueryCache();
+
                 if ($update) {
                     return $this->db->rowCount();
                 }
 
                 // For PostgreSQL with RETURNING clause, fetch the returned ID
-                if(strtolower($this->dbconfig->driver) === 'pgsql') {
+                if (strtolower($this->dbconfig->driver) === 'pgsql') {
                     try {
                         $result = $this->db->single();
                         if ($result && isset($result[$this->primaryKey])) {
@@ -1654,7 +1730,7 @@ class Model
             error_log("PDOException Message: " . $e->getMessage());
             error_log("PDOException File: " . $e->getFile());
             error_log("PDOException Line: " . $e->getLine());
-            
+
             throw DatabaseException::queryError($query, 'Database save operation failed', [], $e);
         }
 
@@ -1703,13 +1779,14 @@ class Model
         }
 
         $query = $this->builder->update($data)->compile(false);
-        
+
         $this->db->query($query);
         $this->db->arrayBind($this->builder->binds);
-        
+
         try {
             if ($this->db->execute()) {
                 $this->builder->binds = [];
+                $this->clearQueryCache();
                 return $this->db->rowCount();
             }
         } catch (\PDOException $e) {
@@ -1749,6 +1826,7 @@ class Model
             try {
                 if ($this->db->execute()) {
                     $result = $this->db->rowCount();
+                    $this->clearQueryCache();
                 }
             } catch (\PDOException $e) {
                 throw DatabaseException::queryError($query, 'Database delete operation failed', [], $e);
@@ -1783,8 +1861,8 @@ class Model
         $result = $this->executeGet($limit, $offset);
 
         if ($result !== false && $result !== null) {
-            if ($limit == 1 && is_array($result) && isset($result['id'])) {
-                // Single record returned as associative array
+            if ($limit == 1 && is_array($result) && (empty($result) || !is_array(reset($result)))) {
+                // Single record returned as associative array (db->single() always returns this shape)
                 $result = $this->processSingleRecord($result);
             } elseif (is_array($result)) {
                 // Multiple records returned as array of arrays
@@ -1804,28 +1882,30 @@ class Model
      */
     protected function executeGet(int|string $limit = 'all', int $offset = 0): array|object|bool
     {
-		if(!empty($limit) || !empty($offset)){
-			if ($limit != 'all'){
-				$this->builder->limit($limit);
-				if ($offset >= 0){
-					$this->builder->offset($offset);
-				}
-			}
-		}
+        if (!empty($limit) || !empty($offset)) {
+            if ($limit != 'all') {
+                $this->builder->limit($limit);
+                if ($offset >= 0) {
+                    $this->builder->offset($offset);
+                }
+            }
+        }
 
-		// Store binds BEFORE compile() resets them
+        // Store binds BEFORE compile() resets them
         $bindsForExecution = $this->builder->binds;
-        
+
         // Fix missing FROM clause by setting it explicitly if needed
-        if(empty($this->builder->queryFrom)) {
+        if (empty($this->builder->queryFrom)) {
             $this->builder->from($this->table);
         }
-        $query = $this->builder->select($this->fields)->compile(true);
-        
+        $selectFields = $this->isDistinct ? 'DISTINCT ' . $this->fields : $this->fields;
+        $this->isDistinct = false;
+        $query = $this->builder->select($selectFields)->compile(true);
+
         // Debug: Store SQL info for error reporting (don't output to avoid breaking JSON)
         $this->lastDebugQuery = $query;
         $this->lastDebugBinds = $bindsForExecution;
-        
+
         // Check cache first for SELECT queries
         if ($this->queryCache && $this->queryCache->shouldCacheQuery($query)) {
             $cacheKey = $this->queryCache->generateKey($query, $bindsForExecution);
@@ -1838,11 +1918,11 @@ class Model
 
                 if ($cachedResult !== null && $cachedResult !== false) {
                     if ($limit == 1) {
-                        // Check if cached result is already a single record (has 'id' key)
-                        if (is_array($cachedResult) && isset($cachedResult['id'])) {
+                        // If cached as a single associative row, return it directly
+                        if (is_array($cachedResult) && (empty($cachedResult) || !is_array(reset($cachedResult)))) {
                             return $cachedResult;
                         }
-                        // Otherwise, assume it's an array of records and take the first one
+                        // Otherwise it was cached as an array of records; take the first one
                         return is_array($cachedResult) && !empty($cachedResult) ? $cachedResult[0] : $cachedResult;
                     }
 
@@ -1861,13 +1941,12 @@ class Model
             } else {
                 $result = $this->db->result($this->returnType);
             }
-
         } catch (\PDOException $e) {
             // Include debug info in the error message
             $debugInfo = "SQL: " . $this->lastDebugQuery . " | Binds: " . json_encode($this->lastDebugBinds);
             $pdoError = $e->getMessage();
             $errorMessage = "Database query execution failed - " . $debugInfo . " - PDO Error: " . $pdoError;
-            
+
             // Cache the failed result (false) for failed queries too
             if ($this->queryCache && $this->queryCache->shouldCacheQuery($this->lastDebugQuery)) {
                 $cacheKey = $this->queryCache->generateKey($this->lastDebugQuery, $this->lastDebugBinds);
@@ -1884,7 +1963,7 @@ class Model
 
         $this->builder->binds = [];
         $this->fields = '*';
-        
+
         // Reset bound parameters for next query
         $this->db->resetBoundParams();
 
@@ -2197,7 +2276,7 @@ class Model
 
         if (in_array($ruleName, $floatRules)) {
             // For range rule, convert to appropriate numeric types
-            return array_map(function($arg) {
+            return array_map(function ($arg) {
                 return is_numeric($arg) ? (strpos($arg, '.') !== false ? floatval($arg) : intval($arg)) : $arg;
             }, $args);
         }

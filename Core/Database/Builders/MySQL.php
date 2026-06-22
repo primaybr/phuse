@@ -50,7 +50,9 @@ class MySQL implements BuildersInterface
      */
     public function dateFormat(string $field, string $format = '%Y-%m-%d'): self
     {
-        $this->querySelect .= ", DATE_FORMAT({$field}, '{$format}')";
+        $qf = $this->quoteIdentifier($field);
+        $ph = $this->bindValue($format);
+        $this->querySelect .= ", DATE_FORMAT({$qf}, {$ph})";
         return $this;
     }
 
@@ -64,8 +66,10 @@ class MySQL implements BuildersInterface
      */
     public function fullTextSearch(string $field, string $searchTerm, bool $booleanMode = false): self
     {
+        $qf = $this->quoteIdentifier($field);
+        $ph = $this->bindValue($searchTerm);
         $mode = $booleanMode ? ' IN BOOLEAN MODE' : '';
-        $this->queryWhere .= " MATCH({$field}) AGAINST('{$searchTerm}'{$mode})";
+        $this->queryWhere .= " MATCH({$qf}) AGAINST({$ph}{$mode})";
         return $this;
     }
 
@@ -78,7 +82,9 @@ class MySQL implements BuildersInterface
      */
     public function jsonExtract(string $field, string $path): self
     {
-        $this->querySelect .= ", JSON_EXTRACT({$field}, '$.{$path}')";
+        $qf = $this->quoteIdentifier($field);
+        $ph = $this->bindValue('$.' . $path);
+        $this->querySelect .= ", JSON_EXTRACT({$qf}, {$ph})";
         return $this;
     }
 
@@ -92,8 +98,10 @@ class MySQL implements BuildersInterface
      */
     public function jsonContains(string $field, $value, string $path = '$'): self
     {
-        $jsonValue = json_encode($value);
-        $this->queryWhere .= " JSON_CONTAINS({$field}, '{$jsonValue}', '$.{$path}')";
+        $qf = $this->quoteIdentifier($field);
+        $phVal = $this->bindValue(json_encode($value));
+        $phPath = $this->bindValue('$.' . $path);
+        $this->queryWhere .= " JSON_CONTAINS({$qf}, {$phVal}, {$phPath})";
         return $this;
     }
 
@@ -107,8 +115,10 @@ class MySQL implements BuildersInterface
      */
     public function groupConcat(string $field, string $separator = ',', string $alias = ''): self
     {
+        $qf = $this->quoteIdentifier($field);
+        $safeSep = preg_replace('/[^a-zA-Z0-9\s,.\-_|\/]/', '', $separator);
         $aliasSql = $alias ? " AS {$alias}" : '';
-        $this->querySelect .= ", GROUP_CONCAT({$field} SEPARATOR '{$separator}'){$aliasSql}";
+        $this->querySelect .= ", GROUP_CONCAT({$qf} SEPARATOR '{$safeSep}'){$aliasSql}";
         return $this;
     }
 
@@ -121,7 +131,9 @@ class MySQL implements BuildersInterface
      */
     public function ifNull(string $field, $defaultValue): self
     {
-        $this->querySelect .= ", IFNULL({$field}, '{$defaultValue}')";
+        $qf = $this->quoteIdentifier($field);
+        $ph = $this->bindValue($defaultValue);
+        $this->querySelect .= ", IFNULL({$qf}, {$ph})";
         return $this;
     }
 
@@ -135,12 +147,16 @@ class MySQL implements BuildersInterface
      */
     public function caseWhen(string $field, array $cases, $default = null): self
     {
-        $caseSql = " CASE {$field}";
+        $qf = $this->quoteIdentifier($field);
+        $caseSql = " CASE {$qf}";
         foreach ($cases as $value => $result) {
-            $caseSql .= " WHEN '{$value}' THEN '{$result}'";
+            $phVal = $this->bindValue($value);
+            $phRes = $this->bindValue($result);
+            $caseSql .= " WHEN {$phVal} THEN {$phRes}";
         }
         if ($default !== null) {
-            $caseSql .= " ELSE '{$default}'";
+            $phDef = $this->bindValue($default);
+            $caseSql .= " ELSE {$phDef}";
         }
         $caseSql .= " END";
         $this->querySelect .= ", {$caseSql}";
@@ -156,7 +172,9 @@ class MySQL implements BuildersInterface
      */
     public function regexp(string $field, string $pattern): self
     {
-        $this->queryWhere .= " {$field} REGEXP '{$pattern}'";
+        $qf = $this->quoteIdentifier($field);
+        $ph = $this->bindValue($pattern);
+        $this->queryWhere .= " {$qf} REGEXP {$ph}";
         return $this;
     }
 

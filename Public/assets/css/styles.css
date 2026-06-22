@@ -61,21 +61,21 @@
    § 2  DARK MODE
    ============================================================ */
 [data-theme=dark] {
-  --ps-bg-base:           #0F172A;
-  --ps-bg-surface:        #1E293B;
-  --ps-bg-subtle:         #334155;
+  --ps-bg-base:           #14171e;
+  --ps-bg-surface:        #191c26;
+  --ps-bg-subtle:         #1f2330;
 
-  --ps-text-primary:      #F1F5F9;
-  --ps-text-secondary:    #94A3B8;
-  --ps-text-muted:        #64748B;
+  --ps-text-primary:      #dce2f0;
+  --ps-text-secondary:    #8b93ac;
+  --ps-text-muted:        #525c74;
 
-  --ps-border:            #334155;
-  --ps-border-strong:     #475569;
+  --ps-border:            #22273a;
+  --ps-border-strong:     #2d3347;
 
-  --ps-primary-light:     #1E3A8A;
+  --ps-primary-light:     #162050;
 
-  --ps-light:             #1E293B;
-  --ps-dark:              #F1F5F9;
+  --ps-light:             #191c26;
+  --ps-dark:              #dce2f0;
 }
 
 /* ============================================================
@@ -3103,6 +3103,26 @@ kbd {
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'/%3E%3C/svg%3E");
 }
 
+.pi-pencil {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 3a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L17 3z'/%3E%3Cpath d='M15 5l4 4'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 3a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L17 3z'/%3E%3Cpath d='M15 5l4 4'/%3E%3C/svg%3E");
+}
+
+.pi-archive {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='3' width='20' height='5' rx='1'/%3E%3Cpath d='M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8'/%3E%3Cpath d='M10 12h4'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='3' width='20' height='5' rx='1'/%3E%3Cpath d='M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8'/%3E%3Cpath d='M10 12h4'/%3E%3C/svg%3E");
+}
+
+.pi-message {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E");
+}
+
+.pi-sparkle {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z'/%3E%3C/svg%3E");
+}
+
 /* ============================================================
    § 37  RESPONSIVE BREAKPOINTS
    ============================================================ */
@@ -3614,17 +3634,17 @@ kbd {
 /* System dark mode (before JS loads - no flash for auto users) */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme=light]) {
-    --ps-bg-base:           #0F172A;
-    --ps-bg-surface:        #1E293B;
-    --ps-bg-subtle:         #334155;
-    --ps-text-primary:      #F1F5F9;
-    --ps-text-secondary:    #94A3B8;
-    --ps-text-muted:        #64748B;
-    --ps-border:            #334155;
-    --ps-border-strong:     #475569;
-    --ps-primary-light:     #1E3A8A;
-    --ps-light:             #1E293B;
-    --ps-dark:              #F1F5F9;
+    --ps-bg-base:           #14171e;
+    --ps-bg-surface:        #191c26;
+    --ps-bg-subtle:         #1f2330;
+    --ps-text-primary:      #dce2f0;
+    --ps-text-secondary:    #8b93ac;
+    --ps-text-muted:        #525c74;
+    --ps-border:            #22273a;
+    --ps-border-strong:     #2d3347;
+    --ps-primary-light:     #162050;
+    --ps-light:             #191c26;
+    --ps-dark:              #dce2f0;
   }
 }
 

@@ -16,6 +16,30 @@ trait BuildersTrait {
 	
 	public array $binds = [];
     public string $querySelect = '';
+
+    /**
+     * Quotes and sanitizes a column/table identifier to prevent SQL injection.
+     * Override in concrete builder classes to use the correct quote character.
+     */
+    protected function quoteIdentifier(string $field): string
+    {
+        $parts = explode('.', $field);
+        return implode('.', array_map(
+            fn($p) => '`' . preg_replace('/[^a-zA-Z0-9_]/', '', $p) . '`',
+            $parts
+        ));
+    }
+
+    /**
+     * Adds a value to the bind array and returns its placeholder.
+     */
+    private function bindValue(mixed $value): string
+    {
+        $placeholder = ':qb_' . count($this->binds);
+        $this->binds[$placeholder] = $value;
+        return $placeholder;
+    }
+
     public string $queryFrom = '';
     public string $queryWhere = '';
     public string $queryLimit = '';
@@ -163,17 +187,17 @@ trait BuildersTrait {
      */
 	public function month(string $field, int $value): self
 	{
-
+        $qf = $this->quoteIdentifier($field);
+        $ph = $this->bindValue($value);
 		if (!empty($this->queryWhere)) {
-            $this->queryWhere = $this->queryWhere." AND MONTH({$field}) = {$value}";
-        }
-		else{
-			$this->queryWhere = " WHERE MONTH({$field}) = '{$value}'";
+            $this->queryWhere = $this->queryWhere . " AND MONTH({$qf}) = {$ph}";
+        } else {
+			$this->queryWhere = " WHERE MONTH({$qf}) = {$ph}";
 		}
 
         return $this;
 	}
-	
+
 	/**
      * Sets the YEAR condition for the query.
      *
@@ -183,16 +207,17 @@ trait BuildersTrait {
      */
 	public function year(string $field, int $value): self
 	{
+        $qf = $this->quoteIdentifier($field);
+        $ph = $this->bindValue($value);
 		if (!empty($this->queryWhere)) {
-            $this->queryWhere = $this->queryWhere." AND YEAR({$field}) = {$value}";
-        }
-		else{
-			$this->queryWhere = " WHERE YEAR({$field}) = '{$value}'";
+            $this->queryWhere = $this->queryWhere . " AND YEAR({$qf}) = {$ph}";
+        } else {
+			$this->queryWhere = " WHERE YEAR({$qf}) = {$ph}";
 		}
 
         return $this;
 	}
-	
+
 	/**
      * Sets the DAY condition for the query.
      *
@@ -202,11 +227,12 @@ trait BuildersTrait {
      */
 	public function day(string $field, int $value): self
 	{
+        $qf = $this->quoteIdentifier($field);
+        $ph = $this->bindValue($value);
 		if (!empty($this->queryWhere)) {
-            $this->queryWhere = $this->queryWhere." AND DAY({$field}) = {$value}";
-        }
-		else{
-			$this->queryWhere = " WHERE DAY({$field}) = '{$value}'";
+            $this->queryWhere = $this->queryWhere . " AND DAY({$qf}) = {$ph}";
+        } else {
+			$this->queryWhere = " WHERE DAY({$qf}) = {$ph}";
 		}
 
         return $this;
@@ -487,7 +513,11 @@ trait BuildersTrait {
      */
     public function orderBy(string $order_by, string $order): self
     {
-        $this->queryOrderBy = " ORDER BY $order_by $order";
+        if (empty($this->queryOrderBy)) {
+            $this->queryOrderBy = " ORDER BY $order_by $order";
+        } else {
+            $this->queryOrderBy .= ", $order_by $order";
+        }
 
         return $this;
     }
@@ -654,7 +684,9 @@ trait BuildersTrait {
      * @return self
      */
     public function whereJsonContains(string $field, $value): self {
-        $this->queryWhere .= " JSON_CONTAINS($field, '" . json_encode($value) . "')";
+        $qf = $this->quoteIdentifier($field);
+        $ph = $this->bindValue(json_encode($value));
+        $this->queryWhere .= " JSON_CONTAINS({$qf}, {$ph})";
         return $this;
     }
 
@@ -747,8 +779,9 @@ trait BuildersTrait {
      */
     public function dateFormat(string $field, string $format = 'Y-m-d'): self
     {
-        // Default implementation - can be overridden
-        $this->querySelect .= ", DATE_FORMAT({$field}, '{$format}')";
+        $qf = $this->quoteIdentifier($field);
+        $ph = $this->bindValue($format);
+        $this->querySelect .= ", DATE_FORMAT({$qf}, {$ph})";
         return $this;
     }
 
@@ -761,8 +794,9 @@ trait BuildersTrait {
      */
     public function jsonExtract(string $field, string $path): self
     {
-        // Default implementation - can be overridden
-        $this->querySelect .= ", JSON_EXTRACT({$field}, '$.{$path}')";
+        $qf = $this->quoteIdentifier($field);
+        $ph = $this->bindValue('$.' . $path);
+        $this->querySelect .= ", JSON_EXTRACT({$qf}, {$ph})";
         return $this;
     }
 
@@ -776,9 +810,10 @@ trait BuildersTrait {
      */
     public function jsonContains(string $field, $value, string $path = '$'): self
     {
-        // Default implementation - can be overridden
-        $jsonValue = json_encode($value);
-        $this->queryWhere .= " JSON_CONTAINS({$field}, '{$jsonValue}', '$.{$path}')";
+        $qf = $this->quoteIdentifier($field);
+        $phVal = $this->bindValue(json_encode($value));
+        $phPath = $this->bindValue('$.' . $path);
+        $this->queryWhere .= " JSON_CONTAINS({$qf}, {$phVal}, {$phPath})";
         return $this;
     }
 
@@ -806,12 +841,16 @@ trait BuildersTrait {
      */
     public function caseWhen(string $field, array $cases, $default = null): self
     {
-        $caseSql = " CASE {$field}";
+        $qf = $this->quoteIdentifier($field);
+        $caseSql = " CASE {$qf}";
         foreach ($cases as $value => $result) {
-            $caseSql .= " WHEN '{$value}' THEN '{$result}'";
+            $phVal = $this->bindValue($value);
+            $phRes = $this->bindValue($result);
+            $caseSql .= " WHEN {$phVal} THEN {$phRes}";
         }
         if ($default !== null) {
-            $caseSql .= " ELSE '{$default}'";
+            $phDef = $this->bindValue($default);
+            $caseSql .= " ELSE {$phDef}";
         }
         $caseSql .= " END";
         $this->querySelect .= ", {$caseSql}";
@@ -827,8 +866,9 @@ trait BuildersTrait {
      */
     public function regexp(string $field, string $pattern): self
     {
-        // Default implementation - can be overridden
-        $this->queryWhere .= " {$field} REGEXP '{$pattern}'";
+        $qf = $this->quoteIdentifier($field);
+        $ph = $this->bindValue($pattern);
+        $this->queryWhere .= " {$qf} REGEXP {$ph}";
         return $this;
     }
 
@@ -841,8 +881,9 @@ trait BuildersTrait {
      */
     public function fullTextSearch(string $field, string $searchTerm): self
     {
-        // Default implementation - can be overridden
-        $this->queryWhere .= " MATCH({$field}) AGAINST('{$searchTerm}')";
+        $qf = $this->quoteIdentifier($field);
+        $ph = $this->bindValue($searchTerm);
+        $this->queryWhere .= " MATCH({$qf}) AGAINST({$ph})";
         return $this;
     }
 
@@ -856,9 +897,10 @@ trait BuildersTrait {
      */
     public function stringAgg(string $field, string $separator = ',', string $alias = ''): self
     {
-        // Default implementation - can be overridden
+        $qf = $this->quoteIdentifier($field);
+        $safeSep = preg_replace('/[^a-zA-Z0-9\s,.\-_|\/]/', '', $separator);
         $aliasSql = $alias ? " AS {$alias}" : '';
-        $this->querySelect .= ", GROUP_CONCAT({$field} SEPARATOR '{$separator}'){$aliasSql}";
+        $this->querySelect .= ", GROUP_CONCAT({$qf} SEPARATOR '{$safeSep}'){$aliasSql}";
         return $this;
     }
 
