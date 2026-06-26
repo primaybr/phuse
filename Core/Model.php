@@ -89,7 +89,7 @@ class Model
 
     /**
      * Whether this instance obtained its connection from the pool and must return it.
-     * False when the connection was injected via Model::on() — the caller owns it.
+     * False when the connection was injected via Model::on() - the caller owns it.
      */
     private bool $ownedByPool = true;
 
@@ -101,7 +101,7 @@ class Model
      *
      * Pass a $connection to reuse an existing Connection (e.g. to share a transaction).
      * When a connection is injected the pool is not touched and the destructor will not
-     * return the connection — the caller that owns the connection is responsible for that.
+     * return the connection - the caller that owns the connection is responsible for that.
      *
      * @param string $table The name of the table.
      * @param string $database The name of the database configuration to use.
@@ -115,7 +115,7 @@ class Model
         }
 
         if ($connection !== null) {
-            // Reuse injected connection — do not touch the pool
+            // Reuse injected connection - do not touch the pool
             $this->db = $connection;
             $this->ownedByPool = false;
         } else {
@@ -162,7 +162,7 @@ class Model
     /**
      * Create a Model instance that shares an existing Connection without acquiring
      * a new one from the pool. Use this to run multiple queries on the same connection
-     * — most importantly inside a transaction where all statements must share one handle.
+     * - most importantly inside a transaction where all statements must share one handle.
      *
      * The provided connection is NOT returned to the pool when this instance is destroyed;
      * the Model that originally obtained it from the pool remains responsible for that.
@@ -357,7 +357,7 @@ class Model
      * e.g. OR conditions that must be grouped in parentheses:
      *   ->whereRaw('(title ILIKE :s1 OR body ILIKE :s2)', [':s1' => '%foo%', ':s2' => '%foo%'])
      *
-     * @param string $sql   Raw SQL fragment (no WHERE keyword) — included verbatim.
+     * @param string $sql   Raw SQL fragment (no WHERE keyword) - included verbatim.
      * @param array  $binds Named bind parameters referenced inside $sql.
      * @return self
      */
@@ -1116,7 +1116,7 @@ class Model
     /**
      * Clear all query cache after a write operation.
      * Cache keys are MD5 hashes of SQL+params so there is no reliable way to
-     * invalidate only the affected table — clearing the full query cache is the
+     * invalidate only the affected table - clearing the full query cache is the
      * correct strategy here.
      */
     private function clearQueryCache(): void

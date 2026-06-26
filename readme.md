@@ -183,6 +183,44 @@ Phuse is an open-source project, and you are welcome to contribute to its develo
 
 ## Latest Changes
 
+### v1.2.5 (2026-06-26)
+
+#### Controller Helpers
+
+- **`redirect()`**, **`json()`**, **`isAjax()`**, **`flash()`** shortcut methods added to `Core\Controller` — no need to reach into sub-objects for common actions
+
+#### HTTP
+
+- **`Response::json(array $data, int $status)`** — static JSON terminator; sets header, encodes, and exits
+- **`Input::isAjax()`** — checks `HTTP_X_REQUESTED_WITH` header
+- **`Client::getIpAddress()` IP-spoofing fix** — defaults to `REMOTE_ADDR`; forwarding headers only trusted when the connecting IP is in `Client::setTrustedProxies([])`
+
+#### Database
+
+- **`Connection::execute()` type-safe fix** — no longer passes already-bound params through `execute($array)` (which resets them all to `PARAM_STR`); calls bare `execute()` when params were bound via `arrayBind()`
+
+#### Router
+
+- **FQCN module support** — controller strings starting with `App\` used as-is, enabling module controllers
+- Route captures cast to `string` before dispatch (UUID-safe)
+- `is_dir()` guard for cache directory creation
+
+#### Template Parser
+
+- **`findTopLevelElse()`** — nesting-aware `{% else %}` locator; fixes corrupted output for nested `{% if %}{% else %}{% endif %}` blocks
+- Off-by-one fix in `findTopLevelIfBlocks()` (`{% endif %}` = 11 chars, not 12)
+- Condition regex: trailing space removed from identifier character class
+
+#### Upload
+
+- `imageProfile()` default max size raised 2 MB → 5 MB
+
+#### CSS
+
+- New icons: `.pi-bars`, `.pi-chart-bar`, `.pi-video`, `.pi-images`, `.pi-inbox`, `.pi-cog`
+- `.vtx-loading` utility class (opacity + pointer-events for async states)
+- Date/time input styling with dark-mode `color-scheme` support
+
 ### v1.2.4 (2026-06-22)
 
 #### Database Builder — SQL Injection Security Fixes

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Core\Template;
 
 /**
- * ParserTrait - PHUSE Template Engine v1.2.4
+ * ParserTrait - PHUSE Template Engine v1.2.5
  *
  * Syntax overview (familiar to Twig & Laravel Blade users):
  *
@@ -664,6 +664,56 @@ trait ParserTrait
     }
 
     /**
+     * Finds the position of a top-level {% else %} within a full if-block string.
+     * Skips any {% else %} that belongs to a nested {% if %}...{% endif %} pair.
+     *
+     * @param string $blockContent  The full block including opening {% if %} and closing {% endif %}.
+     * @return int|false  Position of the top-level {% else %}, or false if none exists.
+     */
+    protected function findTopLevelElse(string $blockContent): int|false
+    {
+        // Start scanning after the opening {% if ... %} tag
+        $startPos = (int) strpos($blockContent, '%}') + 2;
+        $depth    = 0;
+        $i        = $startPos;
+        $length   = strlen($blockContent);
+
+        while ($i < $length) {
+            $nextIf    = strpos($blockContent, '{% if',    $i);
+            $nextEndif = strpos($blockContent, '{% endif', $i);
+            $nextElse  = strpos($blockContent, '{% else %}', $i);
+
+            $candidates = [];
+            if ($nextIf    !== false) $candidates[] = ['pos' => $nextIf,    'type' => 'if'];
+            if ($nextEndif !== false) $candidates[] = ['pos' => $nextEndif, 'type' => 'endif'];
+            if ($nextElse  !== false) $candidates[] = ['pos' => $nextElse,  'type' => 'else'];
+
+            if (empty($candidates)) break;
+
+            usort($candidates, static fn ($a, $b) => $a['pos'] - $b['pos']);
+            $first = $candidates[0];
+
+            if ($first['type'] === 'if') {
+                $depth++;
+                $i = $first['pos'] + 7;
+            } elseif ($first['type'] === 'endif') {
+                if ($depth === 0) {
+                    break; // reached the outer {% endif %}, no top-level else found
+                }
+                $depth--;
+                $i = $first['pos'] + 11;
+            } else { // else
+                if ($depth === 0) {
+                    return $first['pos'];
+                }
+                $i = $first['pos'] + 10; // {% else %} is 10 chars
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Finds top-level {% if %} blocks (ignoring nested ones).
      */
     protected function findTopLevelIfBlocks(string $template): array
@@ -699,15 +749,15 @@ trait ParserTrait
                         break;
                     } else {
                         $depth--;
-                        $j = $nextEndif + 12;
+                        $j = $nextEndif + 11;
                     }
                 }
             }
 
             if ($endPos !== false) {
-                $blockContent = substr($template, $ifPos, $endPos - $ifPos + 12);
+                $blockContent = substr($template, $ifPos, $endPos - $ifPos + 11);
 
-                $elsePos = strpos($blockContent, '{% else %}');
+                $elsePos = $this->findTopLevelElse($blockContent);
 
                 if ($elsePos !== false) {
                     $ifLine = substr($blockContent, 0, $elsePos);
@@ -718,10 +768,11 @@ trait ParserTrait
                         $condition = '';
                     }
 
-                    $ifContent  = substr($ifLine, strlen($conditionMatch[0]));
-                    $elseStart  = $elsePos + 9;
-                    $elseEnd    = strpos($blockContent, '{% endif %}', $elseStart);
-                    $elseContent = $elseEnd !== false
+                    $ifContent   = substr($ifLine, strlen($conditionMatch[0]));
+                    $elseStart   = $elsePos + 9;
+                    // The outer {% endif %} is always the last 11 chars of $blockContent
+                    $elseEnd     = strlen($blockContent) - 11;
+                    $elseContent = $elseEnd > $elseStart
                         ? substr($blockContent, $elseStart, $elseEnd - $elseStart)
                         : '';
 
@@ -761,7 +812,7 @@ trait ParserTrait
                     'else_content' => $elseContent,
                 ];
 
-                $i = $endPos + 12;
+                $i = $endPos + 11;
             } else {
                 $i = $ifPos + 7;
             }
@@ -1231,7 +1282,7 @@ trait ParserTrait
 
         foreach ($parts as $idx => &$part) {
             if ($idx % 2 === 0) {
-                $part = preg_replace_callback('~\$?([a-zA-Z_][a-zA-Z0-9_.|\'\": ]*)~', function (array $match): string {
+                $part = preg_replace_callback('~\$?([a-zA-Z_][a-zA-Z0-9_.|\'\":]*)~', function (array $match): string {
                     $expression = $match[1];
 
                     if (strpos($expression, '|') !== false) {

@@ -27,17 +27,6 @@ class PgSQL implements BuildersInterface
     }
 
     /**
-     * Override insertIgnore to use PostgreSQL ON CONFLICT DO NOTHING syntax.
-     * The trait default generates MySQL INSERT IGNORE which is not valid in PostgreSQL.
-     */
-    public function insertIgnore(array $data): self
-    {
-        $this->insert($data);
-        $this->queryInsert .= ' ON CONFLICT DO NOTHING';
-        return $this;
-    }
-
-    /**
      * Add ORDER BY RANDOM() for PostgreSQL
      *
      * @return self
@@ -45,6 +34,17 @@ class PgSQL implements BuildersInterface
     public function orderByRandom(): self
     {
         $this->queryOrderBy = " ORDER BY RANDOM()";
+        return $this;
+    }
+
+    /**
+     * Override insertIgnore to use PostgreSQL ON CONFLICT DO NOTHING syntax.
+     * The trait default generates MySQL INSERT IGNORE which is not valid in PostgreSQL.
+     */
+    public function insertIgnore(array $data): self
+    {
+        $this->insert($data);
+        $this->queryInsert .= ' ON CONFLICT DO NOTHING';
         return $this;
     }
 

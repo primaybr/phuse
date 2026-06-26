@@ -53,6 +53,13 @@ class Client
     private static ?string $cachedIp = null;
 
     /**
+     * Explicit list of trusted proxy IPs. Only when REMOTE_ADDR matches one of
+     * these will forwarding headers (X-Forwarded-For, CF-Connecting-IP, etc.)
+     * be trusted. Empty by default - meaning REMOTE_ADDR is always the source.
+     */
+    private static array $trustedProxies = [];
+
+    /**
      * Logger instance for framework logging.
      */
     private Log $logger;
@@ -68,28 +75,51 @@ class Client
     }
 
     /**
-     * Retrieves the real IP address of the client, checking multiple proxy headers.
+     * Configure which upstream proxy IPs are trusted.
+     * Call this once during bootstrap if your app sits behind a known proxy.
      *
-     * This method checks common proxy headers in order of reliability to determine
-     * the actual client IP address, filtering out private and reserved IP ranges
-     * with comprehensive security validation and performance optimizations.
+     * @param array $proxies List of trusted proxy IP addresses.
+     */
+    public static function setTrustedProxies(array $proxies): void
+    {
+        self::$trustedProxies = $proxies;
+        self::$cachedIp = null; // invalidate cache on config change
+    }
+
+    /**
+     * Retrieves the real IP address of the client.
+     *
+     * By default always uses REMOTE_ADDR (the direct TCP peer) to prevent
+     * IP spoofing via forged forwarding headers. Forwarding headers are only
+     * trusted when REMOTE_ADDR is explicitly listed in setTrustedProxies().
      *
      * @return string The client's real IP address or 'UNKNOWN' if not determinable.
-     * @throws \RuntimeException If IP validation fails unexpectedly.
      */
     public function getIpAddress(): string
     {
-        // Return cached result if available and valid
         if (self::$cachedIp !== null) {
             return self::$cachedIp;
         }
 
-        foreach (self::IP_HEADERS as $header) {
-            $ip = $this->extractIpFromHeader($header);
-            if ($ip && $this->isValidPublicIp($ip)) {
-                self::$cachedIp = $ip;
-                return $ip;
+        $remoteAddr = $_SERVER['REMOTE_ADDR'] ?? null;
+
+        // Only honour forwarding headers when the direct connection arrives
+        // from a known, configured trusted proxy.
+        if ($remoteAddr !== null && in_array($remoteAddr, self::$trustedProxies, true)) {
+            $proxyHeaders = array_slice(self::IP_HEADERS, 0, -1); // exclude REMOTE_ADDR
+            foreach ($proxyHeaders as $header) {
+                $ip = $this->extractIpFromHeader($header);
+                if ($ip && $this->isValidPublicIp($ip)) {
+                    self::$cachedIp = $ip;
+                    return $ip;
+                }
             }
+        }
+
+        // Fall back to the direct connection address.
+        if ($remoteAddr !== null && filter_var($remoteAddr, FILTER_VALIDATE_IP) !== false) {
+            self::$cachedIp = $remoteAddr;
+            return $remoteAddr;
         }
 
         self::$cachedIp = 'UNKNOWN';

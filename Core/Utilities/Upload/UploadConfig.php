@@ -455,7 +455,7 @@ class UploadConfig
                 'webp' => ['image/webp'],
             ])
             ->setImageDimensions(100, 2048, 100, 2048)
-            ->setMaxSize(2_000_000) // 2MB for images
+            ->setMaxSize(5_000_000) // 5 MB CMS default
             ->setLogFileName('upload/images'); // Use subdirectory for clean organization
     }
 

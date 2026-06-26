@@ -39,7 +39,6 @@ trait BuildersTrait {
         $this->binds[$placeholder] = $value;
         return $placeholder;
     }
-
     public string $queryFrom = '';
     public string $queryWhere = '';
     public string $queryLimit = '';
@@ -197,7 +196,7 @@ trait BuildersTrait {
 
         return $this;
 	}
-
+	
 	/**
      * Sets the YEAR condition for the query.
      *
@@ -217,7 +216,7 @@ trait BuildersTrait {
 
         return $this;
 	}
-
+	
 	/**
      * Sets the DAY condition for the query.
      *

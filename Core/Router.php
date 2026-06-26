@@ -131,7 +131,7 @@ class Router
             'middlewares' => $this->middlewares,
         ];
 
-        if(!file_exists(Folder\Path::CACHE)) {
+        if(!is_dir(Folder\Path::CACHE)) {
             mkdir(Folder\Path::CACHE, 0777, true);
         }
 
@@ -314,18 +314,21 @@ class Router
     {
         // If the controller and the action are both strings and not empty
 		if (is_string($controller) && is_string($this->actions[$pattern]) && !empty($this->actions[$pattern])) {
-			
-            // Get the relative path of the controller (e.g., "Controllers/Welcome.php")
-            $controllerPath = str_replace(ROOT, '', Folder\Path::CONTROLLERS); 
-            // Replace the slashes in the controller name with backslashes and prepend the namespace
-			$controller = str_replace('/', '\\', $controllerPath . $controller);
+
+            // If the controller is already a FQCN (e.g. "App\Modules\Blog\Controllers\Admin\PostsController")
+            // use it as-is; otherwise prepend the default App\Controllers\ namespace.
+            if (!str_starts_with($controller, 'App\\')) {
+                $controllerPath = str_replace(ROOT, '', Folder\Path::CONTROLLERS);
+                $controller = str_replace('/', '\\', $controllerPath . $controller);
+            }
 			// Create a new instance of the controller class
 			$controller = new $controller();
 			// Create a handler array with the controller object and the action name
 			$handler = [$controller, $this->actions[$pattern]];
 			// If the controller has the action method and it is callable
 			if (method_exists($controller, $this->actions[$pattern]) && is_callable($handler)) {
-				// Call the handler with the matches array as arguments
+				// Route captures are always passed as strings (IDs are UUIDs, not ints)
+				$matches = array_map('strval', $matches);
 				$handler(...$matches);
 			} else {
 				// If the controller does not have the action method or it is not callable, show a 404 error

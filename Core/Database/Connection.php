@@ -119,19 +119,18 @@ class Connection
      * @return mixed The result of the execution
      * @throws PDOException If the execution fails
      */
-   public function execute(array $params = []): mixed
+    public function execute(array $params = []): mixed
     {
         try {
-            // Always use boundParams if they exist, regardless of passed params
-            if (!empty($this->boundParams)) {
-                // Merge passed params with bound parameters (passed params take precedence)
-                $allParams = !empty($params) ? array_merge($this->boundParams, $params) : $this->boundParams;
-                return $this->statement->execute($allParams);
+            if (!empty($params)) {
+                // Caller passed explicit params - PDO binds them (all as PARAM_STR).
+                return $this->statement->execute($params);
             }
-
-            return $this->statement->execute($params);
+            // Parameters were already bound type-correctly via arrayBind() → bindValue().
+            // Passing an array to execute() would override those bindings (PDO treats
+            // everything as PARAM_STR), breaking BOOLEAN, NULL, and INT columns.
+            return $this->statement->execute();
         } catch (PDOException $e) {
-            // For debugging, throw the original PDO exception
             throw $e;
         }
     }

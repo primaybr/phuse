@@ -233,4 +233,12 @@ class Input
 
         return $sanitized;
     }
+
+    /**
+     * Returns true when the request carries the XMLHttpRequest header (AJAX).
+     */
+    public function isAjax(): bool
+    {
+        return strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest';
+    }
 }

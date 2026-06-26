@@ -124,4 +124,18 @@ class Response
         $this->statusName = self::STATUS_CODES[$status] ?? 'Unknown Status Code';
         $this->wrapper = $wrapper;
     }
+
+    /**
+     * Sends a JSON response and terminates execution.
+     *
+     * @param array $data The data to encode as JSON.
+     * @param int $status The HTTP status code (default: 200).
+     */
+    public static function json(array $data, int $status = 200): never
+    {
+        http_response_code($status);
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
+    }
 }

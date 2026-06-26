@@ -354,7 +354,7 @@ class Examples extends Controller
             'textColor'    => '#f8fafc',
             'bgColor'      => '#1e293b',
             'siteName'     => 'PHUSE Framework',
-            'version'      => '1.2.4',
+            'version'      => '1.2.5',
             'apiUrl'       => '/api/v1',
             'userId'       => 42,
             'userName'     => 'Demo User',
@@ -365,7 +365,7 @@ class Examples extends Controller
     }
 
     /**
-     * Icon System demo - v1.2.4 feature
+     * Icon System demo - v1.2.5 feature
      * Shows the flat hollow SVG icon system (.pi .pi-name) using CSS mask-image.
      *
      * @return void

@@ -239,4 +239,28 @@ class Controller extends \stdClass
 
         return $this;
     }
+
+    /** Redirect to a URL via URI::redirect() (includes open-redirect protection). */
+    protected function redirect(string $url): never
+    {
+        $this->uri->redirect($url);
+    }
+
+    /** Send a JSON response and terminate. */
+    protected function json(array $data, int $status = 200): never
+    {
+        \Core\Http\Response::json($data, $status);
+    }
+
+    /** True when the request carries the XMLHttpRequest header (AJAX). */
+    protected function isAjax(): bool
+    {
+        return $this->input->isAjax();
+    }
+
+    /** Store a flash message for the next request. */
+    protected function flash(string $type, string $message): void
+    {
+        $this->session->set('flash', ['type' => $type, 'message' => $message]);
+    }
 }

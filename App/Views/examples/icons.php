@@ -108,7 +108,7 @@
     {# - Header - #}
     <div class="card mb-4">
       <div class="card-body text-center py-4">
-        <span class="badge bg-primary mb-2">v1.2.4</span>
+        <span class="badge bg-primary mb-2">v1.2.5</span>
         <h1 class="fw-bold mb-1">
           <i class="pi pi-zap me-2 text-primary"></i>Phuse Icon System
         </h1>

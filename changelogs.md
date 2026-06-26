@@ -1,5 +1,103 @@
 # Changelog
 
+## v1.2.5 (2026-06-26)
+
+### Core — Controller Helpers
+
+Four convenience methods added to `Core\Controller` so subclasses no longer need to reach into sub-objects for common actions:
+
+- **`redirect(string $url)`** — delegates to `$this->uri->redirect()` (includes open-redirect protection); declared `never`
+- **`json(array $data, int $status = 200)`** — calls `Response::json()` and terminates; declared `never`
+- **`isAjax(): bool`** — reads `HTTP_X_REQUESTED_WITH` header via `$this->input->isAjax()`
+- **`flash(string $type, string $message)`** — stores `['type', 'message']` in the session flash key for one-request notifications
+
+### Core — HTTP
+
+#### `Response::json()` — Static JSON Terminator
+
+New `Response::json(array $data, int $status = 200): never` sets `Content-Type: application/json`, `http_response_code`, echoes `json_encode($data)`, and calls `exit`. Avoids boilerplate in every API action.
+
+#### `Input::isAjax()`
+
+New method checks `strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'`.
+
+#### `Client::getIpAddress()` — IP Spoofing Fix
+
+`getIpAddress()` previously iterated all proxy forwarding headers (`X-Forwarded-For`, `CF-Connecting-IP`, etc.) and returned the first valid public IP — allowing any client to spoof its IP by setting a forged header. Fixed:
+
+- New `static $trustedProxies = []` — empty by default; call `Client::setTrustedProxies(array $ips)` during bootstrap to register upstream proxy addresses
+- Forwarding headers are only inspected when `REMOTE_ADDR` is in `$trustedProxies`
+- Falls back unconditionally to `REMOTE_ADDR` otherwise
+
+### Core — Database
+
+#### `Connection::execute()` — Type-Safe PDO Binding
+
+`execute()` previously merged `$this->boundParams` with any caller-passed params and passed them all to `PDOStatement::execute($array)` — PDO treats every value in the array as `PARAM_STR`, silently coercing `null`, booleans, and integers to strings.
+
+Fixed: when params were already bound type-correctly via `arrayBind() → bindValue()`, `execute()` now calls `$statement->execute()` with no arguments, preserving the correct PDO types. Explicit params passed by the caller (e.g. from inline queries) still use `execute($params)` as before.
+
+### Core — Router
+
+Three fixes:
+
+- **FQCN module support** — if the controller string already begins with `App\`, it is used as-is (no namespace prepend). Module controllers registered as `App\Modules\Blog\Controllers\Admin\PostsController` now resolve correctly
+- **Route capture type** — matches are cast to `string` via `array_map('strval', $matches)` before dispatch, so UUID captures (which are strings, not ints) arrive correctly typed
+- **`is_dir()` guard** — cache directory existence is now checked with `is_dir()` instead of `file_exists()`, which could return true for a stale file at the same path
+
+### Core — Log
+
+`Log::write()` previously called `mkdir()` only after `file_exists($logFile)` returned false — which also returned false when the path pointed to a file (not a directory). Fixed to check `is_dir(Path::LOGS)` before creating the directory.
+
+### Core — Template Parser
+
+#### `findTopLevelElse()` — New Helper
+
+New `protected function findTopLevelElse(string $blockContent): int|false` scans a full `{% if %}...{% endif %}` block and returns the position of the **top-level** `{% else %}` — skipping any `{% else %}` that belongs to a nested `{% if %}`. Previously, `strpos()` was used which would match the first `{% else %}` regardless of nesting depth, corrupting the output of `{% if %}{% if %}{% else %}{% endif %}{% else %}{% endif %}` patterns.
+
+#### `findTopLevelIfBlocks()` — Off-by-one + Else Fix
+
+- `{% endif %}` token is 11 characters, not 12 — offset and substring length corrected throughout
+- `{% else %}` boundary now found via `findTopLevelElse()` instead of `strpos()`
+- `$elseEnd` computed as `strlen($blockContent) - 11` (the outer `{% endif %}` is always the last token), eliminating the nested `strpos()` that returned the first inner `{% endif %}`
+
+#### Condition Regex Fix
+
+Trailing space removed from the identifier character class in `preg_replace_callback`: was `[a-zA-Z0-9_.|\'\": ]` (space inside brackets could match whitespace), now `[a-zA-Z0-9_.|\'\":]`.
+
+### Core — Upload
+
+`UploadConfig::imageProfile()` preset max size raised from 2 MB to 5 MB to better suit CMS image uploads.
+
+### CSS Framework
+
+#### New Icons (`.pi` system)
+
+Six new icons added:
+
+| Class | Description |
+| --- | --- |
+| `.pi-bars` | Hamburger / menu icon |
+| `.pi-chart-bar` | Bar chart icon |
+| `.pi-video` | Video camera icon |
+| `.pi-images` | Multiple images / gallery icon |
+| `.pi-inbox` | Inbox / tray icon |
+| `.pi-cog` | Settings / cog icon |
+
+#### `.vtx-loading` Utility
+
+New `.vtx-loading` class: `opacity: 0.45; pointer-events: none; transition: opacity .12s ease` — use on any element while an async operation is pending.
+
+#### Date / Time Input Styling
+
+Consistent styling for `input[type=date]`, `input[type=datetime-local]`, `input[type=time]`, `input[type=month]`, and `input[type=week]` inside `.form-control`:
+
+- `color-scheme: light` (explicit, prevents OS mismatch)
+- Webkit calendar picker indicator: `opacity: 0.5`, pointer cursor, hover to `0.85`
+- Dark theme via `[data-theme=dark]` and `prefers-color-scheme: dark` media query: `color-scheme: dark`
+
+---
+
 ## v1.2.4 (2026-06-22)
 
 ### Database Builder — SQL Injection Security Fixes

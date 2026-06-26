@@ -31,7 +31,7 @@ class Welcome extends Controller
     {
         $data = [
             'date'    => date('Y'),
-            'version' => '1.2.4',
+            'version' => '1.2.5',
 
             // Core feature cards shown on the welcome page
             'features' => [
