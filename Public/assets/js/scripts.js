@@ -220,10 +220,24 @@ class Phuse {
       pop.id        = id;
       pop.className = 'popover fade bs-tooltip-bottom phuse-popover';
       pop.setAttribute('role', 'tooltip');
-      pop.innerHTML =
-        `<div class="popover-arrow" style="left:50%;transform:translateX(-50%);"></div>` +
-        (title   ? `<h3 class="popover-header">${title}</h3>` : '') +
-        `<div class="popover-body">${content}</div>`;
+
+      const arrow = document.createElement('div');
+      arrow.className = 'popover-arrow';
+      arrow.style.left = '50%';
+      arrow.style.transform = 'translateX(-50%)';
+      pop.appendChild(arrow);
+
+      if (title) {
+        const header = document.createElement('h3');
+        header.className = 'popover-header';
+        header.textContent = title;
+        pop.appendChild(header);
+      }
+
+      const body = document.createElement('div');
+      body.className = 'popover-body';
+      body.textContent = content;
+      pop.appendChild(body);
       document.body.appendChild(pop);
 
       place(pop);
