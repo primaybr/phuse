@@ -13,7 +13,7 @@ Four convenience methods added to `Core\Controller` so subclasses no longer need
 
 ### Core — HTTP
 
-#### `Response::json()` — Static JSON Terminator
+#### `Response::json()` - Static JSON Terminator
 
 New `Response::json(array $data, int $status = 200): never` sets `Content-Type: application/json`, `http_response_code`, echoes `json_encode($data)`, and calls `exit`. Avoids boilerplate in every API action.
 

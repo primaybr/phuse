@@ -1,5 +1,9 @@
 # Phuse: A User-Friendly and Intuitive PHP Framework
 
+![Version](https://img.shields.io/badge/version-1.2.5-blue)
+![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 Phuse is a PHP framework that simplifies web development with conventions and helpers. It follows the convention over configuration principle, which means that it has sensible defaults for most settings and features, reducing the need for manual configuration. It also provides a variety of helpers, which are functions that perform common tasks such as formatting, validation, pagination, and more. Phuse aims to make web development more enjoyable and productive with PHP.
 
 ## Features
