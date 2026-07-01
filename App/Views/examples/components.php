@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>JS Components - Phuse Framework</title>
-  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=139">
+  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=140">
   <script>
     (function() {
       try {

@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{title}} - Phuse Framework</title>
-  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=139">
+  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=140">
   <script>
     (function() {
       try {
@@ -108,7 +108,7 @@
     {# - Header - #}
     <div class="card mb-4">
       <div class="card-body text-center py-4">
-        <span class="badge bg-primary mb-2">v1.2.5</span>
+        <span class="badge bg-primary mb-2">v1.2.6</span>
         <h1 class="fw-bold mb-1">
           <i class="pi pi-zap me-2 text-primary"></i>Phuse Icon System
         </h1>
@@ -169,6 +169,8 @@
           <div class="icon-item"><i class="pi pi-arrow-down"></i><span class="icon-name">pi-arrow-down</span></div>
           <div class="icon-item"><i class="pi pi-external-link"></i><span class="icon-name">pi-external-link</span></div>
           <div class="icon-item"><i class="pi pi-sliders"></i><span class="icon-name">pi-sliders</span></div>
+          <div class="icon-item"><i class="pi pi-bars"></i><span class="icon-name">pi-bars</span></div>
+          <div class="icon-item"><i class="pi pi-briefcase"></i><span class="icon-name">pi-briefcase</span></div>
         </div>
       </div>
     </div>
@@ -187,6 +189,8 @@
           <div class="icon-item"><i class="pi pi-mail"></i><span class="icon-name">pi-mail</span></div>
           <div class="icon-item"><i class="pi pi-phone"></i><span class="icon-name">pi-phone</span></div>
           <div class="icon-item"><i class="pi pi-shield"></i><span class="icon-name">pi-shield</span></div>
+          <div class="icon-item"><i class="pi pi-cog"></i><span class="icon-name">pi-cog</span></div>
+          <div class="icon-item"><i class="pi pi-message"></i><span class="icon-name">pi-message</span></div>
         </div>
       </div>
     </div>
@@ -209,6 +213,7 @@
           <div class="icon-item"><i class="pi pi-heart"></i><span class="icon-name">pi-heart</span></div>
           <div class="icon-item"><i class="pi pi-star"></i><span class="icon-name">pi-star</span></div>
           <div class="icon-item"><i class="pi pi-bookmark"></i><span class="icon-name">pi-bookmark</span></div>
+          <div class="icon-item"><i class="pi pi-sparkle"></i><span class="icon-name">pi-sparkle</span></div>
         </div>
       </div>
     </div>
@@ -231,6 +236,12 @@
           <div class="icon-item"><i class="pi pi-trash"></i><span class="icon-name">pi-trash</span></div>
           <div class="icon-item"><i class="pi pi-refresh"></i><span class="icon-name">pi-refresh</span></div>
           <div class="icon-item"><i class="pi pi-database"></i><span class="icon-name">pi-database</span></div>
+          <div class="icon-item"><i class="pi pi-archive"></i><span class="icon-name">pi-archive</span></div>
+          <div class="icon-item"><i class="pi pi-images"></i><span class="icon-name">pi-images</span></div>
+          <div class="icon-item"><i class="pi pi-inbox"></i><span class="icon-name">pi-inbox</span></div>
+          <div class="icon-item"><i class="pi pi-video"></i><span class="icon-name">pi-video</span></div>
+          <div class="icon-item"><i class="pi pi-pencil"></i><span class="icon-name">pi-pencil</span></div>
+          <div class="icon-item"><i class="pi pi-chart-bar"></i><span class="icon-name">pi-chart-bar</span></div>
         </div>
       </div>
     </div>
@@ -249,6 +260,8 @@
           <div class="icon-item"><i class="pi pi-link"></i><span class="icon-name">pi-link</span></div>
           <div class="icon-item"><i class="pi pi-globe"></i><span class="icon-name">pi-globe</span></div>
           <div class="icon-item"><i class="pi pi-zap"></i><span class="icon-name">pi-zap</span></div>
+          <div class="icon-item"><i class="pi pi-mobile"></i><span class="icon-name">pi-mobile</span></div>
+          <div class="icon-item"><i class="pi pi-monitor"></i><span class="icon-name">pi-monitor</span></div>
         </div>
       </div>
     </div>
@@ -262,6 +275,8 @@
           <div class="icon-item"><i class="pi pi-calendar"></i><span class="icon-name">pi-calendar</span></div>
           <div class="icon-item"><i class="pi pi-clock"></i><span class="icon-name">pi-clock</span></div>
           <div class="icon-item"><i class="pi pi-map-pin"></i><span class="icon-name">pi-map-pin</span></div>
+          <div class="icon-item"><i class="pi pi-history"></i><span class="icon-name">pi-history</span></div>
+          <div class="icon-item"><i class="pi pi-map"></i><span class="icon-name">pi-map</span></div>
         </div>
       </div>
     </div>
@@ -274,6 +289,71 @@
         <div class="icon-grid">
           <div class="icon-item"><i class="pi pi-sun"></i><span class="icon-name">pi-sun</span></div>
           <div class="icon-item"><i class="pi pi-moon"></i><span class="icon-name">pi-moon</span></div>
+          <div class="icon-item"><i class="pi pi-palette"></i><span class="icon-name">pi-palette</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-5">
+      <div class="card-header">
+        <span class="fw-semibold"><i class="pi pi-clipboard me-1 text-primary"></i> Forms &amp; Loading (v1.2.6)</span>
+      </div>
+      <div class="card-body">
+        <div class="icon-grid">
+          <div class="icon-item"><i class="pi pi-clipboard"></i><span class="icon-name">pi-clipboard</span></div>
+          <div class="icon-item"><i class="pi pi-spinner"></i><span class="icon-name">pi-spinner</span></div>
+          <div class="icon-item"><i class="pi pi-circle"></i><span class="icon-name">pi-circle</span></div>
+          <div class="icon-item"><i class="pi pi-verified"></i><span class="icon-name">pi-verified</span></div>
+          <div class="icon-item"><i class="pi pi-print"></i><span class="icon-name">pi-print</span></div>
+          <div class="icon-item"><i class="pi pi-play-circle"></i><span class="icon-name">pi-play-circle</span></div>
+          <div class="icon-item"><i class="pi pi-minus-circle"></i><span class="icon-name">pi-minus-circle</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-5">
+      <div class="card-header">
+        <span class="fw-semibold"><i class="pi pi-shopping-cart me-1 text-primary"></i> Commerce (v1.2.6)</span>
+      </div>
+      <div class="card-body">
+        <div class="icon-grid">
+          <div class="icon-item"><i class="pi pi-shopping-cart"></i><span class="icon-name">pi-shopping-cart</span></div>
+          <div class="icon-item"><i class="pi pi-package"></i><span class="icon-name">pi-package</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-5">
+      <div class="card-header">
+        <span class="fw-semibold"><i class="pi pi-key me-1 text-primary"></i> Security, Modules &amp; i18n (v1.2.6)</span>
+      </div>
+      <div class="card-body">
+        <div class="icon-grid">
+          <div class="icon-item"><i class="pi pi-key"></i><span class="icon-name">pi-key</span></div>
+          <div class="icon-item"><i class="pi pi-puzzle"></i><span class="icon-name">pi-puzzle</span></div>
+          <div class="icon-item"><i class="pi pi-languages"></i><span class="icon-name">pi-languages</span></div>
+          <div class="icon-item"><i class="pi pi-send"></i><span class="icon-name">pi-send</span></div>
+          <div class="icon-item"><i class="pi pi-log-in"></i><span class="icon-name">pi-log-in</span></div>
+          <div class="icon-item"><i class="pi pi-log-out"></i><span class="icon-name">pi-log-out</span></div>
+          <div class="icon-item"><i class="pi pi-help-circle"></i><span class="icon-name">pi-help-circle</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-5">
+      <div class="card-header">
+        <span class="fw-semibold"><i class="pi pi-server me-1 text-primary"></i> General &amp; Infra (v1.2.6)</span>
+      </div>
+      <div class="card-body">
+        <div class="icon-grid">
+          <div class="icon-item"><i class="pi pi-rss"></i><span class="icon-name">pi-rss</span></div>
+          <div class="icon-item"><i class="pi pi-share-2"></i><span class="icon-name">pi-share-2</span></div>
+          <div class="icon-item"><i class="pi pi-thumbs-up"></i><span class="icon-name">pi-thumbs-up</span></div>
+          <div class="icon-item"><i class="pi pi-flag"></i><span class="icon-name">pi-flag</span></div>
+          <div class="icon-item"><i class="pi pi-server"></i><span class="icon-name">pi-server</span></div>
+          <div class="icon-item"><i class="pi pi-cloud"></i><span class="icon-name">pi-cloud</span></div>
+          <div class="icon-item"><i class="pi pi-wrench"></i><span class="icon-name">pi-wrench</span></div>
+          <div class="icon-item"><i class="pi pi-building"></i><span class="icon-name">pi-building</span></div>
         </div>
       </div>
     </div>

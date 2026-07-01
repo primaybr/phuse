@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <title>Error 405 Method Not Allowed!</title>
-  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=130">
+  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=140">
 </head>
 
 <body class="d-flex align-items-center justify-content-center min-vh-100">

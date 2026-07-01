@@ -1,4 +1,4 @@
-// Phuse Framework JavaScript v1.2.3
+// Phuse Framework JavaScript v1.2.5
 // Lightweight Bootstrap-compatible component library
 
 class Phuse {

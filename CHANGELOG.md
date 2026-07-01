@@ -1,5 +1,49 @@
 # Changelog
 
+## v1.2.6 (2026-07-01)
+
+### CSS Framework
+
+#### Icon System Split (`icons.css`)
+
+The `.pi` / `.pi-*` icon rules (base class, size modifiers, and every icon definition) moved out of `styles.css` into a dedicated `Public/assets/css/icons.css`. `styles.css` now pulls it in with `@import url("icons.css")` at the same location the section used to live, so no consuming project or view needs to change how it loads CSS - every existing `<link href="styles.css">` tag keeps working unchanged.
+
+#### New Icons
+
+25 new icons added, growing the library past 100 icons:
+
+| Class | Description |
+| --- | --- |
+| `.pi-clipboard` | Clipboard - forms & submissions |
+| `.pi-spinner` | Loading spinner |
+| `.pi-circle` | Generic hollow circle / fallback icon |
+| `.pi-map` | Full map view |
+| `.pi-verified` | Verified badge |
+| `.pi-shopping-cart` | Shopping cart |
+| `.pi-print` | Printer |
+| `.pi-play-circle` | Video play button |
+| `.pi-minus-circle` | Remove / negative status |
+| `.pi-key` | Security / 2FA |
+| `.pi-puzzle` | Plugin / module |
+| `.pi-package` | Package / bundle |
+| `.pi-languages` | i18n / translate |
+| `.pi-send` | Send action |
+| `.pi-log-in` | Sign in |
+| `.pi-log-out` | Sign out |
+| `.pi-help-circle` | Help / support |
+| `.pi-rss` | RSS feed |
+| `.pi-share-2` | Social share |
+| `.pi-thumbs-up` | Like / engagement |
+| `.pi-flag` | Flag / report |
+| `.pi-server` | Server |
+| `.pi-cloud` | Cloud |
+| `.pi-wrench` | Tools / settings |
+| `.pi-building` | Organization |
+
+#### Icon Showcase Sync
+
+`examples/icons` was out of sync with the actual icon inventory - 15 icons added in v1.2.4/v1.2.5 (`archive`, `bars`, `briefcase`, `chart-bar`, `cog`, `history`, `images`, `inbox`, `message`, `mobile`, `monitor`, `palette`, `pencil`, `sparkle`, `video`) were never added to the showcase grid. All 15 are now shown, plus new grids for the v1.2.6 additions above.
+
 ## v1.2.5 (2026-06-26)
 
 ### Core — Controller Helpers

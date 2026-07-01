@@ -1,6 +1,6 @@
 # Phuse: A User-Friendly and Intuitive PHP Framework
 
-![Version](https://img.shields.io/badge/version-1.2.5-blue)
+![Version](https://img.shields.io/badge/version-1.2.6-blue)
 ![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -22,7 +22,7 @@ Phuse is a PHP framework that simplifies web development with conventions and he
 
 - **Modern CSS Framework**: Flat, professional, light-first CSS design system (v1.2.3) with Bootstrap-compatible classes, `--ps-*` design tokens, dark mode via `[data-theme=dark]`, and comprehensive component library
 
-- **Icon System**: 50+ flat hollow SVG icons as CSS classes (`.pi .pi-name`) - no icon fonts, no external files, pure CSS `mask-image` approach, color via `currentColor`
+- **Icon System**: 100+ flat hollow SVG icons as CSS classes (`.pi .pi-name`) in a dedicated `icons.css` - no icon fonts, no external files, pure CSS `mask-image` approach, color via `currentColor`
 
 - **Complete JavaScript Components**: Full Bootstrap 5.3.8 JavaScript compatibility with Alert, Button, Carousel, Modal, Offcanvas, Popover, ScrollSpy, Tooltip, Toast, and Accordion components - all implemented as static methods with WeakMap persistent state
 
@@ -186,6 +186,14 @@ If you have any questions, issues, or feedback regarding Phuse, you can contact 
 Phuse is an open-source project, and you are welcome to contribute to its development. You can fork the repository, make your changes, and submit a pull request. Please follow the coding standards and guidelines before submitting your code.
 
 ## Latest Changes
+
+### v1.2.6 (2026-07-01)
+
+#### CSS Framework
+
+- **Icon system extracted to `icons.css`** — the `.pi` / `.pi-*` rules moved out of `styles.css` into a dedicated `Public/assets/css/icons.css`, pulled in via `@import url("icons.css")` so every existing `<link href="styles.css">` keeps working with no changes needed
+- **25 new icons** added: `clipboard`, `spinner`, `circle`, `map`, `verified`, `shopping-cart`, `print`, `play-circle`, `minus-circle`, `key`, `puzzle`, `package`, `languages`, `send`, `log-in`, `log-out`, `help-circle`, `rss`, `share-2`, `thumbs-up`, `flag`, `server`, `cloud`, `wrench`, `building` — bringing the library to 100+ icons
+- Icon showcase page (`examples/icons`) synced with the full current inventory (previously missing 15 icons added in v1.2.4/v1.2.5)
 
 ### v1.2.5 (2026-06-26)
 
