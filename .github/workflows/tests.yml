@@ -63,4 +63,4 @@ jobs:
           );"
 
       - name: Run test suite
-        run: php vendor/bin/phpunit
+        run: php vendor/bin/phpunit --no-coverage

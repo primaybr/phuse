@@ -221,6 +221,21 @@ fixed all of them - a mix of real source bugs and outdated test expectations:
 `phpstan-baseline.neon` regenerated - several of its suppressed entries corresponded to the
 `getImageType()`/`DatabaseException` bugs above and are no longer needed now that they're fixed.
 
+### CI — Fixed a False-Failure Exit Code Despite 0 Errors/0 Failures
+
+Even after the full suite above went green, GitHub Actions kept marking the "Run test suite" step
+as failed while the PHPUnit summary itself read "OK, but there were issues!" with
+`Tests: 238, Assertions: 464, PHPUnit Warnings: 1, PHPUnit Deprecations: 1, Skipped: 1` - zero
+actual errors or failures. Root cause: `setup-php` is configured with `coverage: none` (no
+Xdebug/PCOV installed on the runner), but `phpunit.xml` still declares a `<coverage>` block with
+HTML/Clover `<report>` output. PHPUnit's attempt to honor that report request without a driver
+raises a "No code coverage driver available" test-runner warning, and PHPUnit 10.5's
+`ShellExitCodeCalculator` exits non-zero whenever that warning fires alongside an attempted
+coverage report - confirmed locally: `php vendor/bin/phpunit` exits `1` with that warning present,
+but exits `0` with `--no-coverage`, for the exact same 238/238 pass. Fixed by adding
+`--no-coverage` to the CI "Run test suite" step (coverage was never actually being collected or
+uploaded by this workflow, so nothing is lost).
+
 ## v1.2.7 (2026-07-02)
 
 ### Core — Router
