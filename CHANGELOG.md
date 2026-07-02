@@ -3,7 +3,7 @@
 ## v1.2.8 (2026-07-02)
 
 This release was originally scoped as Validator rules + middleware implementations + a
-testing/CI push (per the v1.2.7 roadmap). Writing that new test coverage surfaced five
+testing/CI push (per the v1.2.7 roadmap). Writing that new test coverage surfaced six
 previously-undiscovered, unrelated correctness bugs across the Database, Cache, Security, and
 HTTP layers - all fixed here alongside the planned work.
 
@@ -23,6 +23,29 @@ Fixed by moving `compile()`/`resetQuery()` into `BuildersTrait` (both methods ar
 dialect-agnostic - pure string concatenation over shared query-segment properties, nothing
 Postgres-specific) so every driver picks them up automatically. Removed the now-redundant
 duplicate copies from `PgSQL.php`.
+
+#### Fixed: Connection Failures Were Invisible, Causing a Shutdown-Time Fatal
+
+Three compounding bugs, only fully exposed once a real database became available to test against:
+
+1. `Drivers\MySQL::connect()`/`Drivers\PgSQL::connect()` caught `PDOException` and just `echo`ed
+   it instead of rethrowing - a failed connection left the driver's internal `$db` silently `null`
+   with no signal to the caller.
+2. `Connection::__construct()` stored whatever `getDB()` returned without checking it was actually
+   a `PDO` instance, so a `Connection` object could "successfully" construct while wrapping a null
+   handler.
+3. `Connection::__destruct()` explicitly set `$handler = null` "for cleanup" - redundant (PHP
+   already closes PDO connections when the object is garbage collected) and actively harmful: if
+   PHP's shutdown sequence destructed a pooled `Connection` before the `Model` that owned it, the
+   `Model`'s own destructor would later call `ConnectionPool::returnConnection()` on that
+   already-nulled `Connection`, and `isConnectionValid()`'s `$connection->query('SELECT 1')` would
+   fatal with "call to a member function prepare() on null." This is a `\Error`, not an
+   `\Exception`, so `ConnectionPool`'s existing `catch (\Exception $e)` blocks never caught it.
+
+Fixed: both drivers now let `PDOException` propagate; `Connection::__construct()` throws a clear
+`DatabaseException` if the handler isn't a valid `PDO` instance; the hazardous `__destruct()` was
+removed entirely; and `ConnectionPool::createConnection()`/`isConnectionValid()` now catch
+`\Throwable` instead of `\Exception` as defense-in-depth.
 
 ### Core — Cache
 
@@ -99,15 +122,17 @@ Four new `MiddlewareInterface` implementations for the `MiddlewareStack` pipelin
 Added `tests/Core/Utilities/Validator/ValidatorTest.php`,
 `tests/Core/Security/EncryptionTest.php`, `tests/Core/Cache/CacheManagerTest.php`,
 `tests/Core/Http/{SessionTest,InputTest,URITest,ResponseTest,ClientTest}.php`, and
-`tests/Core/Database/Builders/BuildersTest.php` - all five bugs above were found while writing
-these. `ClientTest` specifically regression-tests the v1.2.5 `setTrustedProxies()` IP-spoofing fix.
+`tests/Core/Database/Builders/BuildersTest.php` - all six bugs above were found while writing
+these (the connection-lifecycle bug specifically surfaced once a real database was available to
+run `ModelTest`/`ControllerTest`/`ValidatorTest::testUniqueRule` against - it doesn't reproduce
+against the abstract-class fatal or a fully unreachable DB, only mid-suite against a live one).
+`ClientTest` specifically regression-tests the v1.2.5 `setTrustedProxies()` IP-spoofing fix.
 
 ### CI
 
 Added `.github/workflows/tests.yml` - PHPUnit on push/PR across a PHP 8.2/8.3 matrix, with a MySQL
-service container so `ModelTest`/`ControllerTest` run against a real database instead of hitting
-the (separately tracked, not yet fixed) null-PDO handling gap in `Connection`/`ConnectionPool`
-when no database is reachable.
+service container and a `test_table` schema so `ModelTest`/`ControllerTest`/
+`ValidatorTest::testUniqueRule` exercise real queries instead of gracefully skipping.
 
 ### Dev Tooling
 

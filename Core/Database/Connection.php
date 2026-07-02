@@ -27,16 +27,17 @@ class Connection
 		$connection = "Core\Database\Drivers\\".$this->getDrivers($driver);
 		$connect	= new $connection($host, $port, $dbname, $user, $password, $options);
 		$this->handler = $connect->getDB();
+
+		if (!$this->handler instanceof PDO) {
+			throw new DatabaseException('Failed to establish a database connection');
+		}
     }
 
-    /**
-     * Destructor to clean up database connection
-     */
-    public function __destruct()
-    {
-        //disconnect db conn
-        $this->handler = null;
-    }
+    // No __destruct(): PDO connections close automatically when the handler is garbage
+    // collected. A previous version explicitly nulled $handler here, which raced against
+    // ConnectionPool's static-held references during PHP shutdown - if this object's
+    // destructor ran before the owning Model's, returnConnection()/isConnectionValid()
+    // would later call prepare() on the already-nulled handler and fatal.
 
 	/**
      * Get the appropriate driver class name based on the driver type

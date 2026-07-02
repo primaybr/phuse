@@ -158,7 +158,9 @@ class ConnectionPool
                 $this->config['password'],
                 $this->config['options'] ?? []
             );
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            // \Throwable, not \Exception - a null/invalid PDO handler surfaces as \Error
+            // ("call to a member function on null"), which \Exception alone doesn't catch.
             // Log error but don't throw - pool should handle gracefully
             error_log('Failed to create database connection: ' . $e->getMessage());
             return null;
@@ -178,7 +180,8 @@ class ConnectionPool
             $connection->query('SELECT 1');
             $connection->execute();
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            // \Throwable, not \Exception - see createConnection() for why.
             return false;
         }
     }
