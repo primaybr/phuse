@@ -54,6 +54,66 @@ foreach ($middleware as $mw) {
 Keep route middleware focused and fast - it runs on every matching request, before route caching
 or controller instantiation happen.
 
+## Built-in MiddlewareStack Implementations (v1.2.8+)
+
+`Core\Middleware\` ships four ready-to-use `MiddlewareInterface` implementations for the
+`MiddlewareStack` pipeline (see [dependency-injection-middleware.md](dependency-injection-middleware.md)
+for how to build a stack). Each is added the same way:
+
+```php
+use Core\Middleware\MiddlewareStack;
+use Core\Middleware\TrimStrings;
+use Core\Middleware\ConvertEmptyStringsToNull;
+use Core\Middleware\LogRequest;
+use Core\Middleware\RateLimitMiddleware;
+
+$stack = new MiddlewareStack(function () {
+    $routes = require Path::CONFIG . 'Routes.php';
+    return $routes->run();
+});
+
+$stack->add(new TrimStrings());
+$stack->add(new ConvertEmptyStringsToNull());
+$stack->add(new LogRequest());
+$stack->add(new RateLimitMiddleware(key: 'global:' . (new \Core\Http\Client())->getIpAddress(), maxAttempts: 120, windowSeconds: 60));
+
+$stack->process();
+```
+
+### `TrimStrings`
+
+Trims leading/trailing whitespace from every string value in `$_GET` and `$_POST` (recursively,
+including nested arrays) before the request reaches the application.
+
+### `ConvertEmptyStringsToNull`
+
+Converts every empty-string value in `$_GET` and `$_POST` to `null` - useful ahead of database
+inserts where an empty string and "no value" should be treated the same way.
+
+### `LogRequest`
+
+Logs the method/URI on entry and exit (with elapsed time in ms) to a dedicated `requests` log via
+`Core\Log`. Accepts an optional `Log` instance in its constructor for testing/injection.
+
+### `RateLimitMiddleware`
+
+Limits how many times a keyed action may run within a rolling time window, backed by
+`Core\Cache\CacheManager` for counter storage:
+
+```php
+new RateLimitMiddleware(
+    key: "login:{$ipAddress}",   // unique identifier for what's being limited
+    maxAttempts: 5,               // allowed attempts per window
+    windowSeconds: 300,           // 5-minute window
+    cacheName: 'rate_limit'       // named CacheManager instance for counter storage
+);
+```
+
+When the limit is exceeded it does **not** call `$next()` - it sets a `429` status, a `Retry-After`
+header, and returns `'Too Many Requests'` directly. Combine with `RateLimitMiddleware`'s IP-derived
+key and `Core\Http\Client::getIpAddress()` (see [security.md](security.md)) to rate-limit by real
+client IP even behind a trusted proxy.
+
 ## Choosing Between the Two Systems
 
 - **Route middleware** (this doc): quick per-route/group guards - auth checks, feature flags,

@@ -1,6 +1,6 @@
 # Phuse: A User-Friendly and Intuitive PHP Framework
 
-![Version](https://img.shields.io/badge/version-1.2.7-blue)
+![Version](https://img.shields.io/badge/version-1.2.8-blue)
 ![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -194,6 +194,33 @@ If you have any questions, issues, or feedback regarding Phuse, you can contact 
 Phuse is an open-source project, and you are welcome to contribute to its development. You can fork the repository, make your changes, and submit a pull request. Please follow the coding standards and guidelines before submitting your code.
 
 ## Latest Changes
+
+### v1.2.8 (2026-07-02)
+
+#### Bug Fixes
+
+- **Fixed the MySQL query builder** — `Core\Database\Builders\MySQL` never implemented `compile()`/`resetQuery()` (they existed only as dead, accidentally-commented-out code in `BuildersTrait` and as `PgSQL`-only overrides). Since `Config/Database.php`'s own default driver is `mysql`, this meant a fresh Phuse install fataled on its first database query. Both methods are now shared via `BuildersTrait` for every driver.
+- **Fixed `Core\Cache\FileCache`** — `isCacheValid()` compared a raw serialized string against an array key instead of unserializing it first, so every cache entry was treated as expired immediately after being set.
+- **Fixed `CacheManager::createMemoryConfig()`/`createFileConfig()`** — used snake_case option keys (`default_driver`) that didn't match `CacheConfig`'s camelCase properties, so the presets silently had no effect.
+- **Fixed `Core\Security\Encryption`** — was completely non-functional: `generateKey()`'s SHA-512 digest (64 bytes) never matched any AES-256 cipher's required 32-byte key length, and the configured cipher (`aes-256-cbc-hmac-sha256`) itself fails under `openssl_encrypt()`/`openssl_decrypt()` on OpenSSL 3.x. Now uses SHA-256 key derivation with `aes-256-cbc`. `decrypt()`'s return type widened to `string|false` to reflect CBC's legitimate padding-failure case instead of crashing with a TypeError.
+- **Fixed `Core\Http\URI::makeURL()`** — the first entry in its regex pattern table contained a literal `#`, which collided with the `#...#` delimiter the method wrapped patterns in, breaking `makeURL()` on every call. Delimiter changed to `~`.
+- **Fixed `.gitignore`** — the unanchored `Cache/`/`Session/`/`Logs/` patterns matched directories of those names anywhere in the tree (not just at the repo root), silently hiding things like a `tests/Core/Cache/` directory from git. Anchored with a leading `/`. Also un-ignored `composer.json`/`composer.lock` and `.github/`, which were never actually committed.
+
+#### Validator
+
+New rules in `Core\Utilities\Validator\ValidatorTrait`: `date`, `datetime`, `uuid`, `fileType`, `fileSize`, `confirmed`, `distinct`, `json`, and `unique` (the one DB-backed rule, via `Core\Model`).
+
+#### Middleware
+
+Four new `Core\Middleware\MiddlewareInterface` implementations for the `MiddlewareStack` pipeline: `RateLimitMiddleware` (backed by `CacheManager`), `TrimStrings`, `ConvertEmptyStringsToNull`, `LogRequest`.
+
+#### Testing & CI
+
+Added test coverage for Validator, Encryption, Cache, the HTTP layer (Session/Input/URI/Response/Client), and the database query builders — all of the bugs above were found while writing these tests. Added `.github/workflows/tests.yml` (PHP 8.2/8.3 matrix, MySQL service container).
+
+#### Dev Tooling
+
+`composer.json` now declares `"php": ">=8.2"` and adds `phpstan/phpstan` + `friendsofphp/php-cs-fixer` as dev dependencies, with `composer test`/`analyse`/`cs-check`/`cs-fix` scripts. A `phpstan-baseline.neon` suppresses pre-existing findings so the tool starts clean; `.php-cs-fixer.php` is configured but not yet applied codebase-wide (no baseline mechanism exists for it - a reviewed one-time `composer cs-fix` is left for a future pass).
 
 ### v1.2.7 (2026-07-02)
 

@@ -1,5 +1,130 @@
 # Changelog
 
+## v1.2.8 (2026-07-02)
+
+This release was originally scoped as Validator rules + middleware implementations + a
+testing/CI push (per the v1.2.7 roadmap). Writing that new test coverage surfaced five
+previously-undiscovered, unrelated correctness bugs across the Database, Cache, Security, and
+HTTP layers - all fixed here alongside the planned work.
+
+### Core — Database
+
+#### Fixed: MySQL Query Builder Never Actually Worked
+
+`Core\Database\Builders\MySQL` declared `implements BuildersInterface` but never implemented
+`compile()`/`resetQuery()` - they existed only as dead, accidentally-commented-out code inside
+`BuildersTrait` (the tail of an old implementation got swallowed into a docblock that never
+closed with `*/`) and as `PgSQL`-only overrides. Since `Config/Database.php`'s own default driver
+is `mysql`, and `compile()` runs on essentially every `Model` query, **a fresh Phuse install using
+its own default config fataled on the first database query** with "Class MySQL contains 2
+abstract methods and must therefore be declared abstract."
+
+Fixed by moving `compile()`/`resetQuery()` into `BuildersTrait` (both methods are fully
+dialect-agnostic - pure string concatenation over shared query-segment properties, nothing
+Postgres-specific) so every driver picks them up automatically. Removed the now-redundant
+duplicate copies from `PgSQL.php`.
+
+### Core — Cache
+
+#### Fixed: `FileCache::isCacheValid()` Always Reported Cache Misses
+
+`isCacheValid()` called `readCacheFile($filePath, false)` to check an entry's expiry, but
+`$unserialize = false` returns the **raw serialized string**, not an array - so
+`$cacheData['expires_at']` was an illegal string-offset access, not a real field lookup, and
+always evaluated falsy. Every `set()` followed by a `get()` reported a miss, even immediately
+after writing. Fixed to unserialize before checking expiry.
+
+#### Fixed: `CacheManager::createMemoryConfig()`/`createFileConfig()` Presets Had No Effect
+
+Both passed snake_case option keys (`default_driver`, `use_file_locking`, `file_permission`,
+`default_ttl`) to `CacheConfig`, whose actual properties are camelCase (`defaultDriver`,
+`useFileLocking`, `filePermission`, `defaultTtl`). `property_exists()` silently failed the
+match, so neither preset ever actually configured anything - `createFileConfig()` "worked" only
+by coincidence, since its intended values matched `CacheConfig`'s hardcoded defaults anyway.
+
+### Core — Security
+
+#### Fixed: `Encryption` Was Completely Non-Functional
+
+Two independent, compounding bugs:
+
+1. `generateKey()` derived a key via `SHA-512` (64 bytes), but `aes-256-cbc-hmac-sha256` requires
+   an exact 32-byte key - `openssl_encrypt()` rejected every call with "invalid key length."
+2. Even with a correctly-sized key, `aes-256-cbc-hmac-sha256` itself fails under
+   `openssl_encrypt()`/`openssl_decrypt()` with "cipher operation failed" on OpenSSL 3.x's default
+   providers - it's listed by `openssl_get_cipher_methods()` but not actually usable through PHP's
+   simple encrypt/decrypt API in this configuration.
+
+Fixed: `generateKey()` now uses `SHA-256` (32 bytes, the exact length `aes-256-cbc` needs), and
+`CIPHERING` changed to `aes-256-cbc` - the standard, fully-supported equivalent. Anything
+encrypted with a pre-1.2.8 build was never successfully encrypted in the first place, so there is
+no data-migration concern. `decrypt()`'s return type widened from `string` to `string|false` to
+reflect CBC's legitimate padding-validation failure (wrong key/IV, tampered ciphertext) as an
+expected outcome rather than crashing with a `TypeError`.
+
+### Core — HTTP
+
+#### Fixed: `URI::makeURL()` Failed On Every Call
+
+The first entry in `URI::PATTERN` (`'&#\d+?;'`, meant to strip numeric HTML entities) contains a
+literal `#`, which prematurely closed the `#...#` delimited regex `makeURL()` wrapped every
+pattern in, turning the rest of the pattern into invalid regex modifiers and making
+`preg_replace()` return `null`. Fixed by switching the delimiter to `~` (none of the pattern
+bodies contain one).
+
+#### Fixed: `Controller::redirect()`'s `never` Return Type Was Unenforceable
+
+`Core\Http\URI::redirect()` always exits or throws on every path, but was typed `: void` -
+PHPStan couldn't verify `Controller::redirect()`'s own `: never` contract through the delegated
+call. Changed `URI::redirect()` to `: never` to match its actual behavior.
+
+### Core — Validator (`Core\Utilities\Validator\ValidatorTrait`)
+
+New rules: `date(value, format)`, `datetime(value, format)`, `uuid(value)`,
+`fileType(value, allowed[])`, `fileSize(value, maxBytes)`, `confirmed(value, confirmationValue)`,
+`distinct(value)`, `json(value)`, and `unique(value, table, column, ignoreId, idColumn)` - the one
+DB-backed rule, implemented via `Core\Model` rather than a new query abstraction.
+
+### Core — Middleware (`Core\Middleware\`)
+
+Four new `MiddlewareInterface` implementations for the `MiddlewareStack` pipeline:
+
+- **`RateLimitMiddleware`** - configurable window/max-attempts, backed by `CacheManager`
+- **`TrimStrings`** - recursively trims `$_GET`/`$_POST` string values
+- **`ConvertEmptyStringsToNull`** - recursively converts empty strings to `null`
+- **`LogRequest`** - logs method/URI/duration via `Core\Log`
+
+### Testing
+
+Added `tests/Core/Utilities/Validator/ValidatorTest.php`,
+`tests/Core/Security/EncryptionTest.php`, `tests/Core/Cache/CacheManagerTest.php`,
+`tests/Core/Http/{SessionTest,InputTest,URITest,ResponseTest,ClientTest}.php`, and
+`tests/Core/Database/Builders/BuildersTest.php` - all five bugs above were found while writing
+these. `ClientTest` specifically regression-tests the v1.2.5 `setTrustedProxies()` IP-spoofing fix.
+
+### CI
+
+Added `.github/workflows/tests.yml` - PHPUnit on push/PR across a PHP 8.2/8.3 matrix, with a MySQL
+service container so `ModelTest`/`ControllerTest` run against a real database instead of hitting
+the (separately tracked, not yet fixed) null-PDO handling gap in `Connection`/`ConnectionPool`
+when no database is reachable.
+
+### Dev Tooling
+
+- `composer.json`: added `"require": {"php": ">=8.2"}`, dev dependencies `phpstan/phpstan` and
+  `friendsofphp/php-cs-fixer`, and `test`/`analyse`/`cs-check`/`cs-fix` scripts
+- `phpstan.neon` at level 3 with a generated `phpstan-baseline.neon` suppressing pre-existing
+  findings, so the tool starts clean and only flags new regressions going forward
+- `.php-cs-fixer.php` configured (PSR-12 + strict-types enforcement) but not yet applied
+  codebase-wide - unlike PHPStan, php-cs-fixer has no baseline-suppression mechanism, and a full
+  reformat of 137 files is left for a deliberate, separately-reviewed pass
+- **Fixed `.gitignore`**: `composer.json`, `composer.lock`, and `.github/` were listed as ignored
+  and had never actually been committed - meaning this release's own CI workflow and dev
+  dependencies would have been silently invisible to git. Also, the unanchored `Cache/`/`Session/`/
+  `Logs/` patterns matched directories of those names anywhere in the tree (not just the repo
+  root), silently hiding `tests/Core/Cache/` (added in this release) from git; anchored with a
+  leading `/` and removed the now-unnecessary `!Core/Cache/` exception.
+
 ## v1.2.7 (2026-07-02)
 
 ### Core — Router

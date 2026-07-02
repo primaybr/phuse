@@ -112,6 +112,34 @@ $validator->rule('custom', 'regex', '/^[A-Z]+$/');
 
 // Value in array
 $validator->rule('status', 'in', ['active', 'inactive', 'pending']);
+
+// Password (length check only - hashing/storage is a separate step via Core\Security\Password)
+$validator->rule('password', 'password', 8);
+
+// Date / datetime (format is round-trip checked, not just parsed leniently)
+$validator->rule('birthdate', 'date', 'Y-m-d');
+$validator->rule('published_at', 'datetime', 'Y-m-d H:i:s');
+
+// UUID (v4 shape)
+$validator->rule('id', 'uuid');
+
+// Uploaded file extension/size (operates on a $_FILES-shaped array)
+$validator->rule('avatar', 'fileType', ['jpg', 'png', 'gif']);
+$validator->rule('avatar', 'fileSize', 5 * 1024 * 1024); // 5 MB
+
+// Confirmation field match (e.g. password + password_confirmation)
+$validator->rule('password_confirmation', 'confirmed', $data['password'] ?? null);
+
+// Array values must all be unique
+$validator->rule('tags', 'distinct');
+
+// Valid JSON string
+$validator->rule('settings', 'json');
+
+// Unique in database - no other row already has this value in the given column
+$validator->rule('email', 'unique', 'users', 'email');
+// ...or, when updating an existing row, exclude its own ID from the check:
+$validator->rule('email', 'unique', 'users', 'email', $currentUserId);
 ```
 
 ## Advanced Usage
@@ -368,6 +396,16 @@ new Validator()
 - `minLength(string $value, int $min): bool` - Validate minimum length
 - `maxLength(string $value, int $max): bool` - Validate maximum length
 - `regex(string $value, string $pattern): bool|int` - Validate against regex
+- `password(mixed $value, int $minLength = 8): bool` - Validate plaintext password length (hashing is separate, via `Core\Security\Password`)
+- `date(mixed $value, string $format = 'Y-m-d'): bool` - Validate a date string against a format (round-trip checked)
+- `datetime(mixed $value, string $format = 'Y-m-d H:i:s'): bool` - Validate a date-time string against a format
+- `uuid(mixed $value): bool` - Validate a UUID (v4 shape)
+- `fileType(mixed $value, array $allowed): bool` - Validate an uploaded file's extension against an allow-list
+- `fileSize(mixed $value, int $maxBytes): bool` - Validate an uploaded file's size against a maximum
+- `confirmed(mixed $value, mixed $confirmationValue): bool` - Validate that two values match
+- `distinct(mixed $value): bool` - Validate that all values in an array are unique
+- `json(mixed $value): bool` - Validate that a string is valid JSON
+- `unique(mixed $value, string $table, string $column, mixed $ignoreId = null, string $idColumn = 'id'): bool` - Validate that no other row in `$table` already has this value in `$column` (queries via `Core\Model`)
 
 ## Best Practices
 

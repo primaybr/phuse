@@ -109,7 +109,7 @@
     {# - Header - #}
     <div class="card mb-4">
       <div class="card-body text-center py-4">
-        <span class="badge bg-primary mb-2">v1.2.7</span>
+        <span class="badge bg-primary mb-2">v1.2.8</span>
         <div class="mb-2">
           <img src="{{assetsUrl}}images/phuse-logo-light.svg" alt="" class="phuse-logo-light" height="32">
           <img src="{{assetsUrl}}images/phuse-logo-dark.svg" alt="" class="phuse-logo-dark" height="32">

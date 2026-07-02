@@ -78,7 +78,10 @@ final class URI
         $url = strip_tags($string);
 
         foreach (self::PATTERN as $pattern => $replacement) {
-            $url = preg_replace('#'.$pattern.'#i', $replacement, $url);
+            // '~' delimiter, not '#' - the first PATTERN entry ('&#\d+?;') contains a literal
+            // '#', which prematurely closed a '#...#' delimited regex and made preg_replace()
+            // return null (invalid modifiers), breaking makeURL() on every call.
+            $url = preg_replace('~'.$pattern.'~i', $replacement, $url);
         }
 
         $url = html_entity_decode($url, ENT_QUOTES | ENT_HTML5, 'UTF-8');
@@ -348,11 +351,11 @@ final class URI
      * Redirects to a specified URL with a 302 status code.
      *
      * @param string $url The URL to redirect to.
-     * @return void This method terminates execution after sending headers.
+     * @return never This method always exits or throws.
      * @throws ValidationException If the URL is invalid or potentially malicious.
      * @throws RuntimeException If redirect fails.
      */
-    public function redirect(string $url): void
+    public function redirect(string $url): never
     {
         if (empty($url)) {
             throw new ValidationException('Invalid redirect URL provided');

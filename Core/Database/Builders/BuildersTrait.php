@@ -602,28 +602,65 @@ trait BuildersTrait {
     }
 
     /**
-     * Resets the query parameters based on the specified part.
+     * Compiles the accumulated query clauses into a single SQL string.
      *
-     * @param string $part The part of the query to reset. Options include 'select', 'where', 'insert', etc.
-     * @return self
+     * Shared by every driver via BuildersTrait - dialect-specific quoting/placeholder
+     * differences live in quoteIdentifier() and the individual clause builders, not here.
+     *
+     * @param bool $reset Whether to reset the builder state after compiling.
+     * @return string The compiled SQL query.
+     */
+    public function compile(bool $reset = true): string
+    {
+        $sql = '';
+
+        if (!empty($this->querySelect)) {
+            if (!empty($this->queryWhere) && !empty($this->queryWhereIn)) {
+                $this->queryWhereIn = str_replace('WHERE', 'AND', $this->queryWhereIn);
+            }
+
+            $sql = $this->querySelect.$this->queryFrom.$this->queryJoin.$this->queryWhere.$this->queryWhereIn.$this->queryGroupBy.$this->queryOrderBy.$this->queryLimit.$this->queryOffset;
         } elseif (!empty($this->queryInsert)) {
             $sql = $this->queryInsert;
         } elseif (!empty($this->queryUpdate)) {
             $sql = $this->queryUpdate.$this->queryWhere;
         } elseif (!empty($this->queryDelete)) {
             $sql = $this->queryDelete;
+        } else {
+            $sql = '';
         }
-		else
-		{
-			$sql = '';
-		}
-        
+
         if ($reset) {
             $this->resetQuery();
         }
-        
+
         return str_replace("''", "'", $sql);
-	}
+    }
+
+    /**
+     * Resets all accumulated query clause state and parameter bindings.
+     *
+     * @return self
+     */
+    public function resetQuery(): self
+    {
+        $this->querySelect = '';
+        $this->queryWhere = '';
+        $this->queryWhereIn = '';
+        $this->queryFrom = '';
+        $this->queryJoin = '';
+        $this->queryInsert = '';
+        $this->queryUpdate = '';
+        $this->queryDelete = '';
+        $this->queryOrderBy = '';
+        $this->queryGroupBy = '';
+        $this->queryLimit = '';
+        $this->queryOffset = '';
+
+        $this->binds = [];
+
+        return $this;
+    }
 
     /**
      * Inserts multiple records into the database.

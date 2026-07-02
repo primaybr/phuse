@@ -112,9 +112,12 @@ $fileCache = Core\Cache\CacheManager::get('files', 'file');
 $memoryCache = Core\Cache\CacheManager::get('session', 'memory');
 
 // Create with custom configuration
+// Note: option keys must match CacheConfig's camelCase property names -
+// snake_case keys are silently ignored (fixed in v1.2.8; this example
+// previously showed the broken snake_case form).
 $config = Core\Cache\CacheManager::createFileConfig([
-    'default_ttl' => 7200,
-    'key_prefix' => 'app_v2'
+    'defaultTtl' => 7200,
+    'keyPrefix' => 'app_v2'
 ]);
 
 $customCache = Core\Cache\CacheManager::get('custom', 'file', $config);
@@ -130,10 +133,10 @@ $allStats = Core\Cache\CacheManager::getAllStats();
 <?php
 $config = Core\Cache\CacheManager::createFileConfig([
     'enabled' => true,
-    'default_ttl' => 3600,
-    'use_file_locking' => true,
-    'file_permission' => 0755,
-    'key_prefix' => 'prod_app',
+    'defaultTtl' => 3600,
+    'useFileLocking' => true,
+    'filePermission' => 0755,
+    'keyPrefix' => 'prod_app',
     'subdirectories' => [
         'default'   => 'default',
         'query'     => 'database',

@@ -1,9 +1,16 @@
 # Encryption in Phuse
 
 `Core\Security\Encryption` provides symmetric encryption/decryption of arbitrary data using
-`aes-256-cbc-hmac-sha256`. Use it for data you need to **decrypt back** later (tokens, encrypted
-columns, cookie payloads) - it is not for passwords. For password storage, use
+`aes-256-cbc` (32-byte key, 16-byte IV). Use it for data you need to **decrypt back** later
+(tokens, encrypted columns, cookie payloads) - it is not for passwords. For password storage, use
 `Core\Security\Password` (see [security.md](security.md)), which is one-way by design.
+
+> **v1.2.8 fix**: earlier versions used `aes-256-cbc-hmac-sha256` with a SHA-512-derived key.
+> Neither actually worked - the cipher fails under `openssl_encrypt()`/`openssl_decrypt()` on
+> OpenSSL 3.x, and the 64-byte SHA-512 key didn't match any AES-256 cipher's required 32-byte key
+> length either way. `encrypt()`/`decrypt()` are functional as of v1.2.8; anything encrypted with
+> a pre-1.2.8 build was never successfully encrypted in the first place, so there is no migration
+> concern for existing data.
 
 ## Generating a Key and Salt
 
@@ -21,10 +28,10 @@ $combined = $encryption->generateKey($appSecret); // "<hex key>/<hex salt>"
 [$key, $salt] = explode('/', $combined);
 ```
 
-`generateKey()` derives a key via SHA-512 and generates a fresh random salt (IV) sized for the
-cipher every time it's called - so if you need to decrypt data later, you must persist the salt
-alongside the ciphertext (the key can be re-derived from the same secret string, but the salt
-cannot).
+`generateKey()` derives a key via SHA-256 (32 bytes, matching `aes-256-cbc`'s required key length)
+and generates a fresh random salt (IV) sized for the cipher every time it's called - so if you need
+to decrypt data later, you must persist the salt alongside the ciphertext (the key can be
+re-derived from the same secret string, but the salt cannot).
 
 ## Encrypting and Decrypting
 
@@ -41,6 +48,17 @@ $decrypted = $encryption->decrypt($ciphertext, $key, $salt);
 
 Both `$key` and `$salt` must be the same hex strings used for encryption - `encrypt()`/`decrypt()`
 internally `hex2bin()` them before passing to OpenSSL.
+
+`decrypt()` returns `string|false` - it returns `false` (not garbage plaintext) when given the
+wrong key/salt or corrupted ciphertext, since CBC's padding validation rejects it outright. Always
+check the return value before using it:
+
+```php
+$decrypted = $encryption->decrypt($ciphertext, $key, $salt);
+if ($decrypted === false) {
+    // wrong key/salt, or the ciphertext was tampered with/corrupted
+}
+```
 
 ## Key & Salt Storage Guidance
 

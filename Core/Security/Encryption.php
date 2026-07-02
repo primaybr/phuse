@@ -6,8 +6,11 @@ namespace Core\Security;
 
 class Encryption
 {
-    // Declare the ciphering method as a constant
-    public const CIPHERING = 'aes-256-cbc-hmac-sha256';
+    // aes-256-cbc-hmac-sha256 is listed by openssl_get_cipher_methods() but fails with
+    // "cipher operation failed" under openssl_encrypt()/openssl_decrypt() on OpenSSL 3.x's
+    // default providers - it was never actually functional. aes-256-cbc is the standard,
+    // fully-supported equivalent (same 32-byte key / 16-byte IV requirements).
+    public const CIPHERING = 'aes-256-cbc';
 
     // Use constructor property promotion to initialize the ciphering property
     public function __construct( private string $ciphering = self::CIPHERING ) {}
@@ -15,8 +18,10 @@ class Encryption
     // Use the nullsafe operator to avoid null check conditions
     public function generateKey(string $string): string
     {
-        // Use OpenSSl digest method
-        $key = openssl_digest($string, 'sha512', true);
+        // sha256 produces a 32-byte digest - the exact key length aes-256-cbc requires.
+        // sha512 (64 bytes) was used previously, which openssl_encrypt() silently rejects
+        // with "invalid key length", making encrypt()/decrypt() non-functional.
+        $key = openssl_digest($string, 'sha256', true);
         $salt = $this->generateSalt();
 
         // Use the null coalescing operator to return an empty string if the result is null
@@ -54,8 +59,10 @@ class Encryption
         return $encryption;
     }
 	
-    // Use named arguments to specify the options and iv parameters
-    public function decrypt(string $encryption, string $decryptionKey, string $encryptionSalt): string
+    // Decryption legitimately fails (returns false) when given the wrong key/IV or corrupted
+    // ciphertext - CBC's padding validation rejects it. That's expected behavior, not an error
+    // state, so the return type reflects it rather than crashing with a TypeError.
+    public function decrypt(string $encryption, string $decryptionKey, string $encryptionSalt): string|false
     {
         $decryptionKey = hex2bin($decryptionKey);
         $encryptionSalt = hex2bin($encryptionSalt);

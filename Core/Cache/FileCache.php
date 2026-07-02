@@ -212,9 +212,9 @@ class FileCache extends BaseCache
      */
     private function isCacheValid(string $filePath): bool
     {
-        $cacheData = $this->readCacheFile($filePath, false);
+        $cacheData = $this->readCacheFile($filePath);
 
-        if ($cacheData === false) {
+        if (!is_array($cacheData)) {
             return false;
         }
 

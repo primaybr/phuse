@@ -11,7 +11,7 @@ use Core\Log as Log;
 use Core\Cache\TemplateCache;
 use Core\Security\CSRF;
 /**
- * Template Parser Class - PHUSE v1.2.7
+ * Template Parser Class - PHUSE v1.2.8
  *
  * Handles template rendering with a Twig/Blade-inspired syntax that is safe
  * around inline CSS and JavaScript.

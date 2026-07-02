@@ -118,8 +118,8 @@ class CacheManager
     public static function createMemoryConfig(array $options = []): CacheConfig
     {
         $defaults = [
-            'default_driver' => 'memory',
-            'memory_config' => [
+            'defaultDriver' => 'memory',
+            'memoryConfig' => [
                 'enabled' => true,
                 'max_size' => 1000,
                 'max_memory' => '64M'
@@ -135,10 +135,10 @@ class CacheManager
     public static function createFileConfig(array $options = []): CacheConfig
     {
         $defaults = [
-            'default_driver' => 'file',
-            'use_file_locking' => true,
-            'file_permission' => 0755,
-            'default_ttl' => 3600
+            'defaultDriver' => 'file',
+            'useFileLocking' => true,
+            'filePermission' => 0755,
+            'defaultTtl' => 3600
         ];
 
         return self::createConfig(array_merge($defaults, $options));

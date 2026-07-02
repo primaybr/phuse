@@ -179,4 +179,145 @@ trait ValidatorTrait
     {
         return is_string($value) && strlen($value) >= $minLength;
     }
+
+    /**
+     * Check if a value is a valid date matching the given format
+     *
+     * @param mixed $value The value to check
+     * @param string $format The expected date format (default 'Y-m-d')
+     * @return bool True if the value parses as a date and round-trips to the same format
+     */
+    public function date(mixed $value, string $format = 'Y-m-d'): bool
+    {
+        if (!is_string($value) || $value === '') {
+            return false;
+        }
+
+        $date = \DateTime::createFromFormat($format, $value);
+        return $date !== false && $date->format($format) === $value;
+    }
+
+    /**
+     * Check if a value is a valid date-time matching the given format
+     *
+     * @param mixed $value The value to check
+     * @param string $format The expected date-time format (default 'Y-m-d H:i:s')
+     * @return bool True if the value parses as a date-time and round-trips to the same format
+     */
+    public function datetime(mixed $value, string $format = 'Y-m-d H:i:s'): bool
+    {
+        return $this->date($value, $format);
+    }
+
+    /**
+     * Check if a value is a UUID (v4 shape)
+     *
+     * @param mixed $value The value to check
+     * @return bool True if the value matches the standard UUID format
+     */
+    public function uuid(mixed $value): bool
+    {
+        return is_string($value) && preg_match(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i',
+            $value
+        ) === 1;
+    }
+
+    /**
+     * Check if an uploaded file's extension is in the allowed list
+     *
+     * @param mixed $value A $_FILES-shaped array (must contain a 'name' key)
+     * @param array $allowed Allowed extensions, without the leading dot (e.g. ['jpg', 'png'])
+     * @return bool True if the file's extension is allowed
+     */
+    public function fileType(mixed $value, array $allowed): bool
+    {
+        if (!is_array($value) || empty($value['name'])) {
+            return false;
+        }
+
+        $extension = strtolower(pathinfo($value['name'], PATHINFO_EXTENSION));
+        $allowed = array_map('strtolower', $allowed);
+
+        return in_array($extension, $allowed, true);
+    }
+
+    /**
+     * Check if an uploaded file's size is within the allowed maximum
+     *
+     * @param mixed $value A $_FILES-shaped array (must contain a 'size' key)
+     * @param int $maxBytes The maximum allowed size in bytes
+     * @return bool True if the file's size does not exceed the maximum
+     */
+    public function fileSize(mixed $value, int $maxBytes): bool
+    {
+        if (!is_array($value) || !isset($value['size'])) {
+            return false;
+        }
+
+        return (int) $value['size'] <= $maxBytes;
+    }
+
+    /**
+     * Check if a value matches a confirmation value (e.g. password + password_confirmation)
+     *
+     * @param mixed $value The value to check
+     * @param mixed $confirmationValue The value it must match
+     * @return bool True if both values are identical
+     */
+    public function confirmed(mixed $value, mixed $confirmationValue): bool
+    {
+        return $value === $confirmationValue;
+    }
+
+    /**
+     * Check if all values in an array are unique
+     *
+     * @param mixed $value The array to check
+     * @return bool True if the array contains no duplicate values
+     */
+    public function distinct(mixed $value): bool
+    {
+        return is_array($value) && count($value) === count(array_unique($value, SORT_REGULAR));
+    }
+
+    /**
+     * Check if a value is a valid JSON string
+     *
+     * @param mixed $value The value to check
+     * @return bool True if the value decodes as valid JSON
+     */
+    public function json(mixed $value): bool
+    {
+        if (!is_string($value) || $value === '') {
+            return false;
+        }
+
+        json_decode($value);
+        return json_last_error() === JSON_ERROR_NONE;
+    }
+
+    /**
+     * Check that no other row in a table already has this value in the given column
+     *
+     * @param mixed $value The value to check for uniqueness
+     * @param string $table The table to check against
+     * @param string $column The column the value must be unique in
+     * @param mixed $ignoreId When updating an existing row, its ID to exclude from the check
+     * @param string $idColumn The primary key column name (default 'id')
+     * @return bool True if no other row already has this value
+     */
+    public function unique(mixed $value, string $table, string $column, mixed $ignoreId = null, string $idColumn = 'id'): bool
+    {
+        $model = new \Core\Model($table);
+        $model->where($column, (string) $value);
+
+        if ($ignoreId !== null) {
+            $model->where($idColumn, (string) $ignoreId, '!=');
+        }
+
+        $result = $model->get();
+
+        return empty($result);
+    }
 }

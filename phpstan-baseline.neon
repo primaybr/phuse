@@ -1,0 +1,171 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Method Core\\\\Log\\:\\:write\\(\\) invoked with 3 parameters, 1 required\\.$#"
+			count: 1
+			path: Core/Base.php
+
+		-
+			message: "#^Comparison operation \"\\>\" between \\(array\\|float\\|int\\) and 0 results in an error\\.$#"
+			count: 1
+			path: Core/Cache/BaseCache.php
+
+		-
+			message: "#^Method Core\\\\Log\\:\\:write\\(\\) invoked with 3 parameters, 1 required\\.$#"
+			count: 1
+			path: Core/Cache/BaseCache.php
+
+		-
+			message: "#^Method Core\\\\Log\\:\\:write\\(\\) invoked with 2 parameters, 1 required\\.$#"
+			count: 2
+			path: Core/Cache/QueryCache.php
+
+		-
+			message: "#^Access to property \\$autoClearInDevelopment on an unknown class Config\\\\Template\\.$#"
+			count: 1
+			path: Core/Cache/TemplateCache.php
+
+		-
+			message: "#^Access to property \\$cacheDir on an unknown class Config\\\\Template\\.$#"
+			count: 1
+			path: Core/Cache/TemplateCache.php
+
+		-
+			message: "#^Access to property \\$cacheLifetime on an unknown class Config\\\\Template\\.$#"
+			count: 1
+			path: Core/Cache/TemplateCache.php
+
+		-
+			message: "#^Instantiated class Config\\\\Template not found\\.$#"
+			count: 1
+			path: Core/Cache/TemplateCache.php
+
+		-
+			message: "#^Method Core\\\\Log\\:\\:write\\(\\) invoked with 2 parameters, 1 required\\.$#"
+			count: 2
+			path: Core/Cache/TemplateCache.php
+
+		-
+			message: "#^Call to an undefined method ReflectionType\\:\\:getName\\(\\)\\.$#"
+			count: 1
+			path: Core/Container.php
+
+		-
+			message: "#^Property Core\\\\Controller\\:\\:\\$cache \\(Core\\\\Cache\\\\CacheManager\\) does not accept Core\\\\Cache\\\\BaseCache\\.$#"
+			count: 1
+			path: Core/Controller.php
+
+		-
+			message: "#^Method Core\\\\Log\\:\\:write\\(\\) invoked with 2 parameters, 1 required\\.$#"
+			count: 3
+			path: Core/Exception/Error.php
+
+		-
+			message: "#^Method Core\\\\Log\\:\\:write\\(\\) invoked with 3 parameters, 1 required\\.$#"
+			count: 2
+			path: Core/Exception/Error.php
+
+		-
+			message: "#^Method Core\\\\Log\\:\\:write\\(\\) invoked with 3 parameters, 1 required\\.$#"
+			count: 1
+			path: Core/Exception/Handler.php
+
+		-
+			message: "#^Variable \\$_FILES in isset\\(\\) always exists and is not nullable\\.$#"
+			count: 1
+			path: Core/Http/Input.php
+
+		-
+			message: "#^Method Core\\\\Log\\:\\:write\\(\\) invoked with 3 parameters, 1 required\\.$#"
+			count: 1
+			path: Core/Http/Request.php
+
+		-
+			message: "#^Variable \\$http_response_header on left side of \\?\\? always exists and is not nullable\\.$#"
+			count: 2
+			path: Core/Http/Request.php
+
+		-
+			message: "#^Method Core\\\\Log\\:\\:write\\(\\) invoked with 2 parameters, 1 required\\.$#"
+			count: 3
+			path: Core/Http/Session.php
+
+		-
+			message: "#^Method Core\\\\Log\\:\\:write\\(\\) invoked with 3 parameters, 1 required\\.$#"
+			count: 3
+			path: Core/Http/Session.php
+
+		-
+			message: "#^Method Core\\\\Log\\:\\:write\\(\\) invoked with 3 parameters, 1 required\\.$#"
+			count: 1
+			path: Core/Http/URI.php
+
+		-
+			message: "#^PHPDoc tag @throws with type Core\\\\Exception is not subtype of Throwable$#"
+			count: 1
+			path: Core/Log.php
+
+		-
+			message: "#^Access to an undefined property object\\:\\:\\$prefix\\.$#"
+			count: 1
+			path: Core/Model.php
+
+		-
+			message: "#^Access to property \\$connections on an unknown class Config\\\\Database\\.$#"
+			count: 2
+			path: Core/Model.php
+
+		-
+			message: "#^Instantiated class Config\\\\Database not found\\.$#"
+			count: 1
+			path: Core/Model.php
+
+		-
+			message: "#^Static method Core\\\\Exception\\\\DatabaseException\\:\\:connectionError\\(\\) invoked with 4 parameters, 0\\-2 required\\.$#"
+			count: 1
+			path: Core/Model.php
+
+		-
+			message: "#^Static method Core\\\\Exception\\\\DatabaseException\\:\\:queryError\\(\\) invoked with 4 parameters, 1\\-3 required\\.$#"
+			count: 7
+			path: Core/Model.php
+
+		-
+			message: "#^Variable \\$result might not be defined\\.$#"
+			count: 1
+			path: Core/Model.php
+
+		-
+			message: "#^Variable \\$key on left side of \\?\\? always exists and is not nullable\\.$#"
+			count: 1
+			path: Core/Security/Encryption.php
+
+		-
+			message: "#^Variable \\$salt on left side of \\?\\? always exists and is not nullable\\.$#"
+			count: 1
+			path: Core/Security/Encryption.php
+
+		-
+			message: "#^Access to property \\$autoClearInDevelopment on an unknown class Config\\\\Template\\.$#"
+			count: 1
+			path: Core/Template/Parser.php
+
+		-
+			message: "#^Access to property \\$enableCache on an unknown class Config\\\\Template\\.$#"
+			count: 1
+			path: Core/Template/Parser.php
+
+		-
+			message: "#^Instantiated class Config\\\\Template not found\\.$#"
+			count: 1
+			path: Core/Template/Parser.php
+
+		-
+			message: "#^Property Core\\\\Template\\\\Parser\\:\\:\\$config has unknown class Config\\\\Template as its type\\.$#"
+			count: 2
+			path: Core/Template/Parser.php
+
+		-
+			message: "#^Call to an undefined method Core\\\\Utilities\\\\Image\\\\Image\\:\\:getImageType\\(\\)\\.$#"
+			count: 1
+			path: Core/Utilities/Image/Image.php
