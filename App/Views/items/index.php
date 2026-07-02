@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Item List</title>
-    <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=140">
+    <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=141">
+  <link rel="icon" type="image/svg+xml" href="{{assetsUrl}}images/favicon.svg">
 </head>
 <body class="container py-5">
     <h1 class="mb-4">Item List</h1>

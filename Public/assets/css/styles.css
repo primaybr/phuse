@@ -3343,5 +3343,12 @@ kbd {
 }
 
 /* ============================================================
-   END - PHUSE CSS Framework v1.2.5
+   § 41  LOGO - light/dark swap
+   ============================================================ */
+.phuse-logo-dark { display: none; }
+[data-theme=dark] .phuse-logo-light { display: none; }
+[data-theme=dark] .phuse-logo-dark { display: inline-block; }
+
+/* ============================================================
+   END - PHUSE CSS Framework v1.2.6
    ============================================================ */

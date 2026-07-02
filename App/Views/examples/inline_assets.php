@@ -5,7 +5,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Inline CSS &amp; JS Safety - Phuse Template System</title>
-  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=140">
+  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=141">
+  <link rel="icon" type="image/svg+xml" href="{{assetsUrl}}images/favicon.svg">
   <script>
     (function() {
       try {

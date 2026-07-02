@@ -5,7 +5,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{title}} - Phuse Framework</title>
-  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=140">
+  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=141">
+  <link rel="icon" type="image/svg+xml" href="{{assetsUrl}}images/favicon.svg">
   <script>
     (function() {
       try {
@@ -109,6 +110,10 @@
     <div class="card mb-4">
       <div class="card-body text-center py-4">
         <span class="badge bg-primary mb-2">v1.2.6</span>
+        <div class="mb-2">
+          <img src="{{assetsUrl}}images/phuse-logo-light.svg" alt="" class="phuse-logo-light" height="32">
+          <img src="{{assetsUrl}}images/phuse-logo-dark.svg" alt="" class="phuse-logo-dark" height="32">
+        </div>
         <h1 class="fw-bold mb-1">
           <i class="pi pi-zap me-2 text-primary"></i>Phuse Icon System
         </h1>

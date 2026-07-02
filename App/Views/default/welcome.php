@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Phuse - PHP Easy to Use</title>
-  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=140">
+  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=141">
+  <link rel="icon" type="image/svg+xml" href="{{assetsUrl}}images/favicon.svg">
   <script>(function(){try{var t=localStorage.getItem('phuse-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})()</script>
 </head>
 
@@ -16,6 +17,10 @@
       <div class="card-body text-center py-5 px-4">
         <div class="mb-3">
           <span class="badge bg-primary mb-2">v{{version}}</span>
+        </div>
+        <div class="mb-2">
+          <img src="{{assetsUrl}}images/phuse-logo-light.svg" alt="" class="phuse-logo-light" height="48">
+          <img src="{{assetsUrl}}images/phuse-logo-dark.svg" alt="" class="phuse-logo-dark" height="48">
         </div>
         <h1 class="display-4 fw-bold text-primary mb-2">Phuse</h1>
         <p class="lead text-secondary mb-1">PHP Easy to Use</p>

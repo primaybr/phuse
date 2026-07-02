@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{title}} - Phuse Template System</title>
-  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=140">
+  <link rel="stylesheet" href="{{assetsUrl}}css/styles.css?v=141">
+  <link rel="icon" type="image/svg+xml" href="{{assetsUrl}}images/favicon.svg">
   <script>(function(){try{var t=localStorage.getItem('phuse-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})()</script>
 </head>
 
@@ -13,6 +14,7 @@
   <div class="card shadow mx-auto max-width-lg">
       <div class="card-header bg-secondary text-white p-4">
         <div class="text-center mb-2">
+          <img src="{{assetsUrl}}images/phuse-logo-dark.svg" alt="" height="40" class="mb-2">
           <h1 class="display-5 fw-bold">{{title}}</h1>
           <p class="lead mb-0">{{description}}</p>
         </div>
