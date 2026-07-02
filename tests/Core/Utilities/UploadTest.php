@@ -2,7 +2,28 @@
 
 declare(strict_types=1);
 
-namespace Tests\Core\Utilities;
+// is_uploaded_file() only ever returns true for files that went through PHP's
+// real HTTP upload handling - there is no way to produce one of those from a
+// CLI test. PHP resolves unqualified function calls from the innermost
+// namespace first, so this shim (defined only here, only in this namespace)
+// intercepts calls made from Core\Utilities\Upload's FileValidatorTrait
+// without touching the real global is_uploaded_file() used in production.
+namespace Core\Utilities\Upload {
+    function is_uploaded_file(string $filename): bool
+    {
+        return file_exists($filename);
+    }
+
+    // move_uploaded_file() has the same real-upload-only restriction as
+    // is_uploaded_file() above - copy() (not rename()) so the test fixture
+    // file survives for tests that upload() the same tmp_name more than once.
+    function move_uploaded_file(string $from, string $to): bool
+    {
+        return copy($from, $to);
+    }
+}
+
+namespace Tests\Core\Utilities {
 
 use Core\Utilities\Upload\Upload;
 use Core\Utilities\Upload\UploadConfig;
@@ -206,7 +227,10 @@ class UploadTest extends TestCase
         $config = UploadConfig::forImages();
         $this->upload->configure($config);
 
-        $this->assertEquals(2000000, $this->getPrivateProperty($this->upload, 'maxSize'));
+        // 5 MB, not 2 MB - forImages()'s "5 MB CMS default" (Core/Utilities/Upload/UploadConfig.php)
+        // has been the documented default since v1.2.5 ("raised from 2 MB to 5 MB to better
+        // suit CMS image uploads").
+        $this->assertEquals(5000000, $this->getPrivateProperty($this->upload, 'maxSize'));
         $this->assertEquals(['jpg', 'jpeg', 'png', 'gif', 'webp'], $this->getPrivateProperty($this->upload, 'extensions'));
         $this->assertTrue($this->getPrivateProperty($this->upload, 'xssProtection'));
     }
@@ -310,4 +334,6 @@ class UploadTest extends TestCase
         imagejpeg($image, $filename);
         imagedestroy($image);
     }
+}
+
 }

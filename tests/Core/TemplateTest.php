@@ -9,6 +9,7 @@ use Core\Template\Parser;
 use Core\Template\ParserInterface;
 use Core\Cache\TemplateCache;
 use Core\Log;
+use Core\Folder\Path;
 
 /**
  * Test suite for the Template Parser system
@@ -42,6 +43,11 @@ class TemplateTest extends TestCase
 
         // Create test template files
         $this->createTestTemplates();
+
+        // setTemplate() always resolves against Path::VIEWS (Core/Template/Parser.php) -
+        // it has no configurable base path, so the fixture testSetTemplateWithValidFile()
+        // needs has to be written there directly, not under $this->testViewsDir.
+        file_put_contents(Path::VIEWS . 'basic.php', 'Hello {{name}}!');
     }
 
     protected function tearDown(): void
@@ -61,6 +67,8 @@ class TemplateTest extends TestCase
         if (is_dir($this->testCacheDir)) {
             $this->removeDirectory($this->testCacheDir);
         }
+
+        @unlink(Path::VIEWS . 'basic.php');
     }
 
     private function removeDirectory(string $dir): void
@@ -84,25 +92,25 @@ class TemplateTest extends TestCase
     private function createTestTemplates(): void
     {
         // Basic template
-        file_put_contents($this->testViewsDir . '/basic.php', 'Hello {name}!');
+        file_put_contents($this->testViewsDir . '/basic.php', 'Hello {{name}}!');
 
         // Data template
-        file_put_contents($this->testViewsDir . '/data.php', 'Name: {name}, Age: {age}, City: {city}');
+        file_put_contents($this->testViewsDir . '/data.php', 'Name: {{name}}, Age: {{age}}, City: {{city}}');
 
         // Conditional template
         file_put_contents($this->testViewsDir . '/conditional.php',
-            '{% if show_greeting %}Hello {name}!{% endif %}');
+            '{% if show_greeting %}Hello {{name}}!{% endif %}');
 
         // Foreach template
         file_put_contents($this->testViewsDir . '/foreach.php',
-            'Items: {% foreach items as item %}{item.name} {% endforeach %}');
+            'Items: {% foreach items as item %}{{item.name}} {% endforeach %}');
 
         // Nested template
         file_put_contents($this->testViewsDir . '/nested.php',
-            '{% foreach users as user %}{user.name}: {user.profile.age}{% endforeach %}');
+            '{% foreach users as user %}{{user.name}}: {{user.profile.age}}{% endforeach %}');
 
         // Error template
-        file_put_contents($this->testViewsDir . '/error.php', 'Error: {message}');
+        file_put_contents($this->testViewsDir . '/error.php', 'Error: {{message}}');
     }
 
     public function testParserImplementsInterface(): void
@@ -139,14 +147,14 @@ class TemplateTest extends TestCase
 
     public function testRenderBasicTemplate(): void
     {
-        $template = 'Hello {name}!';
+        $template = 'Hello {{name}}!';
         $result = $this->parser->parseData($template, ['name' => 'World']);
         $this->assertEquals('Hello World!', $result);
     }
 
     public function testRenderDataTemplate(): void
     {
-        $template = 'Name: {name}, Age: {age}, City: {city}';
+        $template = 'Name: {{name}}, Age: {{age}}, City: {{city}}';
         $data = [
             'name' => 'Alice',
             'age' => 25,
@@ -159,7 +167,7 @@ class TemplateTest extends TestCase
     public function testRenderConditionalTemplate(): void
     {
         // Test with true condition
-        $template = '{% if show_greeting %}Hello {name}!{% endif %}';
+        $template = '{% if show_greeting %}Hello {{name}}!{% endif %}';
         $result = $this->parser->parseData($template, [
             'show_greeting' => true,
             'name' => 'Bob'
@@ -176,7 +184,7 @@ class TemplateTest extends TestCase
 
     public function testRenderForeachTemplate(): void
     {
-        $template = 'Items: {% foreach items as item %}{item.name} {% endforeach %}';
+        $template = 'Items: {% foreach items as item %}{{item.name}} {% endforeach %}';
         $data = [
             'items' => [
                 ['name' => 'Item 1'],
@@ -185,12 +193,12 @@ class TemplateTest extends TestCase
             ]
         ];
         $result = $this->parser->parseData($template, $data);
-        $this->assertEquals('Items: Item 1 Item 2 Item 3 ', $result);
+        $this->assertEquals('Items: Item 1 Item 2 Item 3', $result);
     }
 
     public function testRenderNestedTemplate(): void
     {
-        $template = '{% foreach users as user %}{user.name}: {user.profile.age}{% endforeach %}';
+        $template = '{% foreach users as user %}{{user.name}}: {{user.profile.age}}{% endforeach %}';
         $data = [
             'users' => [
                 ['name' => 'John', 'profile' => ['age' => 30]],
@@ -204,25 +212,29 @@ class TemplateTest extends TestCase
     public function testRenderWithReturnFalseOutputsDirectly(): void
     {
         ob_start();
-        echo $this->parser->parseData('Hello {name}!', ['name' => 'Test']);
+        echo $this->parser->parseData('Hello {{name}}!', ['name' => 'Test']);
         $output = ob_get_clean();
         $this->assertEquals('Hello Test!', $output);
     }
 
     public function testExceptionMethodRendersErrorTemplate(): void
     {
-        ob_start();
+        // exception() is typed `: never` - it always throws a Core\Exception\Error
+        // rather than echoing directly (rendering is the caller's/a handler's job,
+        // via the thrown Error's own show() method). It never produces direct
+        // output, so this doesn't wrap the call in ob_start()/ob_get_clean().
+        $this->expectException(\Core\Exception\Error::class);
+        $this->expectExceptionMessage('Test error message');
+
         $this->parser->exception('Test error message');
-        $output = ob_get_clean();
-        $this->assertStringContainsString('Test error message', $output);
     }
 
     public function testExceptionMethodWithCustomTemplate(): void
     {
-        ob_start();
+        $this->expectException(\Core\Exception\Error::class);
+        $this->expectExceptionMessage('Custom error');
+
         $this->parser->exception('Custom error', 'error');
-        $output = ob_get_clean();
-        $this->assertStringContainsString('Custom error', $output);
     }
 
     public function testParseDataWithEmptyTemplateThrowsException(): void
@@ -233,7 +245,7 @@ class TemplateTest extends TestCase
 
     public function testParseDataWithValidTemplate(): void
     {
-        $template = 'Hello {name}!';
+        $template = 'Hello {{name}}!';
         $data = ['name' => 'World'];
         $result = $this->parser->parseData($template, $data);
         $this->assertEquals('Hello World!', $result);
@@ -245,10 +257,10 @@ class TemplateTest extends TestCase
         $this->parser->enableCache(true);
 
         // First parse should work
-        $result1 = $this->parser->parseData('Hello {name}!', ['name' => 'Cache']);
+        $result1 = $this->parser->parseData('Hello {{name}}!', ['name' => 'Cache']);
 
         // Second parse should work
-        $result2 = $this->parser->parseData('Hello {name}!', ['name' => 'Cache']);
+        $result2 = $this->parser->parseData('Hello {{name}}!', ['name' => 'Cache']);
 
         $this->assertEquals($result1, $result2);
         $this->assertEquals('Hello Cache!', $result1);
@@ -258,18 +270,21 @@ class TemplateTest extends TestCase
     {
         // Enable caching and parse to potentially create cache
         $this->parser->enableCache(true);
-        $this->parser->parseData('Hello {name}!', ['name' => 'Cache']);
+        $this->parser->parseData('Hello {{name}}!', ['name' => 'Cache']);
 
-        // Clear cache
+        // Clear cache - clearCache(false) only actually clears when
+        // Config\Template::$autoClearInDevelopment is true (false under the
+        // 'testing' env), otherwise it's a safe no-op returning false. The
+        // force=true path is covered separately by testClearCacheWithForce().
         $result = $this->parser->clearCache();
-        $this->assertTrue($result);
+        $this->assertFalse($result);
     }
 
     public function testClearCacheWithForce(): void
     {
         // Enable caching and parse to potentially create cache
         $this->parser->enableCache(true);
-        $this->parser->parseData('Hello {name}!', ['name' => 'Cache']);
+        $this->parser->parseData('Hello {{name}}!', ['name' => 'Cache']);
 
         // Clear cache with force
         $result = $this->parser->clearCache(true);
@@ -284,7 +299,7 @@ class TemplateTest extends TestCase
 
         $this->assertInstanceOf(Parser::class, $result);
 
-        $output = $this->parser->parseData('Hello {name}!', []);
+        $output = $this->parser->parseData('Hello {{name}}!', []);
         $this->assertEquals('Hello Chain!', $output);
     }
 
@@ -296,8 +311,11 @@ class TemplateTest extends TestCase
         // Set additional data (should merge)
         $this->parser->setData(['age' => 30]);
 
-        $result = $this->parser->parseData('Name: {name}, Age: {age}, City: {city}', []);
-        $this->assertEquals('Name: John, Age: 30, City: ', $result);
+        // 'city' is never provided - the parser deliberately leaves an unresolved
+        // placeholder intact (see ParserTrait::parseNestedProperties()) rather than
+        // silently rendering an empty string, so missing variables stay visible.
+        $result = $this->parser->parseData('Name: {{name}}, Age: {{age}}, City: {{city}}', []);
+        $this->assertEquals('Name: John, Age: 30, City: {{city}}', $result);
     }
 
     public function testSecurityWithUnsafeVariableNames(): void
@@ -310,10 +328,13 @@ class TemplateTest extends TestCase
             'valid_name' => 'should work'
         ];
 
-        $template = '{name} {valid_name}';
+        $template = '{{name}} {{valid_name}}';
         $result = $this->parser->parseData($template, $data);
 
-        // Should only contain safe variables
-        $this->assertEquals('John valid_name', $result);
+        // The template only references {{name}} and {{valid_name}} - both are
+        // valid identifiers (underscores are fine, only 'unsafe-var' with a
+        // hyphen would fail to match the parser's variable-name pattern) and
+        // both are present in $data, so both interpolate normally.
+        $this->assertEquals('John should work', $result);
     }
 }

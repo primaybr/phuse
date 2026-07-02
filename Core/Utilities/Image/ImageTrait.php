@@ -231,6 +231,21 @@ trait ImageTrait
     }
 
     /**
+     * Detect an image file's format, returned as a lowercase extension
+     * (e.g. 'jpg', 'jpeg', 'png', 'gif', 'webp') - the form $imageType is
+     * compared against elsewhere in this trait (see the compress() format check).
+     */
+    protected function getImageType(string $imagePath): string
+    {
+        $info = @getimagesize($imagePath);
+        if ($info === false || !isset($info[2])) {
+            return '';
+        }
+
+        return strtolower(image_type_to_extension($info[2], false));
+    }
+
+    /**
      * Check if image is loaded successfully
      */
     public function isLoaded(): bool

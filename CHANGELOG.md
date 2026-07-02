@@ -150,6 +150,77 @@ service container and a `test_table` schema so `ModelTest`/`ControllerTest`/
   root), silently hiding `tests/Core/Cache/` (added in this release) from git; anchored with a
   leading `/` and removed the now-unnecessary `!Core/Cache/` exception.
 
+### CI — Fixed a `localhost` vs `127.0.0.1` Connection Failure
+
+`Config/Database.php`'s default host was `'localhost'`. On Linux, PHP's PDO MySQL driver treats
+the literal string `"localhost"` specially and attempts a **Unix domain socket** connection instead
+of TCP - but GitHub Actions' MySQL service container is only reachable via TCP port-forwarding, so
+there's no socket file on the runner. This surfaced as `ControllerTest::testModelCreation`/
+`testModelAlias` throwing `DatabaseException: Database connection could not be established` in CI
+only (never locally on Windows, where `localhost` doesn't trigger socket-mode), while ~30 other
+`ModelTest` methods with `try/catch` skip-guards silently skipped instead of erroring - a jump from
+1 skip locally to 33 in CI. Fixed by changing the default host to `127.0.0.1`.
+
+### Testing — Full Suite Green (14 errors + 27 failures + 2 risky, found via CI)
+
+The CI workflow above ran the pre-existing (not newly added) test suite for the first time and
+surfaced a long-standing backlog of failures that had never been fixed locally. Root-caused and
+fixed all of them - a mix of real source bugs and outdated test expectations:
+
+**Real source bugs fixed:**
+- `Core\Exception\SystemException` and `ConfigurationException` were referenced throughout
+  (`Container.php`, `Base.php`, `Http/URI.php`, `Http/Session.php`) but only ever defined inside
+  `Core/Exception/PhuseExceptions.php` - a file bundling six exception classes that Phuse's
+  namespace-to-filepath autoloader can never actually load (it looks for
+  `Core/Exception/SystemException.php`, not a class living inside `PhuseExceptions.php`). Extracted
+  both into their own properly-named files matching the autoloader's expectations; deleted
+  `PhuseExceptions.php` entirely (its other four classes were exact-name duplicates of already-used
+  standalone files, or - `FilesystemException` - referenced nowhere at all).
+- `Core\Utilities\Image\ImageTrait::setImageSource()` called `$this->getImageType($imagePath)`,
+  a method that was never implemented anywhere - every single `Image` operation (`resize()`,
+  `crop()`, `rotate()`, `compress()`, `save()`, etc.) fataled. Implemented it via `getimagesize()` +
+  `image_type_to_extension()`.
+- `Core\Utilities\Upload\UploadConfig::setAllowedMimes()`'s validation regex rejected the `.`
+  character, so the real, IANA-registered MIME type for `.docx` files
+  (`application/vnd.openxmlformats-officedocument.wordprocessingml.document`) was rejected as
+  "invalid format." Widened the regex to the full RFC 6838 token character set (`!#$&-^_.+`).
+- `UploadConfig::setImageDimensions()` unconditionally required all four dimensions to be positive,
+  but `forDocuments()` deliberately passes `(0, 0, 0, 0)` as a documented sentinel meaning "skip
+  image validation entirely" (documents aren't images). Added a special case allowing that exact
+  all-zero combination through.
+
+**Test-only fixes** (source behavior was already correct/intentional):
+- `RouterTest` needed `$_SERVER['HTTP_HOST']` set to exercise the subdirectory-access code path
+  (unset under CLI, which silently took the domain-access branch instead) - a test environment
+  gap, not a Router bug. Also fixed 5 hardcoded expected route keys that had spurious backslash
+  escaping and were missing the `/?` optional-trailing-slash `preparePattern()` always includes.
+- `StrTest::testGenerateMetaKeywords` asserted that "php" should be excluded from extracted
+  keywords with a comment claiming "should be lowercase" that didn't match the assertion at all -
+  a copy-paste mistake. `generateMetaKeywords()` has no stop-word filtering by design; "php" is a
+  legitimate keyword in a sentence explicitly about "PHP and JavaScript."
+- `TemplateTest` used single-brace `{name}` syntax throughout, but Phuse's template engine has
+  used double-brace `{{name}}` syntax since v1.2.1 specifically so single braces in inline CSS/JS
+  pass through untouched - these tests predate that migration and were never updated. Also fixed:
+  `testExceptionMethodRendersErrorTemplate`/`WithCustomTemplate` wrapped `Parser::exception()`
+  (typed `: never`, always throws a catchable `Core\Exception\Error` rather than echoing directly)
+  in `ob_start()`/`ob_get_clean()`, which both failed the assertion and caused the "did not close
+  its own output buffers" risky warnings; rewrote to expect the exception directly. `testClearCache`
+  expected `clearCache()` (no force) to return `true`, contradicting its own safe-by-default design
+  (`Config\Template::$autoClearInDevelopment` is `false` under the `testing` env). `testDataMerging`
+  expected a missing `{{city}}` variable to render as an empty string, but the parser deliberately
+  leaves unresolved placeholders intact so missing variables stay visible for debugging.
+  `testSecurityWithUnsafeVariableNames` asserted `valid_name` (a perfectly safe identifier) should
+  NOT interpolate, contradicting its own test data's `'should work'` value.
+- `UploadTest`: `is_uploaded_file()`/`move_uploaded_file()` can only ever succeed for files that
+  went through PHP's real HTTP upload handling - fundamentally unfakeable from a CLI test. Added
+  namespace-scoped shim functions (PHP resolves unqualified calls from the innermost namespace
+  first) so calls made from within `Core\Utilities\Upload` resolve to test-only stand-ins, with
+  zero effect on the real global functions used in production. Also fixed a stale `2 MB` size
+  expectation for `UploadConfig::forImages()`, whose default has been `5 MB` since v1.2.5.
+
+`phpstan-baseline.neon` regenerated - several of its suppressed entries corresponded to the
+`getImageType()`/`DatabaseException` bugs above and are no longer needed now that they're fixed.
+
 ## v1.2.7 (2026-07-02)
 
 ### Core — Router

@@ -126,11 +126,6 @@ parameters:
 			path: Core/Model.php
 
 		-
-			message: "#^Static method Core\\\\Exception\\\\DatabaseException\\:\\:queryError\\(\\) invoked with 4 parameters, 1\\-3 required\\.$#"
-			count: 7
-			path: Core/Model.php
-
-		-
 			message: "#^Variable \\$result might not be defined\\.$#"
 			count: 1
 			path: Core/Model.php
@@ -164,8 +159,3 @@ parameters:
 			message: "#^Property Core\\\\Template\\\\Parser\\:\\:\\$config has unknown class Config\\\\Template as its type\\.$#"
 			count: 2
 			path: Core/Template/Parser.php
-
-		-
-			message: "#^Call to an undefined method Core\\\\Utilities\\\\Image\\\\Image\\:\\:getImageType\\(\\)\\.$#"
-			count: 1
-			path: Core/Utilities/Image/Image.php

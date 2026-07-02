@@ -175,8 +175,9 @@ class ImageTest extends TestCase
 
         $this->assertTrue($image->isLoaded());
 
-        // Check that log file was created in the logs directory
-        $logFile = Path::LOGS . 'image_test_' . date('Ymd') . '.log';
+        // Check that log file was created in the logs directory - setLogName()
+        // does not append a date suffix (see Core\Log::setLogName()/LogTest).
+        $logFile = Path::LOGS . 'image_test.log';
         $this->assertFileExists($logFile);
     }
 

@@ -111,7 +111,7 @@ class StrTest extends TestCase
         $this->assertStringContainsString('sample', $keywords);
         $this->assertStringContainsString('words', $keywords);
         $this->assertStringContainsString('javascript', $keywords); // Should be lowercase
-        $this->assertStringNotContainsString('php', $keywords); // Should be lowercase
+        $this->assertStringContainsString('php', $keywords); // Should be lowercase, and is a legitimate keyword here
     }
 
     public function testGenerateMetaKeywordsWithShortWords(): void

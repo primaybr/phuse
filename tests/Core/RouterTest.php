@@ -16,8 +16,18 @@ class RouterTest extends TestCase
 
     protected function setUp(): void
     {
+        // preparePattern()/getUrl() branch on $_SERVER['HTTP_HOST'] to detect domain vs.
+        // subdirectory access - unset under CLI, which would take the domain-access branch
+        // and omit the "phuse" basename these tests expect. Force subdirectory-access mode.
+        $_SERVER['HTTP_HOST'] = 'localhost';
+
         // Create a basic Router instance without complex mocking
         $this->router = new Router();
+    }
+
+    protected function tearDown(): void
+    {
+        unset($_SERVER['HTTP_HOST']);
     }
 
     public function testRouterInstantiation(): void
@@ -35,7 +45,7 @@ class RouterTest extends TestCase
         $routesProperty->setAccessible(true);
         $routes = $routesProperty->getValue($this->router);
 
-        $expectedKey = '~^\/phuse\/test$~@GET';
+        $expectedKey = '~^/phuse/test/?$~@GET';
         $this->assertArrayHasKey($expectedKey, $routes);
         $this->assertEquals('TestController', $routes[$expectedKey]);
     }
@@ -49,7 +59,7 @@ class RouterTest extends TestCase
         $routesProperty->setAccessible(true);
         $routes = $routesProperty->getValue($this->router);
 
-        $expectedKey = '~^\/phuse\/test$~@GET';
+        $expectedKey = '~^/phuse/test/?$~@GET';
         $this->assertArrayHasKey($expectedKey, $routes);
         $this->assertEquals('TestController', $routes[$expectedKey]);
     }
@@ -63,7 +73,7 @@ class RouterTest extends TestCase
         $routesProperty->setAccessible(true);
         $routes = $routesProperty->getValue($this->router);
 
-        $expectedKey = '~^\/phuse\/test$~@POST';
+        $expectedKey = '~^/phuse/test/?$~@POST';
         $this->assertArrayHasKey($expectedKey, $routes);
         $this->assertEquals('TestController', $routes[$expectedKey]);
     }
@@ -77,7 +87,7 @@ class RouterTest extends TestCase
         $routesProperty->setAccessible(true);
         $routes = $routesProperty->getValue($this->router);
 
-        $expectedKey = '~^\/phuse\/test$~@PUT';
+        $expectedKey = '~^/phuse/test/?$~@PUT';
         $this->assertArrayHasKey($expectedKey, $routes);
         $this->assertEquals('TestController', $routes[$expectedKey]);
     }
@@ -91,7 +101,7 @@ class RouterTest extends TestCase
         $routesProperty->setAccessible(true);
         $routes = $routesProperty->getValue($this->router);
 
-        $expectedKey = '~^\/phuse\/test$~@DELETE';
+        $expectedKey = '~^/phuse/test/?$~@DELETE';
         $this->assertArrayHasKey($expectedKey, $routes);
         $this->assertEquals('TestController', $routes[$expectedKey]);
     }

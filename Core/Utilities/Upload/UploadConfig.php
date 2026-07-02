@@ -266,11 +266,16 @@ class UploadConfig
      */
     public function setImageDimensions(int $minWidth, int $maxWidth, int $minHeight, int $maxHeight): self
     {
-        if ($minWidth <= 0 || $maxWidth <= 0 || $minHeight <= 0 || $maxHeight <= 0) {
+        // (0, 0, 0, 0) is the documented sentinel for "disable image dimension
+        // validation" (see forDocuments()) - only enforce positivity/ordering
+        // when the caller isn't using that sentinel.
+        $disabled = $minWidth === 0 && $maxWidth === 0 && $minHeight === 0 && $maxHeight === 0;
+
+        if (!$disabled && ($minWidth <= 0 || $maxWidth <= 0 || $minHeight <= 0 || $maxHeight <= 0)) {
             throw new \InvalidArgumentException('Image dimensions must be positive');
         }
 
-        if ($minWidth > $maxWidth || $minHeight > $maxHeight) {
+        if (!$disabled && ($minWidth > $maxWidth || $minHeight > $maxHeight)) {
             throw new \InvalidArgumentException('Minimum dimensions cannot exceed maximum dimensions');
         }
 
@@ -334,7 +339,10 @@ class UploadConfig
             }
 
             foreach ($mimeTypes as $mimeType) {
-                if (!is_string($mimeType) || !preg_match('/^[a-zA-Z][a-zA-Z0-9][a-zA-Z0-9\!\#\$\&\-\^]*\/[a-zA-Z0-9][a-zA-Z0-9\!\#\$\&\-\^]*$/', $mimeType)) {
+                // RFC 6838 allows '!#$&-^_.+' in type/subtype tokens (not just letters/digits) -
+                // the previous pattern omitted '.', rejecting real, IANA-registered MIME types
+                // like 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'.
+                if (!is_string($mimeType) || !preg_match('/^[a-zA-Z][a-zA-Z0-9][a-zA-Z0-9\!\#\$\&\-\^\_\.\+]*\/[a-zA-Z0-9][a-zA-Z0-9\!\#\$\&\-\^\_\.\+]*$/', $mimeType)) {
                     throw new \InvalidArgumentException("Invalid MIME type format: {$mimeType}");
                 }
             }
