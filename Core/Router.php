@@ -55,6 +55,22 @@ class Router
      * @var array $cachedRoutes The cached routes.
      */
     private array $cachedRoutes = [];
+    /**
+     * @var bool $routesCacheDirty Whether routes changed since the cache file was last written.
+     */
+    private bool $routesCacheDirty = false;
+    /**
+     * @var array<string,string> $rawPatterns Maps a route key to its original (pre-regex) pattern, for reverse routing.
+     */
+    private array $rawPatterns = [];
+    /**
+     * @var string|null $lastRouteKey The route key most recently registered via add(), so name() knows what to bind to.
+     */
+    private ?string $lastRouteKey = null;
+    /**
+     * @var array<string,string> $routeNames Maps a route name to its route key.
+     */
+    private array $routeNames = [];
 
     /**
      * Router constructor.
@@ -97,23 +113,111 @@ class Router
      * @param callable|string $controller The controller to handle the route.
      * @param string $action The action method to call on the controller.
      * @param array $middleware Optional middleware for the route.
-     * @return void
+     * @return static Fluent - chain ->name() to register a name for reverse routing.
      */
-    public function add(string $requestMethod, string $pattern, callable|string $controller, string $action = 'index', array $middleware = []): void
+    public function add(string $requestMethod, string $pattern, callable|string $controller, string $action = 'index', array $middleware = []): static
     {
-        $pattern = $this->preparePattern($pattern);
-        $routeKey = $this->getRouteKey($pattern, $requestMethod);
-        
+        $preparedPattern = $this->preparePattern($pattern);
+        $routeKey = $this->getRouteKey($preparedPattern, $requestMethod);
+
         // Check if the route already exists
         if (!isset($this->routes[$routeKey])) {
             $this->routes[$routeKey] = $controller;
             $this->actions[$routeKey] = $action;
             $this->methods[$routeKey] = $requestMethod;
             $this->middlewares[$routeKey] = $middleware;
-            
-            // Cache routes after adding
-            $this->cacheRoutes();
+
+            $this->cachedRoutes = [
+                'routes' => $this->routes,
+                'actions' => $this->actions,
+                'methods' => $this->methods,
+                'middlewares' => $this->middlewares,
+            ];
+
+            // Defer the cache file write until flushRouteCache() runs once, instead
+            // of writing the file after every single route registration.
+            $this->routesCacheDirty = true;
         }
+
+        // Tracked unconditionally (cheap, in-memory only) so name()/route() keep
+        // working even on requests where the route above was skipped because it
+        // was already present from a loaded route cache.
+        $this->rawPatterns[$routeKey] = $pattern;
+        $this->lastRouteKey = $routeKey;
+
+        return $this;
+    }
+
+    /**
+     * Names the most recently registered route, for reverse URL generation via route().
+     *
+     * @param string $name The route name.
+     * @return static
+     */
+    public function name(string $name): static
+    {
+        if ($this->lastRouteKey !== null) {
+            $this->routeNames[$name] = $this->lastRouteKey;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Builds the URL for a named route, substituting params into its capture groups in order.
+     *
+     * @param string $name The route name registered via name().
+     * @param array $params Positional values substituted into the route's capture groups, in order.
+     * @return string The generated URL path.
+     */
+    public function route(string $name, array $params = []): string
+    {
+        if (!isset($this->routeNames[$name])) {
+            throw new \InvalidArgumentException("No route registered with name \"$name\".");
+        }
+
+        $routeKey = $this->routeNames[$name];
+        $pattern = $this->rawPatterns[$routeKey] ?? explode('@', $routeKey)[0];
+
+        $params = array_values($params);
+        $i = 0;
+        $path = preg_replace_callback('/\([^()]*\)/', function () use ($params, &$i) {
+            return isset($params[$i]) ? (string) $params[$i++] : '';
+        }, $pattern);
+
+        return $this->buildBaseUrl() . $path;
+    }
+
+    /**
+     * Builds the base URL prefix (empty for domain access, "/{baseName}" for subdirectory access).
+     *
+     * @return string
+     */
+    private function buildBaseUrl(): string
+    {
+        $baseName = basename(strtolower(ROOT));
+        $host = $_SERVER['HTTP_HOST'] ?? '';
+        $isDomainAccess = !str_contains($host, 'localhost') && !str_contains($host, '127.0.0.1');
+
+        return $isDomainAccess ? '' : URL_SEPARATOR . $baseName;
+    }
+
+    /**
+     * Writes the route cache file if routes changed since the last write.
+     *
+     * Registration typically adds many routes in a row (once per app bootstrap);
+     * calling this once after registration avoids a redundant file write per route.
+     *
+     * @return void
+     */
+    public function flushRouteCache(): void
+    {
+        if (!$this->routesCacheDirty) {
+            return;
+        }
+
+        $this->cacheRoutes();
+        $this->routesCacheDirty = false;
     }
 
     /**
@@ -123,14 +227,6 @@ class Router
      */
     private function cacheRoutes(): void
     {
-        // Cache the routes to file
-        $this->cachedRoutes = [
-            'routes' => $this->routes,
-            'actions' => $this->actions,
-            'methods' => $this->methods,
-            'middlewares' => $this->middlewares,
-        ];
-
         if(!is_dir(Folder\Path::CACHE)) {
             mkdir(Folder\Path::CACHE, 0777, true);
         }
@@ -146,11 +242,11 @@ class Router
      * @param callable|string $controller The controller to handle the route.
      * @param string $action The action method to call on the controller.
      * @param array $middleware Optional middleware for the route.
-     * @return void
+     * @return static Fluent - chain ->name() to register a name for reverse routing.
      */
-    public function get(string $pattern, callable|string $controller, string $action = 'index', array $middleware = []): void
+    public function get(string $pattern, callable|string $controller, string $action = 'index', array $middleware = []): static
     {
-        $this->add('GET', $pattern, $controller, $action, $middleware);
+        return $this->add('GET', $pattern, $controller, $action, $middleware);
     }
 
     /**
@@ -160,11 +256,11 @@ class Router
      * @param callable|string $controller The controller to handle the route.
      * @param string $action The action method to call on the controller.
      * @param array $middleware Optional middleware for the route.
-     * @return void
+     * @return static Fluent - chain ->name() to register a name for reverse routing.
      */
-    public function post(string $pattern, callable|string $controller, string $action = 'index', array $middleware = []): void
+    public function post(string $pattern, callable|string $controller, string $action = 'index', array $middleware = []): static
     {
-        $this->add('POST', $pattern, $controller, $action, $middleware);
+        return $this->add('POST', $pattern, $controller, $action, $middleware);
     }
 
     /**
@@ -173,11 +269,11 @@ class Router
      * @param string $pattern The URL pattern for the route.
      * @param callable|string $controller The controller to handle the route.
      * @param string $action The action method to call on the controller.
-     * @return void
+     * @return static Fluent - chain ->name() to register a name for reverse routing.
      */
-    public function put(string $pattern, callable|string $controller, string $action = 'index'): void
+    public function put(string $pattern, callable|string $controller, string $action = 'index'): static
     {
-        $this->add('PUT', $pattern, $controller, $action);
+        return $this->add('PUT', $pattern, $controller, $action);
     }
 
     /**
@@ -186,11 +282,11 @@ class Router
      * @param string $pattern The URL pattern for the route.
      * @param callable|string $controller The controller to handle the route.
      * @param string $action The action method to call on the controller.
-     * @return void
+     * @return static Fluent - chain ->name() to register a name for reverse routing.
      */
-    public function delete(string $pattern, callable|string $controller, string $action = 'index'): void
+    public function delete(string $pattern, callable|string $controller, string $action = 'index'): static
     {
-        $this->add('DELETE', $pattern, $controller, $action);
+        return $this->add('DELETE', $pattern, $controller, $action);
     }
 
     /**
@@ -214,18 +310,13 @@ class Router
      */
     public function run(): void
     {
+        $this->flushRouteCache();
+
         $url = $this->getUrl();
         $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-        
-        // Debug: Check if any redirects have already been sent
-        if (headers_sent($filename, $linenum)) {
-            $this->log->write("Headers already sent in $filename at line $linenum");
-        } else {
-            $this->log->write("Headers not sent yet");
-        }
 
         $this->redirectIfNeeded();
-        
+
         $this->match($url, $requestMethod);
     }
 

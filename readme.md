@@ -1,6 +1,6 @@
 # Phuse: A User-Friendly and Intuitive PHP Framework
 
-![Version](https://img.shields.io/badge/version-1.2.6-blue)
+![Version](https://img.shields.io/badge/version-1.2.7-blue)
 ![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -157,6 +157,14 @@ Phuse provides comprehensive documentation for all features:
 
 - **[CSRF Protection](docs/csrf-protection.md)**: Cross-site request forgery protection
 
+- **[Router](docs/router.md)**: Route registration, groups, named routes, and route cache lifecycle (v1.2.7)
+
+- **[Middleware](docs/middleware.md)**: Per-route/group middleware callables vs. the `MiddlewareStack` pipeline (v1.2.7)
+
+- **[Security](docs/security.md)**: CSRF, password hashing, and trusted-proxy configuration overview (v1.2.7)
+
+- **[Encryption](docs/encryption.md)**: Symmetric encryption/decryption with `Core\Security\Encryption` (v1.2.7)
+
 - **[HTTP Components](docs/http-components.md)**: Comprehensive HTTP utilities including Client, Input, Request, Response, Session, URI, and CSRF protection
 
 - **[Validator Utilities](docs/validator-utilities.md)**: Data validation with comprehensive rule system
@@ -186,6 +194,22 @@ If you have any questions, issues, or feedback regarding Phuse, you can contact 
 Phuse is an open-source project, and you are welcome to contribute to its development. You can fork the repository, make your changes, and submit a pull request. Please follow the coding standards and guidelines before submitting your code.
 
 ## Latest Changes
+
+### v1.2.7 (2026-07-02)
+
+#### Router
+
+- **Named routes** — chain `->name('users.edit')` onto any registered route, then call `$router->route('users.edit', [$id])` for reverse URL generation instead of hardcoding paths
+- **Debug log spam removed** — `run()` no longer logs a "headers sent" check on every single request
+- **Route cache writes batched** — the route cache file is now written once per request instead of once per route registered during cold-start
+
+#### Security
+
+- **`Core\Security\Password`** — new `hash()`/`verify()`/`needsRehash()` wrapper around `password_hash()`/`password_verify()` (Argon2id by default, bcrypt fallback), plus a matching `password` validator rule
+
+#### Documentation
+
+- New guides: [router.md](docs/router.md), [middleware.md](docs/middleware.md), [security.md](docs/security.md), [encryption.md](docs/encryption.md) — covering previously-undocumented features (route middleware, `Client::setTrustedProxies()`, the `Encryption` class)
 
 ### v1.2.6 (2026-07-01)
 

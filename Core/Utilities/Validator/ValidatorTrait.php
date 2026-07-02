@@ -166,4 +166,17 @@ trait ValidatorTrait
     {
         return strlen(string: $value) <= $max;
     }
+
+    /**
+     * Check if a value is a plausible plaintext password (length only - hashing
+     * and storage are the caller's responsibility via Core\Security\Password)
+     *
+     * @param mixed $value The plaintext password to check
+     * @param int $minLength The minimum length required (default 8)
+     * @return bool True if the value is a non-empty string meeting the minimum length
+     */
+    public function password(mixed $value, int $minLength = 8): bool
+    {
+        return is_string($value) && strlen($value) >= $minLength;
+    }
 }

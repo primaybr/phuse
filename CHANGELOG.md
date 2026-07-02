@@ -1,5 +1,66 @@
 # Changelog
 
+## v1.2.7 (2026-07-02)
+
+### Core — Router
+
+#### Named Routes
+
+Routes can now be named for reverse URL generation. `add()`/`get()`/`post()`/`put()`/`delete()`
+return `static` so registration is chainable:
+
+```php
+$router->get('/users/([a-zA-Z0-9\-]+)/edit', 'UsersController', 'edit')->name('users.edit');
+
+$url = $router->route('users.edit', [$userId]);
+```
+
+`route(string $name, array $params = []): string` substitutes each positional value into the
+route's original capture groups in order, then prefixes the result with the correct base URL for
+domain vs. subdirectory access. Throws `\InvalidArgumentException` for an unknown name.
+
+#### Debug Log Spam Removed
+
+`run()` no longer logs a `headers_sent()` check on every single request - it was unconditional
+debug output left over from development and provided no operational value while bloating `Logs/`.
+
+#### Route Cache Writes Batched
+
+`add()` previously called `cacheRoutes()` (a full `file_put_contents()`) after every individual
+route registration. As of this release, the route array is still updated in memory immediately,
+but the cache file itself is only written once per request via a new `flushRouteCache()`, called
+from `run()`. Registering 50 routes during a cold cache now performs 1 file write instead of 50.
+
+### Core — Boot
+
+`Core/Boot.php` now loads `App/helpers.php` (if the consuming application defines one) immediately
+after the autoloader is registered - a single place to register global helper functions instead of
+requiring them ad hoc throughout the app.
+
+### Core — Security
+
+#### `Core\Security\Password` — New
+
+Wraps `password_hash()`/`password_verify()`/`password_needs_rehash()` with Argon2id as the default
+algorithm (falling back to bcrypt when the Argon2id extension isn't available):
+
+```php
+$hash = Password::hash($plain);
+Password::verify($plain, $hash);
+Password::needsRehash($hash);
+```
+
+A matching `password` validator rule was added to `Core\Utilities\Validator\ValidatorTrait` for
+basic length checks (`$validator->rule('password', 'password', 12)`).
+
+### Documentation
+
+Four new guides fill previously-undocumented gaps: [docs/router.md](docs/router.md),
+[docs/middleware.md](docs/middleware.md), [docs/security.md](docs/security.md), and
+[docs/encryption.md](docs/encryption.md) - including the `Client::setTrustedProxies()`
+IP-spoofing fix (shipped in v1.2.5) and the `Encryption` class, both of which previously had no
+documentation at all.
+
 ## v1.2.6 (2026-07-01)
 
 ### CSS Framework

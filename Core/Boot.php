@@ -43,3 +43,10 @@ spl_autoload_register(function ($namespace_class) {
         throw $e;
     }
 });
+
+// Load application-defined global helper functions, if the consuming app has any.
+$helpersFile = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'App' . DIRECTORY_SEPARATOR . 'helpers.php';
+if (file_exists($helpersFile)) {
+    require_once $helpersFile;
+}
+unset($helpersFile);
