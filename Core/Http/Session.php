@@ -253,7 +253,11 @@ final class Session
         }
 
         if ($value === null) {
-            throw new ValidationException('Session value cannot be null');
+            // Setting null removes the key - callers use set($key, null) to
+            // clear one-time state (pending flags, consumed challenges).
+            unset($_SESSION[$key]);
+            $this->session = $_SESSION;
+            return true;
         }
 
         $_SESSION[$key] = $value;
