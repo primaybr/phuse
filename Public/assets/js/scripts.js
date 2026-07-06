@@ -1,4 +1,4 @@
-// Phuse Framework JavaScript v1.2.5
+// Phuse Framework JavaScript v1.2.8
 // Lightweight Bootstrap-compatible component library
 
 class Phuse {
@@ -9,7 +9,7 @@ class Phuse {
   static _get(el)       { return this._store.get(el) || {}; }
   static _set(el, data) { this._store.set(el, { ...this._get(el), ...data }); }
 
-  // ── Modal ─────────────────────────────────────────────────────────────────
+  // -- Modal -----------------------------------------------------------------
   static modal(element) {
     const isStatic = element.dataset.backdrop === 'static';
 
@@ -68,7 +68,7 @@ class Phuse {
     };
   }
 
-  // ── Dropdown ──────────────────────────────────────────────────────────────
+  // -- Dropdown --------------------------------------------------------------
   static dropdown(element) {
     const menu = element.nextElementSibling;
     return {
@@ -87,7 +87,7 @@ class Phuse {
     };
   }
 
-  // ── Alert ─────────────────────────────────────────────────────────────────
+  // -- Alert -----------------------------------------------------------------
   static alert(element) {
     return {
       close() {
@@ -100,7 +100,7 @@ class Phuse {
     };
   }
 
-  // ── Button toggle ─────────────────────────────────────────────────────────
+  // -- Button toggle ---------------------------------------------------------
   static button() {
     return {
       toggle(el) {
@@ -111,7 +111,7 @@ class Phuse {
     };
   }
 
-  // ── Carousel ──────────────────────────────────────────────────────────────
+  // -- Carousel --------------------------------------------------------------
   // State stored in WeakMap so the same index persists across multiple
   // handler calls on the same DOM element.
   static carousel(element) {
@@ -144,7 +144,7 @@ class Phuse {
     };
   }
 
-  // ── Offcanvas ─────────────────────────────────────────────────────────────
+  // -- Offcanvas -------------------------------------------------------------
   static offcanvas(element) {
     const mkBackdrop = () => {
       let bd = document.getElementById('phuse-offcanvas-backdrop');
@@ -187,7 +187,7 @@ class Phuse {
     };
   }
 
-  // ── Popover ───────────────────────────────────────────────────────────────
+  // -- Popover ---------------------------------------------------------------
   static popover(element) {
     const place = (pop) => {
       const rect = element.getBoundingClientRect();
@@ -264,7 +264,7 @@ class Phuse {
     };
   }
 
-  // ── ScrollSpy ─────────────────────────────────────────────────────────────
+  // -- ScrollSpy -------------------------------------------------------------
   static scrollSpy(element) {
     const targetSel = element.dataset.target || element.dataset.bsTarget;
     const navEl     = targetSel ? document.querySelector(targetSel) : null;
@@ -285,7 +285,7 @@ class Phuse {
     return { update };
   }
 
-  // ── Tooltip ───────────────────────────────────────────────────────────────
+  // -- Tooltip ---------------------------------------------------------------
   static tooltip(element) {
     const position = (tip, placement) => {
       const rect = element.getBoundingClientRect();
@@ -367,7 +367,7 @@ class Phuse {
     };
   }
 
-  // ── Toast ─────────────────────────────────────────────────────────────────
+  // -- Toast -----------------------------------------------------------------
   static toast(message, type = 'info', duration = 4000) {
     // Fixed top-right container
     let container = document.getElementById('phuse-toast-container');
@@ -447,7 +447,7 @@ class Phuse {
     return wrap;
   }
 
-  // ── Accordion ─────────────────────────────────────────────────────────────
+  // -- Accordion -------------------------------------------------------------
   // Structure: .accordion-button > h2.accordion-header > div.accordion-item > div.accordion-body
   static accordion(button) {
     const item = button.closest('.accordion-item');
@@ -489,9 +489,14 @@ class Phuse {
     };
   }
 
-  // ── Dark Mode ─────────────────────────────────────────────────────────────
+  // -- Dark Mode -------------------------------------------------------------
   // Reads localStorage, applies data-theme to <html>, injects toggle button.
+  // Admin pages own their own theme toggle (admin.js, #theme-toggle, 'vtx-theme'
+  // key) - skip entirely there so this doesn't fight it with a stale key and a
+  // second floating button.
   static darkMode() {
+    if (document.getElementById('theme-toggle')) return;
+
     const KEY = 'phuse-theme';
 
     const apply = (dark) => {
@@ -527,7 +532,7 @@ class Phuse {
     }
   }
 
-  // ── Tabs ──────────────────────────────────────────────────────────────────
+  // -- Tabs ------------------------------------------------------------------
   static tabs() {
     return {
       show(targetId, triggerEl) {
@@ -540,7 +545,7 @@ class Phuse {
     };
   }
 
-  // ── Event delegation ──────────────────────────────────────────────────────
+  // -- Event delegation ------------------------------------------------------
   static on(eventType, selector, callback) {
     document.addEventListener(eventType, function(e) {
       if (e.target.nodeType !== Node.ELEMENT_NODE) return;
@@ -549,7 +554,7 @@ class Phuse {
     });
   }
 
-  // ── Init ──────────────────────────────────────────────────────────────────
+  // -- Init ------------------------------------------------------------------
   static init() {
 
     // Dark mode toggle (must run first to avoid layout shift)
@@ -653,7 +658,7 @@ class Phuse {
   }
 }
 
-// ── Bootstrap ─────────────────────────────────────────────────────────────────
+// -- Bootstrap -----------------------------------------------------------------
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => Phuse.init());
 } else {

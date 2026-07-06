@@ -168,11 +168,17 @@ trait BuildersTrait {
      * @return self
      */
     public function delete(): self
-    {		
-		// Prioritize 'WHERE IN' sql statement if found
-		$where = !empty($this->queryWhereIn) ? $this->queryWhereIn : $this->queryWhere;
+    {
+        // Combine WHERE and WHERE IN (matching compile()'s SELECT-branch handling) instead
+        // of dropping one whenever both are present - e.g. ->where(...)->whereIn(...)->delete()
+        // must AND them together, not silently ignore the plain where().
+        $where = $this->queryWhere;
+        $whereIn = $this->queryWhereIn;
+        if (!empty($where) && !empty($whereIn)) {
+            $whereIn = str_replace('WHERE', 'AND', $whereIn);
+        }
 
-        $this->queryDelete = "DELETE FROM {$this->table} $where";
+        $this->queryDelete = "DELETE FROM {$this->table} {$where}{$whereIn}";
 
         return $this;
     }
@@ -623,7 +629,12 @@ trait BuildersTrait {
         } elseif (!empty($this->queryInsert)) {
             $sql = $this->queryInsert;
         } elseif (!empty($this->queryUpdate)) {
-            $sql = $this->queryUpdate.$this->queryWhere;
+            $where = $this->queryWhere;
+            $whereIn = $this->queryWhereIn;
+            if (!empty($where) && !empty($whereIn)) {
+                $whereIn = str_replace('WHERE', 'AND', $whereIn);
+            }
+            $sql = $this->queryUpdate.$where.$whereIn;
         } elseif (!empty($this->queryDelete)) {
             $sql = $this->queryDelete;
         } else {

@@ -1,4 +1,4 @@
-/* PHUSE CSS Framework v1.2.6 | Flat - Modern - Professional */
+/* PHUSE CSS Framework v1.2.8 | Flat - Modern - Professional */
 
 /* Icon system - .pi / .pi-* - lives in icons.css, imported here.
    @import MUST stay before all other rules per the CSS spec, or
@@ -6,13 +6,142 @@
 @import url("icons.css?v=1");
 
 /* ============================================================
+   § 0  SELF-HOSTED TYPEFACE - IBM Plex Sans / Mono
+   No CDN calls (privacy-appropriate for a self-hosted CMS).
+   Files vendored under fonts/ - see fonts/OFL.txt (SIL Open Font License 1.1).
+   ============================================================ */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('../fonts/ibm-plex-sans/ibm-plex-sans-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('../fonts/ibm-plex-sans/ibm-plex-sans-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('../fonts/ibm-plex-sans/ibm-plex-sans-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('../fonts/ibm-plex-sans/ibm-plex-sans-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('../fonts/ibm-plex-mono/ibm-plex-mono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('../fonts/ibm-plex-mono/ibm-plex-mono-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('../fonts/ibm-plex-mono/ibm-plex-mono-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Lora - "Field" theme headings. */
+@font-face {
+  font-family: 'Lora';
+  src: url('../fonts/lora/lora-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Lora';
+  src: url('../fonts/lora/lora-400-italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Lora';
+  src: url('../fonts/lora/lora-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Lora';
+  src: url('../fonts/lora/lora-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Karla - "Field" theme body text. */
+@font-face {
+  font-family: 'Karla';
+  src: url('../fonts/karla/karla-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Karla';
+  src: url('../fonts/karla/karla-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Karla';
+  src: url('../fonts/karla/karla-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Space Grotesk - "Frame" theme display headings. */
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('../fonts/space-grotesk/space-grotesk-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('../fonts/space-grotesk/space-grotesk-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ============================================================
    § 1  DESIGN TOKENS - CSS Custom Properties
    ============================================================ */
 :root {
-  /* Brand */
-  --ps-primary:           #2563EB;
-  --ps-primary-hover:     #1D4ED8;
-  --ps-primary-light:     #EFF6FF;
+  /* Brand - "Precision Ledger" enterprise navy (0.0.9) */
+  --ps-primary:           #1E3A5F;
+  --ps-primary-hover:     #16293F;
+  --ps-primary-light:     #E7EBEF;
+  --ps-primary-rgb:       30, 58, 95;
+  /* Stable navy for filled backgrounds with white text (buttons, avatars,
+     logo marks) - does NOT flip in dark mode, unlike --ps-primary itself. */
+  --ps-primary-fill:       #1E3A5F;
+  --ps-primary-fill-hover: #16293F;
   --ps-success:           #16A34A;
   --ps-success-light:     #F0FDF4;
   --ps-danger:            #DC2626;
@@ -53,13 +182,35 @@
   --ps-shadow-md:         0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.06);
   --ps-shadow-lg:         0 10px 15px rgba(0,0,0,.1), 0 4px 6px rgba(0,0,0,.05);
 
-  /* Typography */
-  --ps-font-sans:         -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --ps-font-mono:         'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  /* Typography - IBM Plex pairing (0.0.9), self-hosted (see @font-face above) */
+  --ps-font-sans:         'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --ps-font-mono:         'IBM Plex Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+
+  /* Type scale - modular, ~1.2 ratio (0.0.9) */
+  --fs-xs:                0.6875rem;  /* 11px - mono labels, captions */
+  --fs-sm:                0.8125rem;  /* 13px - dense UI text */
+  --fs-base:              0.9375rem;  /* 15px - body */
+  --fs-md:                1.0625rem;  /* 17px - subheads */
+  --fs-lg:                1.3125rem;  /* 21px - page titles */
+  --fs-xl:                1.75rem;    /* 28px - ledger stat numbers */
+  --fs-2xl:               2.25rem;    /* 36px - display */
+  --lh-tight:             1.2;
+  --lh-base:              1.5;
+  --lh-loose:             1.7;
 
   /* Grid */
   --ps-gutter-x:          1.5rem;
   --ps-gutter-y:          0;
+
+  /* Spacing scale (0.0.9) - 4px base */
+  --sp-1:                 0.25rem;  /* 4px */
+  --sp-2:                 0.5rem;   /* 8px */
+  --sp-3:                 0.75rem;  /* 12px */
+  --sp-4:                 1rem;     /* 16px */
+  --sp-5:                 1.5rem;   /* 24px */
+  --sp-6:                 2rem;     /* 32px */
+  --sp-7:                 3rem;     /* 48px */
+  --sp-8:                 4rem;     /* 64px */
 }
 
 /* ============================================================
@@ -79,6 +230,13 @@
 
   --ps-primary-light:     #162050;
 
+  /* Navy is too dark to read as TEXT/ICON/BORDER on a dark surface - brighten
+     --ps-primary itself for dark mode. Filled backgrounds (buttons, avatars,
+     logo marks) use the separate, non-flipping --ps-primary-fill instead. */
+  --ps-primary:           #60A5FA;
+  --ps-primary-hover:     #93C5FD;
+  --ps-primary-rgb:       96, 165, 250;
+
   --ps-light:             #191c26;
   --ps-dark:              #dce2f0;
 }
@@ -96,6 +254,12 @@ html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   tab-size: 4;
+  /* Always reserve the scrollbar gutter so short pages (e.g. Contact) don't
+     render a few pixels wider than tall ones (e.g. Search/Videos/Gallery) -
+     without this, the shared sticky header/container appears to shift width
+     between pages depending on whether that page's content needs to scroll. */
+  scrollbar-gutter: stable;
+  overflow-y: scroll;
 }
 
 body {
@@ -582,7 +746,7 @@ hr {
    ============================================================ */
 
 /* Background */
-.bg-primary     { background-color: var(--ps-primary) !important; }
+.bg-primary     { background-color: var(--ps-primary-fill) !important; }
 .bg-secondary   { background-color: var(--ps-secondary) !important; }
 .bg-success     { background-color: var(--ps-success) !important; }
 .bg-danger      { background-color: var(--ps-danger) !important; }
@@ -619,7 +783,7 @@ hr {
 .text-reset     { color: inherit !important; }
 
 /* Text emphasis variants */
-.text-primary-emphasis  { color: #1D4ED8 !important; }
+.text-primary-emphasis  { color: #16293F !important; }
 .text-success-emphasis  { color: #15803D !important; }
 .text-danger-emphasis   { color: #B91C1C !important; }
 .text-warning-emphasis  { color: #B45309 !important; }
@@ -729,13 +893,13 @@ hr {
 
 /* Solid variants */
 .btn-primary {
-  background-color: var(--ps-primary);
-  border-color: var(--ps-primary);
+  background-color: var(--ps-primary-fill);
+  border-color: var(--ps-primary-fill);
   color: #ffffff;
 }
 .btn-primary:hover {
-  background-color: var(--ps-primary-hover);
-  border-color: var(--ps-primary-hover);
+  background-color: var(--ps-primary-fill-hover);
+  border-color: var(--ps-primary-fill-hover);
   color: #ffffff;
   text-decoration: none;
 }
@@ -831,8 +995,8 @@ hr {
   color: var(--ps-primary);
 }
 .btn-outline-primary:hover {
-  background-color: var(--ps-primary);
-  border-color: var(--ps-primary);
+  background-color: var(--ps-primary-fill);
+  border-color: var(--ps-primary-fill);
   color: #ffffff;
   text-decoration: none;
 }
@@ -1053,7 +1217,7 @@ hr {
   vertical-align: baseline;
 }
 
-.badge.bg-primary   { background-color: var(--ps-primary) !important;   color: #ffffff; }
+.badge.bg-primary   { background-color: var(--ps-primary-fill) !important;   color: #ffffff; }
 .badge.bg-secondary { background-color: var(--ps-secondary) !important; color: #ffffff; }
 .badge.bg-success   { background-color: var(--ps-success) !important;   color: #ffffff; }
 .badge.bg-danger    { background-color: var(--ps-danger) !important;    color: #ffffff; }
@@ -1081,7 +1245,7 @@ hr {
   position: relative;
 }
 
-/* ── Close button (used in alerts, modals, offcanvas) ───────────────────── */
+/* -- Close button (used in alerts, modals, offcanvas) --------------------- */
 .btn-close {
   display: inline-flex;
   align-items: center;
@@ -1118,8 +1282,8 @@ hr {
 
 .alert-primary {
   background-color: var(--ps-primary-light);
-  border-color: #BFDBFE;
-  color: #1D4ED8;
+  border-color: #C7CED7;
+  color: #16293F;
 }
 
 .alert-secondary {
@@ -1170,6 +1334,7 @@ hr {
   border-color: rgba(147, 197, 253, 0.3);
   color: #93C5FD;
 }
+[data-theme=dark] .text-primary-emphasis { color: #93C5FD !important; }
 [data-theme=dark] .alert-secondary {
   background-color: rgba(100, 116, 139, 0.15);
   border-color: rgba(148, 163, 184, 0.3);
@@ -1291,8 +1456,8 @@ hr {
 }
 
 .list-group-item.active {
-  background: var(--ps-primary);
-  border-color: var(--ps-primary);
+  background: var(--ps-primary-fill);
+  border-color: var(--ps-primary-fill);
   color: #ffffff;
 }
 
@@ -1354,7 +1519,7 @@ hr {
 .form-control:focus {
   outline: none;
   border-color: var(--ps-primary);
-  box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+  box-shadow: 0 0 0 3px rgba(var(--ps-primary-rgb), .15);
 }
 
 .form-control:disabled {
@@ -1454,13 +1619,26 @@ input[type=time].form-control::-webkit-calendar-picker-indicator:hover {
 .form-select:focus {
   outline: none;
   border-color: var(--ps-primary);
-  box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+  box-shadow: 0 0 0 3px rgba(var(--ps-primary-rgb), .15);
 }
 
 .form-select:disabled {
   background-color: var(--ps-bg-subtle);
   opacity: .65;
   cursor: not-allowed;
+}
+
+.form-select-sm {
+  padding: .25rem 2rem .25rem .5rem;
+  font-size: .875rem;
+  border-radius: var(--ps-radius-sm);
+  background-size: 14px 10px;
+}
+
+.form-select-lg {
+  padding: .75rem 3rem .75rem 1rem;
+  font-size: 1.125rem;
+  border-radius: var(--ps-radius-lg);
 }
 
 .form-check {
@@ -1725,7 +1903,7 @@ input[type=time].form-control::-webkit-calendar-picker-indicator:hover {
   border-radius: 50rem;
 }
 .nav-pills .nav-link.active {
-  background: var(--ps-primary);
+  background: var(--ps-primary-fill);
   color: #ffffff;
 }
 
@@ -1975,7 +2153,7 @@ kbd {
   text-decoration: none;
 }
 .dropdown-item.active {
-  background-color: var(--ps-primary);
+  background-color: var(--ps-primary-fill);
   color: #ffffff;
 }
 .dropdown-item:disabled,
@@ -2020,7 +2198,7 @@ kbd {
   align-items: center;
   justify-content: center;
   height: 100%;
-  background: var(--ps-primary);
+  background: var(--ps-primary-fill);
   transition: width .3s ease;
   white-space: nowrap;
   font-size: .6875rem;
@@ -2679,8 +2857,8 @@ kbd {
 }
 
 .page-item.active .page-link {
-  background-color: var(--ps-primary);
-  border-color: var(--ps-primary);
+  background-color: var(--ps-primary-fill);
+  border-color: var(--ps-primary-fill);
   color: #ffffff;
 }
 
@@ -3343,12 +3521,33 @@ kbd {
 }
 
 /* ============================================================
-   § 41  LOGO - light/dark swap
-   ============================================================ */
-.phuse-logo-dark { display: none; }
-[data-theme=dark] .phuse-logo-light { display: none; }
-[data-theme=dark] .phuse-logo-dark { display: inline-block; }
-
-/* ============================================================
    END - PHUSE CSS Framework v1.2.6
    ============================================================ */
+
+/* -- Admin locale switcher ------------------------------------------------- */
+.vtx-locale-select {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--ps-border);
+  border-radius: var(--ps-radius-sm);
+  color: var(--ps-text);
+  cursor: pointer;
+  font-size: .6875rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  padding: .25rem .5rem;
+  text-transform: uppercase;
+  line-height: 1.4;
+  transition: background .15s, border-color .15s;
+}
+.vtx-locale-select:hover,
+.vtx-locale-select:focus {
+  background: var(--ps-bg-hover);
+  border-color: var(--ps-primary);
+  outline: none;
+}
+.vtx-locale-select option {
+  background: var(--ps-bg);
+  color: var(--ps-text);
+}

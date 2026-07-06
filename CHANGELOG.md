@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.2.8b (2026-07-06)
+
+### Core — Database
+
+#### Fixed: `whereIn()` Silently Broke `update()` and Could Drop Conditions on `delete()`
+
+`Core\Database\Builders\BuildersTrait::compile()`'s `UPDATE` branch only ever appended
+`$this->queryWhere` to the compiled SQL, never `$this->queryWhereIn` - so a bare
+`->whereIn(['id' => $ids])->update([...])` (no accompanying `->where()`) compiled to
+`UPDATE table SET col=:param_1` with no `WHERE` clause text at all, while the query's bind array
+still held the `:id_param0`, `:id_param1`, ... values `whereIn()` had added. PDO rejected the
+mismatched bind count with `PDOException: SQLSTATE[HY093]: Invalid parameter number`. Found via a
+consuming project's "bulk move/delete by id list" endpoint, which is exactly this pattern.
+
+`BuildersTrait::delete()` had a related but distinct bug: it explicitly *prioritized*
+`queryWhereIn` over `queryWhere` whenever both were present (`->where('status','x')
+->whereIn(['id'=>[...]])->delete()`), silently discarding the plain `where()` condition instead of
+ANDing the two together - so a delete meant to be scoped by both conditions would delete every row
+matching the ID list regardless of status.
+
+Both are fixed by reusing the same combine-with-AND logic the `SELECT` branch already used
+correctly (`compile()` lines ~624-628): if both `queryWhere` and `queryWhereIn` are non-empty,
+rewrite `queryWhereIn`'s leading `WHERE` to `AND` and concatenate both. Verified against a live
+Postgres database (SELECT/UPDATE/DELETE, `whereIn()` alone and combined with `where()`, with a
+transaction rollback for the destructive delete tests) - all four combinations now compile correct
+SQL with matching bind counts.
+
 ## v1.2.8 (2026-07-02)
 
 This release was originally scoped as Validator rules + middleware implementations + a

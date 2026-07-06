@@ -110,25 +110,48 @@ class Error extends \Exception
         }
 
         try {
-            // Read the template file content
-            $templateContent = file_get_contents($templatePath);
-            if ($templateContent === false) {
-                throw new \Exception("Could not read template file: {$templatePath}");
-            }
-
-            // Set assets URL for template usage
+            // Set assets URL for template usage. Must be root-relative (leading
+            // slash) - a bare "assets/" resolves against the current request path,
+            // so a 404 on e.g. /blog/missing would wrongly load /blog/assets/...
             try {
                 $configData = $this->config->get();
-                $assetsUrl = $configData->site->assetsUrl . '/' ?? '/assets/';
+                $assetsSegment = trim((string) ($configData->site->assetsUrl ?? 'assets'), '/');
+
+                $host = $_SERVER['HTTP_HOST'] ?? '';
+                $isDomainAccess = !str_contains($host, 'localhost') && !str_contains($host, '127.0.0.1');
+
+                if ($isDomainAccess) {
+                    $assetsUrl = '/' . $assetsSegment . '/';
+                } else {
+                    $fullBaseUrl = $configData->site->baseUrl ?? '';
+                    $basePath = !empty($fullBaseUrl) ? parse_url($fullBaseUrl, PHP_URL_PATH) : basename(trim(ROOT, DS));
+                    $basePath = trim((string) $basePath, '/');
+                    $assetsUrl = '/' . $basePath . '/' . $assetsSegment . '/';
+                }
             } catch (\Throwable $configError) {
                 $this->logger->write("Config error getting assets_url: " . $configError->getMessage(), LOG_WARNING);
                 $assetsUrl = '/assets/';
             }
 
-            // Simple template variable replacement
-            $templateContent = str_replace('{assetsUrl}', $assetsUrl, $templateContent);
-            $templateContent = str_replace('{date}', date('Y'), $templateContent);
-            $templateContent = str_replace('{year}', date('Y'), $templateContent);
+            // Execute the template as PHP (templates like error/404.php contain live
+            // logic, not just static markup) instead of dumping its raw source
+            ob_start();
+            try {
+                include $templatePath;
+            } finally {
+                $templateContent = ob_get_clean();
+            }
+
+            if ($templateContent === false) {
+                throw new \Exception("Could not render template file: {$templatePath}");
+            }
+
+            // Backward-compatible placeholder substitution for static templates
+            $templateContent = str_replace(
+                ['{{assetsUrl}}', '{assetsUrl}', '{date}', '{year}'],
+                [$assetsUrl, $assetsUrl, date('Y'), date('Y')],
+                $templateContent
+            );
 
             return $templateContent;
 
