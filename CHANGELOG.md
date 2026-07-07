@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.2.8d (2026-07-08)
+
+### Core — Middleware
+
+#### Added: `SecurityHeadersMiddleware`
+
+No security-header logic (`Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options`,
+`Referrer-Policy`, HSTS) existed anywhere in the framework itself - applications had to set these
+per-controller, and `Core\Middleware\MiddlewareStack::add()` was already wired into
+`Core\Base::run()` but nothing ever called it in practice. Added `Core\Middleware\SecurityHeadersMiddleware`,
+applying a strict baseline (no `unsafe-inline`) to every response, plus `Strict-Transport-Security`
+when the application's `https` config flag is `true`. `Core\Base::run()` now adds it to the
+middleware stack automatically, so every route in every Phuse-based application - any controller,
+any surface - gets these headers with zero per-route or per-app changes. An application that needs
+a different policy (e.g. an admin panel relying on inline scripts) can still override individual
+headers afterward in its own controller, since a later `header()` call for the same header name
+replaces the earlier one.
+
 ## v1.2.8c (2026-07-07)
 
 ### Core — Template

@@ -10,6 +10,7 @@ use Core\Folder\Path;
 use Core\Config;
 use Core\Container;
 use Core\Middleware\MiddlewareStack;
+use Core\Middleware\SecurityHeadersMiddleware;
 use Core\Http\Session;
 use Exception;
 
@@ -114,7 +115,8 @@ class Base
                 $routes = require_once Path::CONFIG . 'Routes.php';
                 return $routes->run();
             });
-            
+            $middlewareStack->add(new SecurityHeadersMiddleware());
+
             // Process through middleware stack
             $middlewareStack->process();
         } catch (Exception $e) {
