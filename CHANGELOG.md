@@ -1,5 +1,36 @@
 # Changelog
 
+## v1.2.8c (2026-07-07)
+
+### Core — Template
+
+#### Fixed: Template Cache Never Actually Served a Cached Copy
+
+`Core\Template\Parser::render()` computed a cache key for the template+data combination,
+immediately deleted any existing cache file for that key ("force cache invalidation"), and then
+always re-rendered and re-parsed from scratch before re-storing. `Core\Cache\TemplateCache`'s
+`hasValidCache()` and `getCached()` methods - the actual read side of the cache - were fully
+implemented but never called from `render()` or anywhere else in the codebase, so every request
+paid the full template-compile and minify cost regardless of `Config\Template::$enableCache`.
+
+Fixed `render()` to check `hasValidCache()` first and serve `getCached()` directly when a valid,
+unexpired entry exists for the exact template+data key, only falling through to a full render when
+the cache is missing or stale. No changes needed to `TemplateCache` itself. `generateKey()` already
+incorporates the template's `mtime` and a hash of the render data, so the cache still correctly
+invalidates whenever the template file or the data passed to it changes.
+
+### Core — Output
+
+#### Added: Transparent Gzip Compression
+
+No response compression existed anywhere in the framework - confirmed via a full grep of `Core/`
+for `Content-Encoding`, `ob_gzhandler`, and related terms. Added a single `ob_start('ob_gzhandler')`
+call at the top of `Core\Base::run()`, guarded by `extension_loaded('zlib')` and
+`!ini_get('zlib.output_compression')` to avoid double-compression on servers that already gzip at
+the php.ini/webserver level. `ob_gzhandler` auto-negotiates `Accept-Encoding` per PHP's built-in
+logic, so clients that don't support compression are unaffected. This wraps every response any
+Phuse-based application produces - any route, any controller - with zero per-route changes.
+
 ## v1.2.8b (2026-07-06)
 
 ### Core — Database

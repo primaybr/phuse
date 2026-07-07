@@ -90,6 +90,14 @@ class Base
      */
     public function run(): void
     {
+        // Transparently gzip every response (admin, front, API) when the client supports it
+        // and the server isn't already compressing output itself.
+        if (extension_loaded('zlib') && !ini_get('zlib.output_compression')) {
+            ob_start('ob_gzhandler');
+        } else {
+            ob_start();
+        }
+
         try {
             $env = $this->config->getEnv();
             $validEnvironments = ['development', 'local', 'production', 'testing'];

@@ -165,14 +165,17 @@ class Parser implements ParserInterface
             $this->setData($data);
         }
 
-        // Clear existing cache for this template
+        // Serve a valid cached copy of this exact template+data combination, if one exists
         $cacheKey = null;
         if ($this->useCache) {
             $cacheKey = $this->cache->generateKey($this->template, $this->data);
-            // Force cache invalidation
-            $cacheFile = $this->cache->getCachePath($cacheKey);
-            if (file_exists($cacheFile)) {
-                unlink($cacheFile);
+            if ($this->cache->hasValidCache($cacheKey)) {
+                $content = $this->cache->getCached($cacheKey);
+                if ($return) {
+                    return $content;
+                }
+                echo $content;
+                return null;
             }
         }
 
