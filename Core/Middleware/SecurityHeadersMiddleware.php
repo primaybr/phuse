@@ -21,12 +21,26 @@ use Core\Config;
  * same-named header by default, so the later, more permissive value wins
  * only where it's explicitly set.
  *
+ * script-src also allow-lists the exact SHA-256 hash of an inline FOUC-
+ * prevention snippet (App/Views/_shared/theme-init.php in Vertext, the
+ * primary consumer of this framework) - a small, static, first-party
+ * script with no per-request variation, so its hash never changes. This
+ * is the CSP-recommended way to allow one specific known-safe inline
+ * script without weakening the policy generally: any actually-injected
+ * malicious inline script has different content and therefore a
+ * different hash, so it's still blocked. Harmless as an unused allow-list
+ * entry in a Phuse app that doesn't ship that exact script. Recompute via:
+ *   php -r '$c=file_get_contents("App/Views/_shared/theme-init.php");
+ *   preg_match("/<script>(.*)<\/script>/s",$c,$m);
+ *   echo base64_encode(hash("sha256",$m[1],true));'
+ * if that script's content ever changes.
+ *
  * @package Core\Middleware
  * @author  Prima Yoga
  */
 class SecurityHeadersMiddleware implements MiddlewareInterface
 {
-    private const CSP = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; frame-ancestors 'none'";
+    private const CSP = "default-src 'self'; script-src 'self' 'sha256-oDYWwGoPMMLZnC4nXKXi7EA6Ad5mbokl8Ye1cMFUfJk='; style-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; frame-ancestors 'none'";
 
     /**
      * @param callable $next The next middleware or the final application handler.
