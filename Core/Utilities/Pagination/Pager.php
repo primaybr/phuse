@@ -244,11 +244,15 @@ class Pager implements PagerInterface
 
         $attrString = $this->buildAttributes($attributes);
 
+        // $text is always framework-controlled (nav entities like &raquo; or a
+        // plain page number), never user input, so it's intentionally not
+        // passed through htmlspecialchars() here — doing so double-encodes
+        // the entities (e.g. &raquo; becomes the literal text "&raquo;").
         if ($isActive) {
-            return '<li ' . $attrString . '><span class="' . $linkClass . '">' . htmlspecialchars($text) . "</span></li>";
+            return '<li ' . $attrString . '><span class="' . $linkClass . '">' . $text . "</span></li>";
         }
 
-        return '<li ' . $attrString . '><a href="' . htmlspecialchars($url) . '" class="' . $linkClass . '">' . htmlspecialchars($text) . "</a></li>";
+        return '<li ' . $attrString . '><a href="' . htmlspecialchars($url) . '" class="' . $linkClass . '">' . $text . "</a></li>";
     }
 
     /**
