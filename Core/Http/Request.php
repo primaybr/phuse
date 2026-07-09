@@ -177,7 +177,9 @@ class Request
             $this->stream = fopen($requestUrl, 'r', false, $context);
 
             if ($this->stream === false) {
-                throw new RuntimeException("Failed to open stream for URL: {$requestUrl}");
+                $lastError = error_get_last();
+                throw new RuntimeException("Failed to open stream for URL: {$requestUrl}" .
+                    ($lastError ? " ({$lastError['message']})" : ' (upstream did not respond in time or refused the connection)'));
             }
 
             $this->httpResponseCode = $this->extractResponseCode($http_response_header ?? []);
@@ -378,7 +380,9 @@ class Request
             $this->stream = fopen($requestUrl, 'r', false, $context);
 
             if ($this->stream === false) {
-                throw new \RuntimeException("Failed to open stream for URL after token refresh: {$requestUrl}");
+                $lastError = error_get_last();
+                throw new \RuntimeException("Failed to open stream for URL after token refresh: {$requestUrl}" .
+                    ($lastError ? " ({$lastError['message']})" : ' (upstream did not respond in time or refused the connection)'));
             }
 
             $this->httpResponseCode = $this->extractResponseCode($http_response_header ?? []);
@@ -497,6 +501,10 @@ class Request
         $this->options['max_redirects'] = 0;
         $this->options['ignore_errors'] = 1;
         $this->options['method'] = $this->method;
+        // Bounded below common reverse-proxy gateway timeouts (60s) so a slow
+        // upstream fails with this framework's own JSON error format instead
+        // of the gateway killing the connection and returning a raw 504.
+        $this->options['timeout'] ??= 45.0;
 
         if ($this->method === 'POST' || $this->method === 'PUT') {
             if (empty($this->data)) {
