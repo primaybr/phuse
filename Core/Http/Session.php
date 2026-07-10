@@ -30,10 +30,27 @@ final class Session
     /**
      * Session configuration constants.
      */
-    private const SESSION_COOKIE_SECURE = true;
     private const SESSION_COOKIE_HTTPONLY = true;
     private const SESSION_COOKIE_SAMESITE = 'Strict';
     private const SESSION_GC_MAXLIFETIME = 1440; // 24 minutes
+
+    /**
+     * Determine if secure cookie should be used based on environment.
+     */
+    private static function isSecureConnection(): bool
+    {
+        // Check if running via CLI
+        if (PHP_SAPI === 'cli') {
+            return false;
+        }
+
+        // Check various HTTPS indicators
+        return (
+            (isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] === 'on' || $_SERVER['HTTPS'] === '1')) ||
+            (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
+            (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443)
+        );
+    }
 
     /**
      * Session validation data for hijacking protection.
@@ -129,7 +146,7 @@ final class Session
                 'lifetime' => 0, // Session cookie (expires when browser closes)
                 'path' => '/',
                 'domain' => '', // Use current domain
-                'secure' => self::SESSION_COOKIE_SECURE,
+                'secure' => self::isSecureConnection(),
                 'httponly' => self::SESSION_COOKIE_HTTPONLY,
                 'samesite' => self::SESSION_COOKIE_SAMESITE
             ]);

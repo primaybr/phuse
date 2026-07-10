@@ -73,6 +73,46 @@ trait ParserTrait
         return $current;
     }
 
+    /**
+     * Converts a value to its {{ }} output string, HTML-escaping it unless
+     * it's a SafeHtml-wrapped, pre-trusted fragment (nested render() output,
+     * sidebar/navbar markup, generated <link>/<script> tags). This is the
+     * default output encoding for every HTML-context substitution path in
+     * this trait - do not bypass it for values that can contain user/API
+     * data.
+     */
+    protected function escapeForOutput($value): string
+    {
+        if ($value instanceof SafeHtml) {
+            return (string) $value;
+        }
+
+        return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+    }
+
+    /**
+     * Converts a value for substitution inside an inline <script>/<style>
+     * block (see restoreHtmlBlocks()), where the placeholder sits inside
+     * developer-provided quotes, e.g. const apiUrl = "{{apiUrl}}";
+     * HTML-escaping is the wrong tool here - it doesn't stop the value from
+     * breaking out of the JS string via an unescaped quote/backslash, and
+     * would just corrupt legitimate values. json_encode() (minus its own
+     * surrounding quotes) escapes quotes/backslashes/control characters
+     * correctly for this context, and its default slash-escaping doubles as
+     * protection against a literal "</script>" in the value closing the tag
+     * early.
+     */
+    protected function escapeForScriptContext($value): string
+    {
+        if ($value instanceof SafeHtml) {
+            return (string) $value;
+        }
+
+        $encoded = json_encode((string) $value, JSON_UNESCAPED_UNICODE);
+
+        return $encoded === false ? '' : substr($encoded, 1, -1);
+    }
+
     // -----------------------------------------------------------------------
     // New v1.2.1 syntax helpers
     // -----------------------------------------------------------------------
@@ -347,12 +387,16 @@ trait ParserTrait
 
             $value = $this->resolveNestedProperty($data, $expression);
 
+            if ($value instanceof SafeHtml) {
+                return (string) $value;
+            }
+
             // Unresolved or non-scalar - leave the placeholder intact
             if ($value === null || is_array($value) || is_object($value)) {
                 return $matches[0];
             }
 
-            return (string) $value;
+            return $this->escapeForOutput($value);
         }, $template);
     }
 
@@ -425,10 +469,13 @@ trait ParserTrait
         }
 
         $value = $this->resolveNestedProperty($data, $expression);
+        if ($value instanceof SafeHtml) {
+            return (string) $value;
+        }
         if (is_array($value) || is_object($value)) {
             return '';
         }
-        return (string) $value;
+        return $this->escapeForOutput($value);
     }
 
     /**
@@ -530,7 +577,7 @@ trait ParserTrait
                         continue;
                     }
                     // Map {{key}} → value for each cell in the row
-                    $arr['{{'.$key.'}}'] = is_array($val) ? implode(', ', $val) : (string) $val;
+                    $arr['{{'.$key.'}}'] = $this->escapeForOutput($val);
                 }
 
                 $str .= strtr($match[1], $arr);
@@ -587,7 +634,7 @@ trait ParserTrait
             foreach ($data as $key => $val) {
                 $parse   = is_array($val)
                     ? $this->parseArray($template, $key, $val)
-                    : $this->parseValue($key, (string) $val);
+                    : $this->parseValue($key, $this->escapeForOutput($val));
                 $replace = array_merge($replace, $parse);
             }
         }
@@ -865,13 +912,13 @@ trait ParserTrait
             $replacements = [];
 
             // Simple scalar replacement  {{loopVar}}
-            $replacements['{{'.$loopVar.'}}'] = is_array($value) ? json_encode($value) : (string) $value;
+            $replacements['{{'.$loopVar.'}}'] = $this->escapeForOutput(is_array($value) ? json_encode($value) : $value);
 
             // Nested property access  {{loopVar.name}}, {{loopVar.profile.age}}
             if (is_array($value) || is_object($value)) {
                 $flattened = $this->flattenArray($value, $loopVar);
                 foreach ($flattened as $nestedKey => $nestedValue) {
-                    $replacements['{{'.$nestedKey.'}}'] = (string) $nestedValue;
+                    $replacements['{{'.$nestedKey.'}}'] = $this->escapeForOutput($nestedValue);
                 }
             }
 
@@ -931,12 +978,12 @@ trait ParserTrait
             $nestedResult = '';
             foreach ($nestedIterable as $item) {
                 $itemReplacements = [];
-                $itemReplacements['{{'.$loopVar.'}}'] = is_array($item) ? json_encode($item) : (string) $item;
+                $itemReplacements['{{'.$loopVar.'}}'] = $this->escapeForOutput(is_array($item) ? json_encode($item) : $item);
 
                 if (is_array($item) || is_object($item)) {
                     $flattened = $this->flattenArray($item, $loopVar);
                     foreach ($flattened as $nestedKey => $nestedValue) {
-                        $itemReplacements['{{'.$nestedKey.'}}'] = (string) $nestedValue;
+                        $itemReplacements['{{'.$nestedKey.'}}'] = $this->escapeForOutput($nestedValue);
                     }
                 }
 
@@ -1190,8 +1237,7 @@ trait ParserTrait
         $condition = implode('', $parts);
 
         try {
-            $result = eval("return ($condition);");
-            return (bool) $result;
+            return $this->evaluateSafeExpression($condition);
         } catch (\Throwable $e) {
             return false;
         }
@@ -1316,11 +1362,305 @@ trait ParserTrait
         $condition = implode('', $parts);
 
         try {
-            $result = eval("return ($condition);");
-            return (bool) $result;
+            return $this->evaluateSafeExpression($condition);
         } catch (\Throwable $e) {
             return false;
         }
+    }
+
+    // -----------------------------------------------------------------------
+    // Safe expression evaluator (replaces eval())
+    // -----------------------------------------------------------------------
+
+    /**
+     * Evaluates a boolean expression built from {if}/{while} condition syntax
+     * after evaluateCondition()/evaluateConditionInLoop() have already
+     * substituted every template variable into PHP-literal form (quoted
+     * strings, numeric literals, true/false/null). Only the operator/
+     * grouping structure from the template markup itself remains free-form,
+     * so this supports exactly that constrained grammar - literals,
+     * comparisons (==, !=, ===, !==, <, >, <=, >=), logical operators
+     * (&&, ||, !) and parentheses. No function calls, no variable access, no
+     * assignment - replaces eval() since arbitrary code execution was never
+     * actually needed for what these templates produce.
+     *
+     * @throws \RuntimeException on malformed input - callers catch this and
+     *         treat it as a failed condition (false), matching eval()'s
+     *         previous fail-safe-on-parse-error behavior.
+     */
+    protected function evaluateSafeExpression(string $condition): bool
+    {
+        $tokens = $this->tokenizeExpression($condition);
+        $pos    = 0;
+        $result = $this->parseExprOr($tokens, $pos);
+
+        if ($pos !== count($tokens)) {
+            throw new \RuntimeException('Unexpected token in expression: '.$condition);
+        }
+
+        return (bool) $result;
+    }
+
+    /**
+     * @return array<int, string|array{type: string, value: mixed}>
+     */
+    private function tokenizeExpression(string $condition): array
+    {
+        $tokens = [];
+        $len    = strlen($condition);
+        $i      = 0;
+
+        while ($i < $len) {
+            $ch = $condition[$i];
+
+            if (ctype_space($ch)) {
+                $i++;
+                continue;
+            }
+
+            if ($ch === '(' || $ch === ')') {
+                $tokens[] = $ch;
+                $i++;
+                continue;
+            }
+
+            if ($ch === "'" || $ch === '"') {
+                $quote = $ch;
+                $value = '';
+                $i++;
+                while ($i < $len && $condition[$i] !== $quote) {
+                    if ($condition[$i] === '\\' && $i + 1 < $len
+                        && ($condition[$i + 1] === $quote || $condition[$i + 1] === '\\')
+                    ) {
+                        $value .= $condition[$i + 1];
+                        $i += 2;
+                        continue;
+                    }
+                    $value .= $condition[$i];
+                    $i++;
+                }
+                if ($i >= $len) {
+                    throw new \RuntimeException('Unterminated string literal in expression: '.$condition);
+                }
+                $i++; // consume closing quote
+                $tokens[] = ['type' => 'string', 'value' => $value];
+                continue;
+            }
+
+            if ($ch === '&' && ($condition[$i + 1] ?? '') === '&') {
+                $tokens[] = '&&';
+                $i += 2;
+                continue;
+            }
+
+            if ($ch === '|' && ($condition[$i + 1] ?? '') === '|') {
+                $tokens[] = '||';
+                $i += 2;
+                continue;
+            }
+
+            if ($ch === '=' && ($condition[$i + 1] ?? '') === '=' && ($condition[$i + 2] ?? '') === '=') {
+                $tokens[] = '===';
+                $i += 3;
+                continue;
+            }
+
+            if ($ch === '!' && ($condition[$i + 1] ?? '') === '=' && ($condition[$i + 2] ?? '') === '=') {
+                $tokens[] = '!==';
+                $i += 3;
+                continue;
+            }
+
+            if ($ch === '=' && ($condition[$i + 1] ?? '') === '=') {
+                $tokens[] = '==';
+                $i += 2;
+                continue;
+            }
+
+            if ($ch === '!' && ($condition[$i + 1] ?? '') === '=') {
+                $tokens[] = '!=';
+                $i += 2;
+                continue;
+            }
+
+            if ($ch === '<' && ($condition[$i + 1] ?? '') === '=') {
+                $tokens[] = '<=';
+                $i += 2;
+                continue;
+            }
+
+            if ($ch === '>' && ($condition[$i + 1] ?? '') === '=') {
+                $tokens[] = '>=';
+                $i += 2;
+                continue;
+            }
+
+            if ($ch === '<' || $ch === '>') {
+                $tokens[] = $ch;
+                $i++;
+                continue;
+            }
+
+            if ($ch === '!') {
+                $tokens[] = '!';
+                $i++;
+                continue;
+            }
+
+            // Number literal: optional leading '-', digits, optional '.' digits.
+            // No binary subtraction exists in this grammar, so a leading '-'
+            // is unambiguous.
+            if ($ch === '-' || ctype_digit($ch)) {
+                $start = $i;
+                if ($ch === '-') {
+                    $i++;
+                }
+                while ($i < $len && ctype_digit($condition[$i])) {
+                    $i++;
+                }
+                if (($condition[$i] ?? '') === '.') {
+                    $i++;
+                    while ($i < $len && ctype_digit($condition[$i])) {
+                        $i++;
+                    }
+                }
+                $numStr = substr($condition, $start, $i - $start);
+                if ($numStr === '' || $numStr === '-') {
+                    throw new \RuntimeException('Malformed number literal in expression: '.$condition);
+                }
+                $tokens[] = [
+                    'type'  => 'number',
+                    'value' => str_contains($numStr, '.') ? (float) $numStr : (int) $numStr,
+                ];
+                continue;
+            }
+
+            // Bareword literal: true / false / null (the only identifiers
+            // evaluateCondition()/evaluateConditionInLoop() ever substitute).
+            if (ctype_alpha($ch) || $ch === '_') {
+                $start = $i;
+                while ($i < $len && (ctype_alnum($condition[$i]) || $condition[$i] === '_')) {
+                    $i++;
+                }
+                $word = substr($condition, $start, $i - $start);
+
+                $tokens[] = match ($word) {
+                    'true'  => ['type' => 'bool', 'value' => true],
+                    'false' => ['type' => 'bool', 'value' => false],
+                    'null'  => ['type' => 'null', 'value' => null],
+                    default => throw new \RuntimeException("Unexpected identifier \"$word\" in expression: ".$condition),
+                };
+                continue;
+            }
+
+            throw new \RuntimeException("Unexpected character \"$ch\" in expression: ".$condition);
+        }
+
+        return $tokens;
+    }
+
+    private function parseExprOr(array $tokens, int &$pos): mixed
+    {
+        $left = $this->parseExprAnd($tokens, $pos);
+
+        while (($tokens[$pos] ?? null) === '||') {
+            $pos++;
+            // Not "$left = $left || parseExprAnd(...)" - PHP's || short-circuits
+            // and would skip the call (and its $pos advancement) once $left is
+            // already true, leaving trailing tokens unconsumed.
+            $right = $this->parseExprAnd($tokens, $pos);
+            $left  = $left || $right;
+        }
+
+        return $left;
+    }
+
+    private function parseExprAnd(array $tokens, int &$pos): mixed
+    {
+        $left = $this->parseExprEquality($tokens, $pos);
+
+        while (($tokens[$pos] ?? null) === '&&') {
+            $pos++;
+            // Same short-circuit hazard as parseExprOr() above, mirrored for &&.
+            $right = $this->parseExprEquality($tokens, $pos);
+            $left  = $left && $right;
+        }
+
+        return $left;
+    }
+
+    private function parseExprEquality(array $tokens, int &$pos): mixed
+    {
+        $left = $this->parseExprComparison($tokens, $pos);
+
+        while (in_array($tokens[$pos] ?? null, ['==', '!=', '===', '!=='], true)) {
+            $op    = $tokens[$pos];
+            $pos++;
+            $right = $this->parseExprComparison($tokens, $pos);
+            $left  = match ($op) {
+                '=='  => $left == $right,
+                '!='  => $left != $right,
+                '===' => $left === $right,
+                '!==' => $left !== $right,
+            };
+        }
+
+        return $left;
+    }
+
+    private function parseExprComparison(array $tokens, int &$pos): mixed
+    {
+        $left = $this->parseExprUnary($tokens, $pos);
+
+        while (in_array($tokens[$pos] ?? null, ['<', '>', '<=', '>='], true)) {
+            $op    = $tokens[$pos];
+            $pos++;
+            $right = $this->parseExprUnary($tokens, $pos);
+            $left  = match ($op) {
+                '<'  => $left < $right,
+                '>'  => $left > $right,
+                '<=' => $left <= $right,
+                '>=' => $left >= $right,
+            };
+        }
+
+        return $left;
+    }
+
+    private function parseExprUnary(array $tokens, int &$pos): mixed
+    {
+        if (($tokens[$pos] ?? null) === '!') {
+            $pos++;
+            return !$this->parseExprUnary($tokens, $pos);
+        }
+
+        return $this->parseExprPrimary($tokens, $pos);
+    }
+
+    private function parseExprPrimary(array $tokens, int &$pos): mixed
+    {
+        $token = $tokens[$pos] ?? null;
+
+        if ($token === null) {
+            throw new \RuntimeException('Unexpected end of expression');
+        }
+
+        if ($token === '(') {
+            $pos++;
+            $value = $this->parseExprOr($tokens, $pos);
+            if (($tokens[$pos] ?? null) !== ')') {
+                throw new \RuntimeException('Expected closing parenthesis in expression');
+            }
+            $pos++;
+            return $value;
+        }
+
+        if (is_array($token) && in_array($token['type'], ['string', 'number', 'bool', 'null'], true)) {
+            $pos++;
+            return $token['value'];
+        }
+
+        throw new \RuntimeException('Unexpected token in expression');
     }
 
     // -----------------------------------------------------------------------
@@ -1400,11 +1740,14 @@ trait ParserTrait
      */
     protected function restoreHtmlBlocks(string $template, array $protectedBlocks): string
     {
-        // Build a replacement map for scalar values using the new {{key}} syntax
+        // Build a replacement map for scalar values using the new {{key}} syntax.
+        // These substitute inside <script>/<style> text, sitting within
+        // developer-provided quotes - escapeForScriptContext() (not HTML
+        // escaping) is what keeps a value from breaking out of that string.
         $replace = [];
         foreach ($this->data as $key => $val) {
             if (!is_array($val)) {
-                $replace['{{'.$key.'}}'] = (string) $val;
+                $replace['{{'.$key.'}}'] = $this->escapeForScriptContext($val);
             }
         }
 

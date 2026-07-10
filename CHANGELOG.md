@@ -1,5 +1,163 @@
 # Changelog
 
+## v1.2.9 (2026-07-10)
+
+### Core — Template
+
+#### Fixed: Template Engine Used `eval()` for Every `{% if %}` / `{% while %}` Condition
+
+`Core\Template\ParserTrait::evaluateCondition()` and `evaluateConditionInLoop()` built a PHP
+expression string by substituting each template variable's value in as a PHP literal (a quoted
+string, a number, `true`/`false`/`null`) and then ran it through `eval("return ($condition);")`.
+Any value that could reach a `{% if %}`/`{% while %}` condition - directly, or via a filter chain -
+became live PHP source the moment it was substituted in as a string literal; a value containing an
+unescaped quote followed by arbitrary PHP was executed, not compared. No consuming application was
+found to pass genuinely attacker-controlled data into a condition today, but the risk was structural
+to the design, not dependent on any particular call site staying "safe" forever.
+
+Replaced `eval()` with `evaluateSafeExpression()`, a small recursive-descent parser/evaluator
+(`tokenizeExpression()` + `parseExprOr/And/Equality/Comparison/Unary/Primary()`) that only
+understands the grammar these two callers actually produce: quoted string/number/`true`/`false`/
+`null` literals, comparison operators (`==`, `!=`, `===`, `!==`, `<`, `>`, `<=`, `>=`), logical
+operators (`&&`, `||`, `!`), and parentheses. No function calls, no variable access, no assignment -
+there was never a legitimate need for arbitrary code execution here. Malformed input throws
+`\RuntimeException`, caught by both callers and treated as `false`, matching `eval()`'s previous
+fail-safe-on-parse-error behavior exactly.
+
+#### Added: Automatic Output Escaping for `{{ variable }}`
+
+`{{ variable }}` substitution across every code path in `ParserTrait` (`parseNestedProperties()`,
+`resolveExpressionValue()`, `parseArray()`, `parseTemplate()`'s scalar-replacement step, and both
+`{% foreach %}` variable-substitution paths) cast values to string with no escaping at all - any
+HTML metacharacter in the value rendered as literal markup. Since templates commonly render
+API/database-sourced data, this made stored and reflected XSS the default outcome for every `{{ }}`
+placeholder in every Phuse-based application, not an opt-in risk.
+
+Added `escapeForOutput()` (`htmlspecialchars($value, ENT_QUOTES, 'UTF-8')`) as the shared encoder
+for all of the above call sites, and a `Core\Template\SafeHtml` wrapper class for the narrow case
+where a value is genuinely pre-rendered, trusted HTML (nested `render()` output, sidebar/navbar
+markup, generated `<link>`/`<script>` tags) - `escapeForOutput()` passes a `SafeHtml` instance
+through unescaped via `__toString()`. The pre-existing `{!! variable !!}` raw-output syntax (added
+in v1.2.1) is unaffected and remains the documented way to render trusted HTML from template data;
+this change only closes the gap where the *default*, unmarked `{{ }}` syntax was silently unescaped.
+
+Also added `escapeForScriptContext()` for the separate substitution path used inside protected
+`<script>`/`<style>` blocks (`restoreHtmlBlocks()`), where a value sits inside developer-authored
+quotes (e.g. `const apiUrl = "{{apiUrl}}";`). HTML-escaping is the wrong tool in that context - it
+doesn't stop a value from breaking out of the JS string via an unescaped quote/backslash.
+`escapeForScriptContext()` uses `json_encode()` (stripped of its own surrounding quotes) instead,
+whose slash-escaping also prevents a literal `</script>` in the value from closing the tag early.
+
+**Upgrade note for existing templates**: any `{{ variable }}` that was relying on the old unescaped
+behavior to render pre-built HTML must switch to `{!! variable !!}` or wrap the value in
+`new Core\Template\SafeHtml($html)` before passing it to the template. Everything else - the
+overwhelming majority of template variables, which hold plain text - needs no changes and is simply
+now protected against XSS by default.
+
+### Core — Security
+
+#### Added: `CSRFMiddleware`
+
+No CSRF check ran unless a controller action explicitly called one - correct behavior depended on
+every state-changing action remembering to opt in. Added `Core\Middleware\CSRFMiddleware`,
+validating a `csrf_token` POST field or `X-CSRF-Token` header against `Core\Security\CSRF` on every
+non-GET/HEAD/OPTIONS request, and wired it into `Core\Base::run()`'s middleware stack (after
+`SecurityHeadersMiddleware`) so it applies by default across an entire application with no per-route
+changes. Requests carrying an `Authorization` header are exempt - Bearer/API-key auth is a
+cookie-independent scheme a cross-site page cannot forge, so CSRF protection is inapplicable to it
+by definition; enforcing it anyway would just reject legitimate non-browser API clients. Consuming
+applications that already validate CSRF manually per-action are unaffected - `CSRF::validateToken()`
+doesn't consume the token, so the middleware's check and a controller's own check compose safely.
+
+#### Added: `Core\Security\Nonce`
+
+Added `Core\Security\Nonce::get()`, generating one cryptographically random, base64-encoded nonce
+per request and caching it for the request's lifetime, so the same value can be reused both in a
+CSP `script-src` header and in matching `<script nonce="...">` attributes - the browser only
+executes an inline script whose `nonce` attribute matches the one in the header. This is scaffolding
+for a future nonce-based CSP alternative to the current SHA-256 hash allow-list
+(`SecurityHeadersMiddleware`): the class is self-contained and not yet called from anywhere in
+`Core\` or wired into any middleware, so it has no effect on request handling as shipped.
+
+### Core — Session
+
+#### Fixed: Session Cookie `Secure` Flag Was Hardcoded `true`
+
+`Core\Http\Session`'s `SESSION_COOKIE_SECURE` constant was unconditionally `true`, so
+`session_set_cookie_params()` always marked the session cookie `Secure` regardless of whether the
+request actually arrived over HTTPS. Browsers refuse to store a `Secure` cookie set over plain HTTP,
+so this silently broke session persistence (login, flash messages, CSRF tokens) on any non-HTTPS
+deployment - most commonly local development.
+
+Replaced the constant with `isSecureConnection()`, which checks `$_SERVER['HTTPS']`,
+`X-Forwarded-Proto` (for requests behind a reverse proxy/load balancer), and port 443, and returns
+`false` outright under CLI (no HTTPS concept applies). Production HTTPS deployments keep the
+`Secure` flag exactly as before; HTTP deployments now get a working session cookie instead of a
+silently-dropped one.
+
+### Core — Configuration
+
+#### Added: `.env` File Support
+
+No mechanism existed for reading environment variables from a `.env` file - secrets had to be
+hardcoded directly into versioned `Config/Config.php`. Added `Core\Env`, a minimal parser (no
+Composer dependency exists in this project, so no `vlucas/phpdotenv`) that loads `KEY=value` pairs
+from `ROOT.'.env'` into `getenv()`/`$_ENV`/`$_SERVER`, called once from `Core\Boot.php` before
+anything else (Config, helpers) might read from it. A missing `.env` file is not an error -
+applications that set real environment variables outside PHP (web server, container) are unaffected.
+
+### Core — Routing
+
+#### Fixed: Route Cache Had No Invalidation
+
+`Core\Router` cached the compiled route table to `Cache/routes.cache` and loaded it unconditionally
+on every request if the file existed, with no check against whether `Config/Routes.php` (or a
+module's route registration) had changed since. A newly added or edited route was silently shadowed
+by the stale cache until someone manually deleted the file on the server - the exact class of bug a
+route cache exists to avoid, not cause.
+
+Route caching is now **off by default** (`$enableRouteCache = false`): registering routes from
+config on every request is a handful of array builds and small regexes, and real PHP speedup comes
+from OPcache on the `.php` files themselves, not from re-serializing this array. If re-enabled,
+`loadRoutes()` now self-invalidates by comparing the cache file's mtime against the newest mtime
+among `Config/Routes.php`, `Config/Config.php`, and any file under `Config/Routes/*.php` - an
+unreadable config directory is treated as "always stale" (fails safe toward re-registering routes,
+never toward serving a shadowed cache).
+
+### Core — HTTP Client
+
+#### Improved: `Core\Http\Request` Error Messages and Default Timeout
+
+A failed `fopen()` against a remote URL only ever raised a generic "Failed to open stream for URL"
+`RuntimeException`, discarding PHP's own `error_get_last()` detail (connection refused, DNS failure,
+TLS error, etc.) - every failure mode looked identical from the outside. Both the initial request and
+the post-token-refresh retry now append that detail when available, or a explicit
+"upstream did not respond in time or refused the connection" note when it isn't.
+
+Also added a 45-second default `timeout` stream option (only applied if the caller hasn't already
+set one via `setOptions('timeout', ...)`), bounded below the common 60-second reverse-proxy gateway
+timeout so a slow upstream fails with this framework's own JSON error format instead of the gateway
+killing the connection first and returning a raw, framework-bypassing 504.
+
+### Core — Pagination
+
+#### Fixed: `Pager::renderPageLink()` Double-Encoded HTML Entities
+
+The active-page and default page-link branches both ran `$text` through `htmlspecialchars()` before
+output. `$text` is always framework-controlled (a plain page number, or a nav entity like `&raquo;`
+passed in via `PagerConfig`) - never user input - so escaping it a second time turned `&raquo;` into
+the literal, visible text `&raquo;` instead of rendering the »  character. Removed the redundant
+escaping; `$url` (still genuinely built from request state) keeps its `htmlspecialchars()` call.
+
+### Core — Middleware
+
+#### Updated: `SecurityHeadersMiddleware` CSP Comment Generalized
+
+Documentation-only change: the CSP hash allow-list comment previously referenced Vertext by name as
+the only consumer of the allow-listed inline script; reworded to describe the mechanism generically
+since any Phuse application shipping that exact script benefits, and the entry is harmless dead
+weight in one that doesn't.
+
 ## v1.2.8d (2026-07-08)
 
 ### Core — Middleware

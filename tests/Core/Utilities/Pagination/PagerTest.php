@@ -161,12 +161,12 @@ class PagerTest extends TestCase
         $html = $pager->render();
 
         // Should not show first/previous links on first page
-        $this->assertStringNotContainsString('&amp;laquo;', $html);
-        $this->assertStringNotContainsString('&amp;lt;', $html);
+        $this->assertStringNotContainsString('&laquo;', $html);
+        $this->assertStringNotContainsString('&lt;', $html);
 
         // Should show next/last links
-        $this->assertStringContainsString('&amp;gt;', $html);
-        $this->assertStringContainsString('&amp;raquo;', $html);
+        $this->assertStringContainsString('&gt;', $html);
+        $this->assertStringContainsString('&raquo;', $html);
     }
 
     /**
@@ -178,12 +178,12 @@ class PagerTest extends TestCase
         $html = $pager->render();
 
         // Should show first/previous links
-        $this->assertStringContainsString('&amp;laquo;', $html);
-        $this->assertStringContainsString('&amp;lt;', $html);
+        $this->assertStringContainsString('&laquo;', $html);
+        $this->assertStringContainsString('&lt;', $html);
 
         // Should not show next/last links
-        $this->assertStringNotContainsString('&amp;gt;', $html);
-        $this->assertStringNotContainsString('&amp;raquo;', $html);
+        $this->assertStringNotContainsString('&gt;', $html);
+        $this->assertStringNotContainsString('&raquo;', $html);
     }
 
     /**
@@ -195,10 +195,10 @@ class PagerTest extends TestCase
         $html = $pager->render();
 
         // Should show all navigation links
-        $this->assertStringContainsString('&amp;laquo;', $html);
-        $this->assertStringContainsString('&amp;lt;', $html);
-        $this->assertStringContainsString('&amp;gt;', $html);
-        $this->assertStringContainsString('&amp;raquo;', $html);
+        $this->assertStringContainsString('&laquo;', $html);
+        $this->assertStringContainsString('&lt;', $html);
+        $this->assertStringContainsString('&gt;', $html);
+        $this->assertStringContainsString('&raquo;', $html);
     }
 
     /**

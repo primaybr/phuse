@@ -11,6 +11,7 @@ use Core\Config;
 use Core\Container;
 use Core\Middleware\MiddlewareStack;
 use Core\Middleware\SecurityHeadersMiddleware;
+use Core\Middleware\CSRFMiddleware;
 use Core\Http\Session;
 use Exception;
 
@@ -116,6 +117,7 @@ class Base
                 return $routes->run();
             });
             $middlewareStack->add(new SecurityHeadersMiddleware());
+            $middlewareStack->add(new CSRFMiddleware());
 
             // Process through middleware stack
             $middlewareStack->process();
