@@ -92,8 +92,8 @@ class Controller extends \stdClass
      */
     public CSRF $csrf;
 
-    /** 
-     * @var Cache The cache object for caching data.
+    /**
+     * @var \Core\Cache\BaseCache The cache object for caching data.
      */
     public $cache;
 
@@ -176,6 +176,7 @@ class Controller extends \stdClass
             'baseUrl' => $this->baseUrl,
             'imgUrl' => $this->imgUrl,
             'assetsUrl' => $this->assetsUrl,
+            'nonce' => \Core\Security\Nonce::get(),
         ]);
 
         return $this->template->render($template, $data, $return);
