@@ -361,8 +361,16 @@ final class URI
             throw new ValidationException('Invalid redirect URL provided');
         }
 
-        // Resolve relative paths to absolute URLs before validation
-        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        // Resolve relative paths to absolute URLs before validation. A relative path is
+        // always same-origin (we build it from the CURRENT request's own trusted host) -
+        // tracked here because the open-redirect/private-IP check below must never apply
+        // to it: that check exists for externally-sourced absolute URLs (e.g. a
+        // marketplace listing's stored URL), not the site's own host, which is completely
+        // normal to be "unresolvable via public DNS" or on a private IP on any local/dev/
+        // internal deployment (e.g. a Windows hosts-file-mapped `.test` domain, or a
+        // private VPC).
+        $wasRelative = !filter_var($url, FILTER_VALIDATE_URL);
+        if ($wasRelative) {
             $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
             $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
             $url = $scheme . '://' . $host . '/' . ltrim($url, '/');
@@ -379,9 +387,25 @@ final class URI
             throw new ValidationException('Redirect URL must use HTTP or HTTPS scheme');
         }
 
-        // Additional security: prevent redirects to private IP ranges
-        if (isset($parsedUrl['host']) && !empty($parsedUrl['host']) && $parsedUrl['host'] !== 'localhost' && $parsedUrl['host'] !== '127.0.0.1') {
-            $ip = gethostbyname($parsedUrl['host']);
+        // Additional security: prevent redirects to private IP ranges - only meaningful
+        // for a URL that was already absolute (externally-sourced); a same-origin
+        // relative redirect is never an open-redirect risk regardless of what its own
+        // host resolves to.
+        if (!$wasRelative && isset($parsedUrl['host']) && !empty($parsedUrl['host']) && $parsedUrl['host'] !== 'localhost' && $parsedUrl['host'] !== '127.0.0.1') {
+            $host       = $parsedUrl['host'];
+            $hostIsIp   = filter_var($host, FILTER_VALIDATE_IP) !== false;
+            $ip         = $hostIsIp ? $host : gethostbyname($host);
+
+            // gethostbyname() returns its input UNCHANGED in two different cases: a
+            // genuine DNS resolution failure (transient hiccup, not necessarily anything
+            // wrong with the URL), AND when $host was already a literal IP (nothing to
+            // resolve). Only the former is a lookup failure - checked via $hostIsIp above
+            // so a literal private IP still correctly falls through to the range check
+            // below instead of being misreported as "couldn't resolve".
+            if (!$hostIsIp && $ip === $host) {
+                throw new ValidationException('Could not resolve redirect host - refusing to redirect');
+            }
+
             $isLoopback = ($ip === '127.0.0.1' || $ip === '::1' || str_starts_with($ip, '127.'));
             if (!$isLoopback && filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
                 throw new ValidationException('Redirect URL resolves to private or reserved IP address');
