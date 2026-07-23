@@ -66,7 +66,18 @@ class QueryCache
     {
         $query = trim(preg_replace('/\s+/', ' ', $query));
         $key = md5($query . serialize($params));
-        return 'query_' . $key . '.cache';
+
+        // Embed every table this query touches (bare, unquoted identifiers -
+        // Core\Model's query builder never quotes them) so clearTableCache()'s
+        // glob("*{$table}*") can invalidate just the cache entries a write to
+        // that table actually affects, instead of Model::clearQueryCache()
+        // having to wipe the whole cache directory on every write.
+        preg_match_all('/\b(?:FROM|JOIN)\s+([a-zA-Z_][a-zA-Z0-9_]*)/i', $query, $matches);
+        $tables = array_unique(array_map('strtolower', $matches[1] ?? []));
+        sort($tables);
+        $tablePart = $tables ? implode('-', $tables) . '_' : '';
+
+        return 'query_' . $tablePart . $key . '.cache';
     }
 
     /**

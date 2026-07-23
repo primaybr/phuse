@@ -156,6 +156,22 @@ trait ImageTrait
             return $this;
         }
 
+        // GD's WebP decoder can hit an unrecoverable "cannot allocate temporary
+        // buffer" engine-level fatal on certain animated WebP files - not a
+        // catchable warning/exception, it kills the whole PHP process outright
+        // (confirmed against a real crawled marketplace image: getimagesizefromstring()
+        // reported a perfectly reasonable 800x800, imagecreatefromstring() still
+        // fataled). GD only ever supports the first static frame of a WebP anyway,
+        // so there is no correct rendering to fall back to - reject before ever
+        // calling the crashing function, detected via the RIFF/WEBP container's
+        // ANIM chunk signature rather than relying on GD to fail gracefully.
+        if (substr($imageData, 0, 4) === 'RIFF' && substr($imageData, 8, 4) === 'WEBP'
+            && str_contains(substr($imageData, 0, 64), 'ANIM')) {
+            $this->errors[] = 'Animated WebP images are not supported: ' . $imagePath;
+            $this->log('ERROR', 'Animated WebP images are not supported', ['path' => $imagePath]);
+            return $this;
+        }
+
         $this->image = imagecreatefromstring($imageData);
         if ($this->image === false) {
             $this->errors[] = 'Invalid image format or corrupted file: ' . $imagePath;

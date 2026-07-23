@@ -1,5 +1,43 @@
 # Changelog
 
+## v1.3.0 (2026-07-23)
+
+### Core — Cache
+
+#### Fixed: A Write Through `Core\Model` Wiped the Entire Query Cache, Not Just the Affected Table
+
+`Core\Cache\QueryCache`'s cache filenames were keyed only by an MD5 hash of the SQL text plus its
+bound params, with no table name embedded anywhere in the key. `clearTableCache($table)` already
+existed and globbed `*{$table}*` against the cache directory, but since no filename ever actually
+contained a table name, it was a silent no-op for any real table - so `Model::clearQueryCache()`
+(called from every `save()`/`update()`/`delete()`) fell back to wiping the *entire* cache directory
+on every single write, regardless of which table the write touched. Found while investigating a
+consuming application (Carikno) where an unrelated table's high-frequency writes were repeatedly
+flushing every other cached query on the site.
+
+`QueryCache::generateKey()` now extracts every bare table name a query's `FROM`/`JOIN` clauses
+reference (safe because `Core\Model`'s query builder never quotes table identifiers) and embeds
+them in the cache filename, so `clearTableCache()` now genuinely scopes invalidation to the cache
+entries a write to that table could actually affect. `Model::clearQueryCache()` now calls
+`clearTableCache($this->table)` instead of a blanket `clear()`. New test coverage:
+`tests/Core/Cache/QueryCacheTest.php`.
+
+Known limitation: invalidation still uses substring glob matching, so a table name that is a pure
+substring of another table's name (e.g. a hypothetical `listings` vs `marketplace_listings`) could
+over- or under-invalidate - worth keeping in mind when naming tables in a consuming application.
+
+### Core — Utilities
+
+#### Fixed: GD Could Crash the Whole PHP Process on Certain Animated WebP Images
+
+GD's WebP decoder can hit an unrecoverable, uncatchable `gd-webp cannot allocate temporary buffer`
+fatal error on certain animated WebP images, crashing the whole PHP process even though
+`getimagesizefromstring()` reported perfectly reasonable dimensions for the same file (found via a
+real crawled marketplace product image in a consuming application). GD only ever decodes a WebP's
+first static frame anyway, so `Core\Utilities\Image\ImageTrait.php` now detects the RIFF/WEBP
+container's `ANIM` chunk signature and rejects the image gracefully before ever calling the
+function that crashes, instead of relying on GD to fail safely on its own.
+
 ## v1.2.9 (2026-07-10)
 
 ### Core — Template

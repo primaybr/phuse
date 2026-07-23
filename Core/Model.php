@@ -1114,14 +1114,13 @@ class Model
     }
 
     /**
-     * Clear all query cache after a write operation.
-     * Cache keys are MD5 hashes of SQL+params so there is no reliable way to
-     * invalidate only the affected table - clearing the full query cache is the
-     * correct strategy here.
+     * Clear cached queries for this model's own table after a write operation.
+     * Cache filenames embed every table a query touches (QueryCache::generateKey()),
+     * so this only invalidates entries a write to $this->table could actually affect.
      */
     private function clearQueryCache(): void
     {
-        $this->queryCache?->clear();
+        $this->queryCache?->clearTableCache($this->table);
     }
 
     // ===== ORM FEATURES =====

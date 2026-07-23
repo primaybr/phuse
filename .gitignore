@@ -10,3 +10,5 @@ vendor/
 .claude/
 .playwright-mcp/
 .markdownlint.json
+.remember/
+.kilo/
