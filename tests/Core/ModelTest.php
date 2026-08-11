@@ -82,7 +82,41 @@ class ModelTest extends TestCase
         }
 
         $this->model->where('id', 1, '=');
-        $this->assertTrue(true); // Placeholder
+        $builder = $this->getPrivateProperty($this->model, 'builder');
+        $this->assertSame(' WHERE id = :where_0', $builder->queryWhere);
+        $this->assertSame(1, $builder->binds[':where_0']);
+    }
+
+    /**
+     * Regression test: where($key, $value) must never reinterpret $value as
+     * an operator just because it case-insensitively matches one ("all",
+     * "and", "in", "is", "like", ...). This previously broke on real data -
+     * e.g. a slug literally "all" produced "WHERE slug ALL :bind" with
+     * "=" bound in the operator's place, a live SQL syntax error.
+     */
+    public function testWhereDoesNotReinterpretValueMatchingOperatorKeyword(): void
+    {
+        if (!$this->model) {
+            $this->markTestSkipped('Model not initialized');
+        }
+
+        $this->model->where('slug', 'all');
+        $builder = $this->getPrivateProperty($this->model, 'builder');
+        $this->assertSame(' WHERE slug = :where_0', $builder->queryWhere);
+        $this->assertSame('all', $builder->binds[':where_0']);
+    }
+
+    /** where($key, $value, $operator) is strictly positional - operator is always third. */
+    public function testWhereWithExplicitOperator(): void
+    {
+        if (!$this->model) {
+            $this->markTestSkipped('Model not initialized');
+        }
+
+        $this->model->where('lang', 'en', '!=');
+        $builder = $this->getPrivateProperty($this->model, 'builder');
+        $this->assertSame(' WHERE lang != :where_0', $builder->queryWhere);
+        $this->assertSame('en', $builder->binds[':where_0']);
     }
 
     public function testWhereIn(): void

@@ -415,10 +415,6 @@ class Router
                     return;
                 }
 
-                $this->log->write("Accessing route: $requestUri with method: $requestMethod");
-                $endTime = microtime(true); // End profiling
-                $this->log->write('Route matching took: ' . ($endTime - $startTime) . ' seconds');
-
                 // Dispatch the request to the appropriate controller and action
                 $this->handleRequest($controller, $matches, $routeKey);
                 return; // Exit after handling the request

@@ -262,10 +262,10 @@ class Image implements ImageInterface
      */
     public function destroy(): void
     {
-        // Use reflection or just implement the logic directly
-        // Since the trait is used in this class, the method should be available
+        // imagedestroy() is deprecated as of PHP 8.5 and a no-op since PHP 8.0
+        // (GD images have been objects, not resources, since then, and are
+        // garbage-collected automatically) - unset is enough.
         if (isset($this->image) && $this->image !== null) {
-            imagedestroy($this->image);
             unset($this->image);
         }
         if (isset($this->errors)) {

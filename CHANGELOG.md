@@ -1,5 +1,63 @@
 # Changelog
 
+## v1.3.3 (2026-08-11)
+
+### Core — Database Cache
+
+#### Fixed: Admin and AJAX Screens Could Serve Stale Query-Cache Results
+
+`Core\Model::initializeQueryCache()` built its cache config from hardcoded
+`CACHE_LIFETIME`/`CACHE_DIRECTORY` constants plus an inline array, with no way
+for a request to opt out - every `SELECT`/`SHOW`/`DESCRIBE`/`EXPLAIN` query was
+cached for a flat 1 hour regardless of context. Confirmed on a consuming
+application (Carikno): admin list screens kept showing content up to an hour
+stale after a write from a background worker or another pod. `Config\Database`'s
+`getCacheConfig()` now accepts the current request URI (defaulting to
+`$_SERVER['REQUEST_URI']`) and disables caching whenever the path contains a
+complete `/admin/` segment, so it still works when the app is hosted below a
+base path. `Core\Model` now pulls its cache config from
+`Config\Database::getCacheConfig()` instead of the removed hardcoded constants.
+
+### Icon System
+
+#### Added: 15 New Glyphs
+
+`pi-bolt`, `pi-eye-slash`, `pi-map-marker`, `pi-play`, `pi-refresh`,
+`pi-sparkles`, `pi-spinner`, `pi-unlink`, plus `pi-envelope`, `pi-equals`,
+`pi-exclamation-triangle`, `pi-info-circle`, `pi-times`, `pi-warning`,
+`pi-warning-circle` - the latter 7 were already referenced by a consuming
+application's (Vertext's) admin views with no glyph ever defined for them in
+this shared icon system, so they rendered invisible; added here as the
+canonical source rather than only patched downstream. `Public/assets/css/icons.css`
+bumped to `?v=2`.
+
+## v1.3.2 (2026-08-06)
+
+### Core — HTML Minifier
+
+#### Fixed: Admin Pages Could Crash Rendering Any Sufficiently Large Page
+
+`TypeError: preg_replace(): Argument #3 ($subject) must be of type array|string, null given`.
+`Core\Utilities\Text\HTML::minifyWhitespace()` (and several sibling methods) chain multiple
+`preg_replace()`/`preg_replace_callback()` calls over the full rendered page; on large-enough input
+one of those calls can hit PHP's internal PCRE backtrack limit and return `NULL` rather than
+throwing, and every following call in the chain then crashed trying to use that `NULL` as its
+subject. Confirmed on a consuming application (Carikno): a form with two dropdowns totaling
+~13,000 `<option>` tags. Every such call now falls back to its unmodified input on `NULL`, so an
+oversized page degrades (slightly less compact whitespace) instead of crashing outright.
+
+## v1.3.1 (2026-08-05)
+
+### Core — Router
+
+#### Fixed: `Router::match()` Logged Route-Timing Noise On Every Successful Request
+
+`Router::match()` unconditionally wrote "Accessing route: ..." and "Route matching took: ...
+seconds" to the log file for every single successfully-matched request, regardless of environment -
+on any site with meaningful traffic this drowned out genuine errors in the shared log file. Only the
+failure path ("No matching route found for URL: ...") is actually worth logging; the success-path
+lines are removed.
+
 ## v1.3.0 (2026-07-23)
 
 ### Core — Cache

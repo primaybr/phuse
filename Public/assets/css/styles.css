@@ -3,7 +3,7 @@
 /* Icon system - .pi / .pi-* - lives in icons.css, imported here.
    @import MUST stay before all other rules per the CSS spec, or
    browsers silently ignore it. */
-@import url("icons.css?v=1");
+@import url("icons.css?v=2");
 
 /* ============================================================
    § 0  SELF-HOSTED TYPEFACE - IBM Plex Sans / Mono

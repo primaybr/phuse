@@ -321,6 +321,13 @@ trait BuildersTrait {
     /**
      * Sets the WHERE clause for the query.
      *
+     * Strictly positional: where($key, $value, $operator = '='). Previously
+     * this method guessed at intent by swapping $value/$operator whenever
+     * $value case-insensitively matched a SQL keyword ("IN", "IS", "ALL", ...) -
+     * this broke on real data that happened to equal one of those words (e.g.
+     * a slug "all"), producing "WHERE slug ALL :bind" with the value bound in
+     * the operator's place. Call with the operator third: where('lang', $val, '!=').
+     *
      * @param string $key The field to apply the condition to.
      * @param string|int $value The value to compare with.
      * @param string $operator The operator to use for the condition.
@@ -329,15 +336,6 @@ trait BuildersTrait {
      */
     public function where(string $key = '', string|int $value = '', string $operator = '=', string $clause = 'AND'): self
     {
-		// Only swap parameters if the second parameter is actually an operator
-		// and not a UUID or other legitimate value
-		if(is_string($value) && in_array(strtoupper($value),$this->operators))
-		{
-			$newValue = $operator;
-			$operator = $value;
-			$value = $newValue;
-		}
-		
         $where = ' WHERE ';
         $operator = strtoupper(trim($operator));
         

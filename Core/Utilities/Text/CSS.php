@@ -59,7 +59,6 @@ class CSS
         curl_setopt($ch, CURLOPT_NOBODY, true);
         curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
 
         // check if fileName is URL then verify first using CURL
         if ($httpCode >= 200 && $httpCode < 300) {

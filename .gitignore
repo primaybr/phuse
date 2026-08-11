@@ -12,3 +12,4 @@ vendor/
 .markdownlint.json
 .remember/
 .kilo/
+.codex/

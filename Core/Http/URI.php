@@ -387,11 +387,34 @@ final class URI
             throw new ValidationException('Redirect URL must use HTTP or HTTPS scheme');
         }
 
+        // An absolute URL built from the app's OWN configured base URL/current host
+        // (e.g. every $this->redirect(site_path(...)) call in this codebase) is
+        // exactly as safe as a relative redirect - it's provably same-origin without
+        // needing to ask DNS anything. Treating it like the externally-sourced case
+        // below made every one of those redirects depend on a live lookup of our own
+        // domain from inside the app process on every request; a transient resolver
+        // hiccup then threw this uncaught instead of just redirecting to the page we
+        // already know we're serving.
+        //
+        // The trusted host MUST come from server-side config (SITE_BASE_URL), never
+        // from $_SERVER['HTTP_HOST'] - that's the client's own request, and trusting
+        // it here would let an attacker who controls both a redirect target AND their
+        // own request's Host header spoof their way past the private-IP/SSRF guard
+        // below. SITE_BASE_URL unset (e.g. local/dev) is the one case where there's no
+        // trusted value to check against - falls back to the Host header there only,
+        // same as the $wasRelative branch above already implicitly does.
+        $configuredHost = strtolower((string) (parse_url((string) (getenv('SITE_BASE_URL') ?: ''), PHP_URL_HOST) ?? ''));
+        $requestHost     = strtolower(explode(':', (string) ($_SERVER['HTTP_HOST'] ?? ''), 2)[0]);
+        $trustedHost     = $configuredHost !== '' ? $configuredHost : $requestHost;
+        $isSameOrigin = $wasRelative
+            || ($trustedHost !== '' && strtolower((string) ($parsedUrl['host'] ?? '')) === $trustedHost);
+
         // Additional security: prevent redirects to private IP ranges - only meaningful
-        // for a URL that was already absolute (externally-sourced); a same-origin
-        // relative redirect is never an open-redirect risk regardless of what its own
+        // for a URL that's genuinely externally-sourced; same-origin (relative, or
+        // absolute but matching the current request's own host) is never an open-
+        // redirect risk regardless of what its own
         // host resolves to.
-        if (!$wasRelative && isset($parsedUrl['host']) && !empty($parsedUrl['host']) && $parsedUrl['host'] !== 'localhost' && $parsedUrl['host'] !== '127.0.0.1') {
+        if (!$isSameOrigin && isset($parsedUrl['host']) && !empty($parsedUrl['host']) && $parsedUrl['host'] !== 'localhost' && $parsedUrl['host'] !== '127.0.0.1') {
             $host       = $parsedUrl['host'];
             $hostIsIp   = filter_var($host, FILTER_VALIDATE_IP) !== false;
             $ip         = $hostIsIp ? $host : gethostbyname($host);

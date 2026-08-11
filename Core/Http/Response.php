@@ -135,6 +135,13 @@ class Response
     {
         http_response_code($status);
         header('Content-Type: application/json');
+        // No cache-control header here left every JSON endpoint's freshness up
+        // to browser heuristic caching (no explicit directive at all) - a
+        // repeated identical-URL GET poll is exactly the shape most likely to
+        // hit a heuristically-cached stale response instead of the live one.
+        // JSON API responses should never be cached by the browser regardless.
+        header('Cache-Control: no-store, no-cache, must-revalidate');
+        header('Pragma: no-cache');
         echo json_encode($data);
         exit;
     }

@@ -37,9 +37,6 @@ class Model
     private const CREATED_BY_COLUMN = 'created_by';
     private const UPDATED_BY_COLUMN = 'updated_by';
     private const DELETED_BY_COLUMN = 'deleted_by';
-    private const CACHE_LIFETIME = 3600; // 1 hour
-    private const CACHE_DIRECTORY = 'database';
-
     public Database\Connection $db;
     protected string $table;
     protected object $dbconfig;
@@ -288,21 +285,16 @@ class Model
     /**
      * Adds a WHERE clause to the query.
      * 
-     * Supports multiple formats for flexibility:
-     * - where('field', 'value') - Uses default = operator
-     * - where('field', 'value', 'operator') - Traditional format  
-     * - where('field', 'operator', 'value') - SQL-like format (more practical)
-     *
-     * The builder automatically detects operator vs value and swaps if needed.
+     * Strictly positional: where($key, $value, $operator = '='). To use a
+     * non-default operator, pass it third: where('lang', $val, '!=').
      *
      * @param string $key The field to apply the condition to.
-     * @param string|int $value The value to compare with OR the operator if using 3-parameter format.
-     * @param string|int $type The operator to use OR the value if using 3-parameter format.
+     * @param string|int $value The value to compare with.
+     * @param string|int $type The operator to use for the condition (default '=').
      * @return self
      */
     public function where(string $key = '', string|int $value = '', string|int $type = '='): self
     {
-        // The builder automatically handles operator/value detection
         $this->builder->where($key, $value, $type);
 
         return $this;
@@ -1050,15 +1042,7 @@ class Model
     protected function initializeQueryCache(): void
     {
         try {
-            $cacheConfig = [
-                'enabled' => true,
-                'lifetime' => self::CACHE_LIFETIME,
-                'directory' => self::CACHE_DIRECTORY,
-                'cacheable_queries' => ['SELECT', 'SHOW', 'DESCRIBE', 'EXPLAIN'],
-                'exclude_tables' => [],
-                'ignore_on_calc_found_rows' => true
-            ];
-
+            $cacheConfig = (new DatabaseConfig())->getCacheConfig();
             $this->queryCache = new QueryCache($cacheConfig);
         } catch (\Exception $e) {
             // Cache initialization failed, continue without caching

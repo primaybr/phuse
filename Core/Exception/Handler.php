@@ -66,6 +66,18 @@ class Handler
         // Log error using framework's logging system
         $this->logger->write($errorMessage, $logLevel, $context);
 
+        // Only a genuinely fatal-class error (codeMap() -> 'Fatal Error') should
+        // abort the request. Everything else here is E_WARNING/E_NOTICE/E_DEPRECATED/
+        // etc. - PHP's own severity model already intends these as non-fatal and
+        // continuable; halting the entire request for one is a self-inflicted
+        // outage, not a safety measure. Confirmed live in Carikno: a harmless
+        // curl_close() deprecation notice (a no-op since PHP 8.0) was killing an
+        // entire request via this handler on a codebase-wide pattern that would
+        // silently 500 on ANY future deprecation notice too.
+        if ($error !== 'Fatal Error') {
+            return;
+        }
+
         $env = $this->config->getEnv();
 
         if ('development' === $env || 'local' === $env) {

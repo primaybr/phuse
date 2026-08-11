@@ -100,6 +100,10 @@ class HTML
      */
     private function minifyAttributes(string $html): string
     {
+        // ?? $html: see minifyWhitespace()'s docblock re: preg_replace()/
+        // preg_replace_callback() returning NULL rather than the original string
+        // on a PCRE limit - this method's own `: string` return type would
+        // otherwise turn that into a TypeError at the return statement.
         return preg_replace_callback(
             '#<([^\/\s<>!]+)(?:\s+([^<>]*?)\s*|\s*)(\/?)>#s',
             function ($matches) {
@@ -112,13 +116,13 @@ class HTML
                 }
 
                 // Normalize attribute spacing
-                $attributes = preg_replace('#([^\s=]+)(\=([\'"]?)(.*?)\3)?(\s+|$)#s', ' $1$2', $attributes);
-                $attributes = trim($attributes);
+                $normalized = preg_replace('#([^\s=]+)(\=([\'"]?)(.*?)\3)?(\s+|$)#s', ' $1$2', $attributes) ?? $attributes;
+                $normalized = trim($normalized);
 
-                return "<{$tagName} {$attributes}{$selfClosing}>";
+                return "<{$tagName} {$normalized}{$selfClosing}>";
             },
             $html
-        );
+        ) ?? $html;
     }
 
     /**
@@ -126,11 +130,14 @@ class HTML
      */
     private function minifyComments(string $html): string
     {
+        // ?? $html: see minifyWhitespace()'s docblock - preg_replace() returns
+        // NULL (not the original string) on hitting a PCRE limit on very large
+        // input, and this runs against the full page HTML too.
         // Remove standard HTML comments but preserve IE conditional comments
-        $html = preg_replace('/<!--(?!\[if\s).*?-->/s', '', $html);
+        $html = preg_replace('/<!--(?!\[if\s).*?-->/s', '', $html) ?? $html;
 
         // Clean up whitespace left by removed comments
-        $html = preg_replace('/^\s*?\n\s*/m', '', $html);
+        $html = preg_replace('/^\s*?\n\s*/m', '', $html) ?? $html;
 
         return $html;
     }
@@ -157,7 +164,7 @@ class HTML
                 return "<{$beforeTag} style={$quote}{$minifiedCSS}{$quote}";
             },
             $html
-        );
+        ) ?? $html;
     }
 
     /**
@@ -181,7 +188,7 @@ class HTML
                 return "<style{$attributes}>{$minifiedCSS}</style>";
             },
             $html
-        );
+        ) ?? $html;
     }
 
     /**
@@ -205,7 +212,7 @@ class HTML
                 return "<script{$attributes}>{$minifiedJS}</script>";
             },
             $html
-        );
+        ) ?? $html;
     }
 
     /**
@@ -213,10 +220,12 @@ class HTML
      */
     private function minifySimpleCSS(string $css): string
     {
+        // ?? $css: see minifyWhitespace()'s docblock re: preg_replace() returning
+        // NULL rather than the original string on a PCRE limit.
         // Basic CSS minification - remove comments and extra whitespace
-        $css = preg_replace('/\/\*[^*]*\*+([^\/*][^*]*\*+)*\//s', '', $css);
-        $css = preg_replace('/\s*([{}:;,>+~])\s*/', '$1', $css);
-        $css = preg_replace('/\s+/', ' ', $css);
+        $css = preg_replace('/\/\*[^*]*\*+([^\/*][^*]*\*+)*\//s', '', $css) ?? $css;
+        $css = preg_replace('/\s*([{}:;,>+~])\s*/', '$1', $css) ?? $css;
+        $css = preg_replace('/\s+/', ' ', $css) ?? $css;
         return trim($css);
     }
 
@@ -237,10 +246,12 @@ class HTML
             $js
         );
         // Remove block comments /* ... */
-        $js = preg_replace('/\/\*[^*]*\*+([^\/*][^*]*\*+)*\//s', '', $js);
+        // ?? $js throughout: see minifyWhitespace()'s docblock re: preg_replace()
+        // returning NULL rather than the original string on a PCRE limit.
+        $js = preg_replace('/\/\*[^*]*\*+([^\/*][^*]*\*+)*\//s', '', $js) ?? $js;
         // Compact whitespace around operators and braces
-        $js = preg_replace('/\s*([{}:;,>+~=!])\s*/', '$1', $js);
-        $js = preg_replace('/\s+/', ' ', $js);
+        $js = preg_replace('/\s*([{}:;,>+~=!])\s*/', '$1', $js) ?? $js;
+        $js = preg_replace('/\s+/', ' ', $js) ?? $js;
         return trim($js);
     }
 
@@ -254,29 +265,44 @@ class HTML
     {
         // Handle different types of whitespace patterns
 
+        // Every step below falls back to the input unchanged (`?? $html`) instead
+        // of overwriting $html with preg_replace()'s return value directly -
+        // preg_replace() returns NULL (not false, not the original string) when it
+        // hits an internal PCRE limit (backtrack/recursion) rather than throwing,
+        // and several of these patterns use non-greedy `.*?` with the `s` modifier
+        // across the FULL page HTML, the largest/most limit-prone string in this
+        // whole minify pipeline. Once one step returned NULL, every subsequent
+        // `preg_replace($pattern, $replacement, $html)` call crashed outright
+        // (TypeError: Argument #3 ($subject) must be of type array|string, null
+        // given) - confirmed live on a Marketplace Listings edit/create form once
+        // its brand/product dropdowns grew past ~13,000 combined `<option>` tags.
+        // Skipping a pattern on an oversized page is a silent, harmless
+        // degradation (slightly less compact whitespace); crashing the whole
+        // admin page is not.
+
         // Pattern 1: Keep space after self-closing tags like <img> and <input>
-        $html = preg_replace('#<(img|input|br|hr|meta|link)(>| .*?>)#s', '<$1$2', $html);
+        $html = preg_replace('#<(img|input|br|hr|meta|link)(>| .*?>)#s', '<$1$2', $html) ?? $html;
 
         // Pattern 2: Remove line breaks and multiple spaces between tags
-        $html = preg_replace('#(>)(?:\n*|\s{2,})(<)#s', '$1$2', $html);
+        $html = preg_replace('#(>)(?:\n*|\s{2,})(<)#s', '$1$2', $html) ?? $html;
 
         // Pattern 3: Remove spaces before closing tags
-        $html = preg_replace('#\s+(<\/.*?>)#s', '$1', $html);
+        $html = preg_replace('#\s+(<\/.*?>)#s', '$1', $html) ?? $html;
 
         // Pattern 4: Handle tag combinations and spacing
-        $html = preg_replace('#(<[^\/]*?>)\s+(<[^\/]*?>)#s', '$1$2', $html);
-        $html = preg_replace('#(<\/.*?>)\s+(<\/.*?>)#s', '$1$2', $html);
+        $html = preg_replace('#(<[^\/]*?>)\s+(<[^\/]*?>)#s', '$1$2', $html) ?? $html;
+        $html = preg_replace('#(<\/.*?>)\s+(<\/.*?>)#s', '$1$2', $html) ?? $html;
 
         // Pattern 5: Handle spacing around content
-        $html = preg_replace('#(<\/.*?>)\s+(\s)(?!\<)#s', '$1$2', $html);
-        $html = preg_replace('#(?<!\>)\s+(\s)(<[^\/]*?\/?>)#s', '$1$2', $html);
+        $html = preg_replace('#(<\/.*?>)\s+(\s)(?!\<)#s', '$1$2', $html) ?? $html;
+        $html = preg_replace('#(?<!\>)\s+(\s)(<[^\/]*?\/?>)#s', '$1$2', $html) ?? $html;
 
         // Pattern 6: Handle empty tags
-        $html = preg_replace('#(<[^\/]*?>)\s+(<\/.*?>)#s', '$1$2', $html);
+        $html = preg_replace('#(<[^\/]*?>)\s+(<\/.*?>)#s', '$1$2', $html) ?? $html;
 
         // Pattern 7: Clean up multiple spaces and &nbsp;
-        $html = preg_replace('#(&nbsp;)&nbsp;(?![<\s])#s', '$1 ', $html);
-        $html = preg_replace('#(?<=\>)(&nbsp;)(?=\<)#s', '$1', $html);
+        $html = preg_replace('#(&nbsp;)&nbsp;(?![<\s])#s', '$1 ', $html) ?? $html;
+        $html = preg_replace('#(?<=\>)(&nbsp;)(?=\<)#s', '$1', $html) ?? $html;
 
         // Final cleanup: remove leading/trailing whitespace
         $html = trim($html);

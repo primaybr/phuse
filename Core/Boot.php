@@ -9,6 +9,22 @@
 
 set_include_path(get_include_path().PATH_SEPARATOR.'./');
 
+// Composer's autoloader (third-party vendor/ packages) is registered FIRST,
+// before the custom App/Core/Config loader below - order matters here: on a
+// miss, Composer's generated loader just returns (never throws), so PHP
+// falls through to try the next registered autoloader; but the custom one
+// below throws on a miss instead of returning, which would abort the whole
+// autoload chain before Composer ever got a turn if it were registered
+// first. Stays invisible until a runtime Composer dependency is actually
+// added - confirmed missing in Carikno (a downstream fork) when
+// minishlink/web-push was added there and silently failed to resolve at
+// runtime.
+$_vtxVendorAutoload = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+if (file_exists($_vtxVendorAutoload)) {
+    require $_vtxVendorAutoload;
+}
+unset($_vtxVendorAutoload);
+
 spl_autoload_extensions('.php');
 
 spl_autoload_register(function ($namespace_class) {

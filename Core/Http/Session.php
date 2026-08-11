@@ -31,7 +31,15 @@ final class Session
      * Session configuration constants.
      */
     private const SESSION_COOKIE_HTTPONLY = true;
-    private const SESSION_COOKIE_SAMESITE = 'Strict';
+    // 'Lax', not 'Strict': a Strict cookie is withheld by the browser on a
+    // cross-site top-level navigation, which is exactly what a third-party
+    // OAuth provider's redirect back to a callback route is - the session
+    // carrying any pending oauth-style state would silently not arrive.
+    // Lax still blocks the cross-site POST/subrequest cases CSRF actually
+    // relies on, and state-changing endpoints validate their own CSRF token
+    // independently regardless. (Confirmed breaking Carikno's Google
+    // Sign-In callback - mirrored here since this class is shared.)
+    private const SESSION_COOKIE_SAMESITE = 'Lax';
     private const SESSION_GC_MAXLIFETIME = 1440; // 24 minutes
 
     /**
@@ -398,12 +406,8 @@ final class Session
      */
     private function ensureSessionStarted(): void
     {
-        error_log("Session status: " . session_status() . " (NONE=" . PHP_SESSION_NONE . ", ACTIVE=" . PHP_SESSION_ACTIVE . ")");
         if (session_status() === PHP_SESSION_NONE) {
-            error_log("Initializing new session...");
             $this->initializeSession();
-        } else {
-            error_log("Session already active, using existing session");
         }
     }
 
