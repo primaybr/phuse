@@ -643,7 +643,7 @@ trait BuildersTrait {
             $this->resetQuery();
         }
 
-        return str_replace("''", "'", $sql);
+        return $sql;
     }
 
     /**

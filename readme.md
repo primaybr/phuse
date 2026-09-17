@@ -1,6 +1,6 @@
 # Phuse: A User-Friendly and Intuitive PHP Framework
 
-![Version](https://img.shields.io/badge/version-1.3.3-blue)
+![Version](https://img.shields.io/badge/version-1.3.4-blue)
 ![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -14,7 +14,7 @@ Phuse is a PHP framework that simplifies web development with conventions and he
 
 - **Advanced Active Record ORM**: Complete ORM system with relationships, eager loading, model events, scopes, soft deletes, attribute casting, accessors/mutators, and automatic validation
 
-- **Database Connection Pooling**: High-performance connection management for concurrent requests with automatic health monitoring
+- **Database Connection Pooling**: High-performance connection management for concurrent requests with automatic health monitoring, lazy dead-connection validation, and transparent reconnect-and-retry on a dropped server connection
 
 - **Query Result Caching**: Intelligent caching system with automatic invalidation and configurable storage options
 
@@ -54,7 +54,11 @@ Phuse is a PHP framework that simplifies web development with conventions and he
 
 - **Configurable**: Control cache lifetime and storage location
 
-- **And more**: Phuse also offers other features such as logging, sessions, security, email, and more.
+- **Pluggable Sessions**: Configurable driver (`files`, `redis`, `database`), session-fixation hardening, and a dependency-free Postgres-backed distributed session store for horizontally-scaled deployments
+
+- **Markdown Content Negotiation**: Serves any public page as `text/markdown` to a requester that asks for it via `Accept`, for AI-agent/LLM-friendly access to a site's content with no HTML markup in the way
+
+- **And more**: Phuse also offers other features such as logging, security, email, and more.
 
 ## Installation
 

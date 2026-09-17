@@ -145,16 +145,16 @@ class Controller extends \stdClass
         if ($isDomainAccess) {
             // Domain access: baseUrl is empty (root level)
             $this->baseUrl = '';
-            $this->imgUrl = $this->config->site->imgUrl ?? '';
-            $this->assetsUrl = '/' . $this->config->site->assetsUrl . '/';
+            $this->imgUrl = (string) ($this->config->site->imgUrl ?? '');
+            $this->assetsUrl = '/' . trim((string) ($this->config->site->assetsUrl ?? 'assets'), '/') . '/';
         } else {
             // Subdirectory access: baseUrl includes the subdirectory path with leading slash
-            $fullBaseUrl = $this->config->site->baseUrl;
-            $basePath = !empty($fullBaseUrl) ? parse_url($fullBaseUrl, PHP_URL_PATH) : basename(trim(ROOT, DS));
-            $basePath = trim($basePath, '/'); // Remove any trailing slashes
+            $fullBaseUrl = (string) ($this->config->site->baseUrl ?? '');
+            $basePath = !empty($fullBaseUrl) ? (parse_url($fullBaseUrl, PHP_URL_PATH) ?? '') : basename(trim(ROOT, DS));
+            $basePath = trim((string) $basePath, '/'); // Remove any trailing slashes
             $this->baseUrl = '/' . $basePath; // Always include leading slash for URL construction
-            $this->imgUrl = $this->config->site->imgUrl ?? '';
-            $this->assetsUrl = $this->baseUrl . '/' . $this->config->site->assetsUrl . '/';
+            $this->imgUrl = (string) ($this->config->site->imgUrl ?? '');
+            $this->assetsUrl = $this->baseUrl . '/' . trim((string) ($this->config->site->assetsUrl ?? 'assets'), '/') . '/';
         }
     }
 

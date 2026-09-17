@@ -18,7 +18,6 @@ namespace Core\Utilities\Pagination;
  * - Navigation link text and symbols
  * - Accessibility features and ARIA labels
  * - URL generation patterns and parameters
- * - Logging and debugging options
  *
  * @package Core\Utilities\Pagination
  */
@@ -224,26 +223,6 @@ class PagerConfig
      * @var string Query parameter name for pagination
      */
     public string $pageParameter = 'page';
-
-    /**
-     * Enable logging using Core\Log
-     *
-     * Whether to enable logging of pagination operations and events.
-     * When enabled, uses the framework's Core\Log system for consistent logging.
-     *
-     * @var bool Whether to enable pagination logging
-     */
-    public bool $enableLogging = true;
-
-    /**
-     * Log file name (without extension)
-     *
-     * The base name for log files created by the pagination component.
-     * The framework's logging system will handle the full path and extension.
-     *
-     * @var string Base name for pagination log files
-     */
-    public string $logFileName = 'pagination_component';
 
     /**
      * Enable accessibility features (ARIA labels)

@@ -12,6 +12,7 @@ use Core\Container;
 use Core\Middleware\MiddlewareStack;
 use Core\Middleware\SecurityHeadersMiddleware;
 use Core\Middleware\CSRFMiddleware;
+use Core\Middleware\MarkdownNegotiationMiddleware;
 use Core\Http\Session;
 use Exception;
 
@@ -77,6 +78,19 @@ class Base
         
         $this->container = new Container();
         $this->config = $this->container->set('config', Config::class, true)->get('config');
+
+        // Set as early as possible (before Log/Handler/Session are constructed)
+        // so log timestamps, exceptions, and session cookie expiry are already
+        // correct from the first line of request handling. Config::get() only
+        // exposes what's in Config.php - no DB read needed here, so this is
+        // always safe even before install. The live-configurable settings
+        // override runs later, in run() (Bootstrap\TimezoneResolver::apply()),
+        // since it may need the database.
+        date_default_timezone_set(
+            \Core\Bootstrap\TimezoneResolver::isValid($this->config->timezone ?? '')
+                ? $this->config->timezone
+                : 'UTC'
+        );
         $this->logger = new Log();
         $this->handler = new Handler($this->logger, $this->config);
         $this->session = new Session($this->logger);
@@ -92,6 +106,12 @@ class Base
      */
     public function run(): void
     {
+        // Live-configurable override of the Config-layer default set in the
+        // constructor, from the admin-editable settings.timezone value - runs
+        // before the middleware stack so it applies uniformly to every admin,
+        // front-end, and API request alike.
+        \Core\Bootstrap\TimezoneResolver::apply($this->config->timezone ?? 'UTC');
+
         // Transparently gzip every response (admin, front, API) when the client supports it
         // and the server isn't already compressing output itself.
         if (extension_loaded('zlib') && !ini_get('zlib.output_compression')) {
@@ -118,10 +138,11 @@ class Base
             });
             $middlewareStack->add(new SecurityHeadersMiddleware());
             $middlewareStack->add(new CSRFMiddleware());
+            $middlewareStack->add(new MarkdownNegotiationMiddleware());
 
             // Process through middleware stack
             $middlewareStack->process();
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             // Log the exception and display an appropriate error
             $this->logger->write(
                 "Application Error: " . $e->getMessage(),

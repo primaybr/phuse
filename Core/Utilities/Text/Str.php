@@ -119,6 +119,21 @@ final class Str
     }
 
     /**
+     * Formats a UTC-sourced datetime string (e.g. a Postgres NOW()-generated
+     * created_at, pinned to UTC by Core\Database\Drivers\PgSQL) into the
+     * app's current default timezone. Do NOT use this for a PHP-generated
+     * timestamp (date('Y-m-d H:i:s'), the Core\Model default) - those are
+     * already in the app's default timezone, and re-labeling them as UTC
+     * here would shift them incorrectly.
+     */
+    public static function displayDateTime(string $utcDatetime, string $format = 'M j, Y H:i'): string
+    {
+        $date = new DateTime($utcDatetime, new DateTimeZone('UTC'));
+        $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
+        return $date->format($format);
+    }
+
+    /**
      * Check if a string is valid base64 encoded
      *
      * @param string $string The string to check

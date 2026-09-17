@@ -40,7 +40,7 @@ final class Session
     // independently regardless. (Confirmed breaking Carikno's Google
     // Sign-In callback - mirrored here since this class is shared.)
     private const SESSION_COOKIE_SAMESITE = 'Lax';
-    private const SESSION_GC_MAXLIFETIME = 1440; // 24 minutes
+    private static ?DatabaseSessionHandler $databaseSessionHandler = null;
 
     /**
      * Determine if secure cookie should be used based on environment.
@@ -148,10 +148,15 @@ final class Session
             return;
         }
 
+        $lifetime = SessionConfiguration::lifetimeSeconds(getenv('SESSION_LIFETIME_SECONDS'));
+        $sessionDriver = SessionConfiguration::driver(getenv('SESSION_DRIVER'));
+
+        $this->configureSessionDriver($sessionDriver, $lifetime);
+
         // Set secure cookie parameters if session is not already active
         if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
             session_set_cookie_params([
-                'lifetime' => 0, // Session cookie (expires when browser closes)
+                'lifetime' => $lifetime,
                 'path' => '/',
                 'domain' => '', // Use current domain
                 'secure' => self::isSecureConnection(),
@@ -162,23 +167,99 @@ final class Session
 
         // Set session save path and garbage collection only if session is not active
         if (session_status() === PHP_SESSION_NONE) {
-            // Set explicit session save path to avoid permission issues
-            $sessionPath = ini_get('session.save_path');
-            if (empty($sessionPath) || !is_dir($sessionPath) || !is_writable($sessionPath)) {
-                // Fallback to system temp directory if default path is not writable
-                $sessionPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'php_sessions';
-                if (!is_dir($sessionPath)) {
-                    mkdir($sessionPath, 0777, true);
+            // A non-file handler (for example Redis) owns its own connection
+            // string in session.save_path. Treating that value as a directory
+            // would overwrite it with a pod-local temporary path and break
+            // shared sessions after an ID rotation or a scale-out.
+            if (SessionConfiguration::usesFilesystemHandler(ini_get('session.save_handler'))) {
+                $sessionPath = ini_get('session.save_path');
+                if (empty($sessionPath) || !is_dir($sessionPath) || !is_writable($sessionPath)) {
+                    // Fallback to system temp directory if default path is not writable
+                    $sessionPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'php_sessions';
+                    if (!is_dir($sessionPath)) {
+                        mkdir($sessionPath, 0777, true);
+                    }
+                    ini_set('session.save_path', $sessionPath);
                 }
-                ini_set('session.save_path', $sessionPath);
             }
-            ini_set('session.gc_maxlifetime', (string)self::SESSION_GC_MAXLIFETIME);
+            ini_set('session.gc_maxlifetime', (string) $lifetime);
+            ini_set('session.use_strict_mode', '1'); // reject uninitialized session IDs (session fixation)
+            ini_set('session.cookie_lifetime', (string) $lifetime);
+        }
+
+        // Apply GC settings even if session was already started (e.g. CSRF
+        // instantiated first) - ini_set on a live session only affects the
+        // next session_start(), but setting cookie params via the cookie
+        // itself ensures the browser persists the cookie for the full TTL.
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            ini_set('session.gc_maxlifetime', (string) $lifetime);
+            ini_set('session.use_strict_mode', '1');
         }
 
         // Use more secure session hash (if available)
         if (function_exists('session_set_save_handler')) {
             // Could implement custom save handler for additional security
         }
+    }
+
+    private function configureSessionDriver(string $driver, int $lifetime): void
+    {
+        $environment = getenv('APP_ENV');
+
+        if (SessionConfiguration::requiresDurableStore($environment) && !SessionConfiguration::isDurableDriver($driver)) {
+            throw new ConfigurationException('Production requires a durable SESSION_DRIVER (database or redis).');
+        }
+
+        if ($driver === 'database') {
+            $this->configureDatabaseSessionHandler($lifetime);
+            return;
+        }
+
+        if ($driver === 'redis' && SessionConfiguration::driver(ini_get('session.save_handler')) !== 'redis') {
+            throw new ConfigurationException('SESSION_DRIVER=redis requires PHP session.save_handler=redis.');
+        }
+
+        if (!in_array($driver, ['files', 'redis'], true)) {
+            throw new ConfigurationException(sprintf('Unsupported SESSION_DRIVER "%s".', $driver));
+        }
+    }
+
+    private function configureDatabaseSessionHandler(int $lifetime): void
+    {
+        if (self::$databaseSessionHandler !== null) {
+            return;
+        }
+
+        $database = new \Config\Database();
+        $connection = $database->getConnectionConfig();
+
+        if (strtolower((string) ($connection['driver'] ?? '')) !== 'pgsql') {
+            throw new ConfigurationException('SESSION_DRIVER=database requires PostgreSQL.');
+        }
+
+        try {
+            $pdo = new \PDO(
+                sprintf(
+                    'pgsql:host=%s;port=%s;dbname=%s',
+                    (string) ($connection['host'] ?? ''),
+                    (string) ($connection['port'] ?? '5432'),
+                    (string) ($connection['database'] ?? '')
+                ),
+                (string) ($connection['username'] ?? ''),
+                (string) ($connection['password'] ?? ''),
+                [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]
+            );
+        } catch (\PDOException $exception) {
+            throw new ConfigurationException('Unable to connect to the database session store.', previous: $exception);
+        }
+
+        $handler = new DatabaseSessionHandler(new PostgresSessionStore($pdo), $lifetime);
+
+        if (!session_set_save_handler($handler, true)) {
+            throw new ConfigurationException('Unable to register the database session handler.');
+        }
+
+        self::$databaseSessionHandler = $handler;
     }
 
     /**
@@ -201,8 +282,14 @@ final class Session
      */
     private function validateSessionIntegrity(): bool
     {
+        // HIJACKING FIX: read stored values from $_SESSION instead of instance
+        // properties - a fresh Session instance on each request had null
+        // originals, so validation was always skipped after the first request.
+        $storedUserAgent = $_SESSION['user_agent'] ?? null;
+        $storedIpAddress = $_SESSION['ip_address'] ?? null;
+
         // Skip validation if not initialized
-        if (!$this->originalUserAgent || !$this->originalIpAddress) {
+        if (!$storedUserAgent || !$storedIpAddress) {
             return true;
         }
 
@@ -210,23 +297,37 @@ final class Session
         $client = new Client();
         $currentIpAddress = $client->getIpAddress();
 
+        $this->originalUserAgent = $storedUserAgent;
+        $this->originalIpAddress = $storedIpAddress;
+
         // Check for significant changes that might indicate hijacking
-        if ($currentUserAgent !== $this->originalUserAgent) {
+        if ($currentUserAgent !== $storedUserAgent) {
             $this->logger->write('Session hijacking detected: User agent changed', 'warning', [
-                'original_agent' => $this->originalUserAgent,
+                'original_agent' => $storedUserAgent,
                 'current_agent' => $currentUserAgent,
                 'session_id' => session_id()
             ]);
-            return false;
+
+            // Invalidate compromised session state and issue clean guest session
+            // instead of throwing an unhandled 500 RuntimeException.
+            $_SESSION = [];
+            $this->session = [];
+            if (session_status() === PHP_SESSION_ACTIVE && !headers_sent()) {
+                session_regenerate_id(true);
+            }
+            $this->initializeHijackingProtection();
+            return true;
         }
 
         // IP address change is more lenient (mobile networks, etc.)
-        if ($currentIpAddress !== $this->originalIpAddress && !empty($currentIpAddress)) {
+        if ($currentIpAddress !== $storedIpAddress && !empty($currentIpAddress)) {
             $this->logger->write('Session IP address changed', 'info', [
                 'original_ip' => $this->originalIpAddress,
                 'current_ip' => $currentIpAddress,
                 'session_id' => session_id()
             ]);
+            $_SESSION['ip_address'] = $currentIpAddress;
+            $this->originalIpAddress = $currentIpAddress;
             // Could implement more sophisticated IP validation here
         }
 

@@ -142,7 +142,7 @@ class Response
         // JSON API responses should never be cached by the browser regardless.
         header('Cache-Control: no-store, no-cache, must-revalidate');
         header('Pragma: no-cache');
-        echo json_encode($data);
+        echo json_encode($data, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_SLASHES);
         exit;
     }
 }

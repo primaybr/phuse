@@ -65,11 +65,12 @@ class ConnectionPool
      * @param int $minConnections Minimum connections to maintain
      * @param int $maxConnections Maximum connections allowed
      */
-    public function __construct(array $config, int $minConnections = 2, int $maxConnections = 10)
+    public function __construct(array $config, int $minConnections = 1, int $maxConnections = 50)
     {
         $this->config = $config;
         $this->minConnections = $minConnections;
-        $this->maxConnections = $maxConnections;
+        $maxEnv = getenv('DB_POOL_MAX_CONNECTIONS');
+        $this->maxConnections = ($maxEnv !== false && is_numeric($maxEnv)) ? (int) $maxEnv : $maxConnections;
 
         $this->initializePool();
     }
@@ -98,11 +99,27 @@ class ConnectionPool
      */
     public function getConnection(): Connection
     {
-        // Try to get an available connection
-        if (!empty($this->availableConnections)) {
+        // Try to get an available connection that is confirmed alive
+        while (!empty($this->availableConnections)) {
             $connection = array_pop($this->availableConnections);
-            $this->busyConnections[] = $connection;
-            return $connection;
+            if ($this->isConnectionValid($connection)) {
+                $this->busyConnections[] = $connection;
+                return $connection;
+            }
+
+            // Connection is dead - attempt reconnect
+            try {
+                $connection->reconnect();
+                if ($this->isConnectionValid($connection)) {
+                    $this->busyConnections[] = $connection;
+                    return $connection;
+                }
+            } catch (\Throwable) {
+                // Reconnect failed, discard
+            }
+
+            unset($connection);
+            $this->currentConnections = max(0, $this->currentConnections - 1);
         }
 
         // Create new connection if under max limit
@@ -115,7 +132,7 @@ class ConnectionPool
             }
         }
 
-        throw new DatabaseException('No database connections available. Maximum connections reached.');
+        throw new DatabaseException('No database connections available. Maximum connections reached (' . $this->maxConnections . ').');
     }
 
     /**
@@ -132,13 +149,12 @@ class ConnectionPool
             unset($this->busyConnections[$key]);
         }
 
-        // Check if connection is still valid
-        if ($this->isConnectionValid($connection)) {
-            $this->availableConnections[] = $connection;
-        } else {
-            // Connection is invalid, don't reuse it
-            $this->currentConnections--;
+        if (method_exists($connection, 'touchLastUsed')) {
+            $connection->touchLastUsed();
         }
+
+        // Return connection to available pool without redundant SELECT 1 roundtrips
+        $this->availableConnections[] = $connection;
     }
 
     /**
@@ -175,15 +191,12 @@ class ConnectionPool
      */
     private function isConnectionValid(Connection $connection): bool
     {
-        try {
-            // Simple ping query to test connection
-            $connection->query('SELECT 1');
-            $connection->execute();
+        // If connection was used within the last 15 seconds, skip active ping query
+        if (method_exists($connection, 'getLastUsedAt') && (microtime(true) - $connection->getLastUsedAt()) < 15.0) {
             return true;
-        } catch (\Throwable $e) {
-            // \Throwable, not \Exception - see createConnection() for why.
-            return false;
         }
+
+        return $connection->isAlive();
     }
 
     /**

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Core\Utilities\Pagination;
 
-use Core\Log;
 use InvalidArgumentException;
 
 /**
@@ -20,12 +19,10 @@ use InvalidArgumentException;
  * - Page calculations and bounds checking
  * - Input validation and error handling
  * - URL generation for navigation links
- * - Logging integration with Core\Log
  * - State management for pagination parameters
  *
  * This trait uses protected properties that should be declared in the using class:
  * - $config: PagerConfig instance for configuration
- * - $logger: Log instance for logging operations
  * - $totalItems: Total number of items to paginate
  * - $itemsPerPage: Number of items per page
  * - $currentPage: Current active page number
@@ -40,7 +37,6 @@ use InvalidArgumentException;
 trait PagerTrait
 {
     protected PagerConfig $config;
-    protected ?Log $logger;
     protected int $totalItems = 0;
     protected int $itemsPerPage = 20;
     protected int $currentPage = 1;
@@ -63,21 +59,7 @@ trait PagerTrait
         }
 
         $this->config = $config ?? new PagerConfig();
-        $this->logger = $this->createLogger();
         $this->initialized = true;
-    }
-
-    /**
-     * Create logger instance using Core\Log
-     */
-    protected function createLogger(): ?Log
-    {
-        if ($this->config->enableLogging) {
-            $log = new Log();
-            $log->setLogName($this->config->logFileName);
-            return $log;
-        }
-        return null;
     }
 
     /**
@@ -86,7 +68,6 @@ trait PagerTrait
     public function setConfig(PagerConfig $config): self
     {
         $this->config = $config;
-        $this->logger = $this->createLogger();
         return $this;
     }
 
@@ -100,10 +81,6 @@ trait PagerTrait
         }
 
         $this->totalItems = $totalItems;
-
-        if ($this->logger) {
-            $this->log('INFO', 'Total items set', ['totalItems' => $totalItems]);
-        }
 
         return $this;
     }
@@ -121,10 +98,6 @@ trait PagerTrait
 
         $this->itemsPerPage = $itemsPerPage;
 
-        if ($this->logger) {
-            $this->log('INFO', 'Items per page set', ['itemsPerPage' => $itemsPerPage]);
-        }
-
         return $this;
     }
 
@@ -139,10 +112,6 @@ trait PagerTrait
 
         $this->currentPage = $currentPage;
 
-        if ($this->logger) {
-            $this->log('INFO', 'Current page set', ['currentPage' => $currentPage]);
-        }
-
         return $this;
     }
 
@@ -152,10 +121,6 @@ trait PagerTrait
     public function setUrl(string $url): self
     {
         $this->url = rtrim($url, '?&');
-
-        if ($this->logger) {
-            $this->log('INFO', 'Base URL set', ['url' => $url]);
-        }
 
         return $this;
     }
@@ -172,10 +137,6 @@ trait PagerTrait
         }
 
         $this->numLinks = $numLinks;
-
-        if ($this->logger) {
-            $this->log('INFO', 'Number of links set', ['numLinks' => $numLinks]);
-        }
 
         return $this;
     }
@@ -269,16 +230,5 @@ trait PagerTrait
         }
 
         return $errors;
-    }
-
-    /**
-     * Log a message using Core\Log
-     */
-    protected function log(string $level, string $message, array $context = []): void
-    {
-        if ($this->logger) {
-            $contextString = empty($context) ? '' : ' ' . json_encode($context);
-            $this->logger->write("[$level] $message$contextString");
-        }
     }
 }

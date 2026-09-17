@@ -172,6 +172,77 @@ trait ImageTrait
             return $this;
         }
 
+        // Validate dimensions and memory footprint BEFORE calling GD's imagecreatefromstring().
+        // imagecreatefromstring() allocates uncompressed truecolor bitmaps into RAM (width * height * 4 bytes).
+        // For large marketplace images (e.g. 4500x4500), GD requires ~81MB which causes an uncatchable
+        // PHP engine-level fatal memory exhaustion error if checked after allocation.
+        $maxWidth = $this->getConfigValue('maxWidth', 4096);
+        $maxHeight = $this->getConfigValue('maxHeight', 4096);
+        $minWidth = $this->getConfigValue('minWidth', 1);
+        $minHeight = $this->getConfigValue('minHeight', 1);
+
+        $imageInfo = @getimagesizefromstring($imageData);
+        if ($imageInfo !== false) {
+            $preWidth = (int) ($imageInfo[0] ?? 0);
+            $preHeight = (int) ($imageInfo[1] ?? 0);
+
+            if ($preWidth > $maxWidth || $preHeight > $maxHeight) {
+                $this->errors[] = 'Image dimensions too large: ' . $preWidth . 'x' . $preHeight .
+                                  ' (max: ' . $maxWidth . 'x' . $maxHeight . ')';
+                $this->log('ERROR', 'Image dimensions too large', [
+                    'width' => $preWidth,
+                    'height' => $preHeight,
+                    'maxWidth' => $maxWidth,
+                    'maxHeight' => $maxHeight
+                ]);
+                return $this;
+            }
+
+            if ($preWidth < $minWidth || $preHeight < $minHeight) {
+                $this->errors[] = 'Image dimensions too small: ' . $preWidth . 'x' . $preHeight .
+                                  ' (min: ' . $minWidth . 'x' . $minHeight . ')';
+                $this->log('ERROR', 'Image dimensions too small', [
+                    'width' => $preWidth,
+                    'height' => $preHeight,
+                    'minWidth' => $minWidth,
+                    'minHeight' => $minHeight
+                ]);
+                return $this;
+            }
+
+            // Estimate memory needed to decompress truecolor RGBA bitmap + GD overhead
+            $channels = (int) ($imageInfo['channels'] ?? 4);
+            $bits = (int) ($imageInfo['bits'] ?? 8);
+            $bytesPerPixel = max(4, (int) ceil(($bits / 8) * $channels));
+            $estimatedBytes = (int) ($preWidth * $preHeight * $bytesPerPixel * 1.75);
+
+            $memoryLimit = $this->parseMemoryBytes((string) ini_get('memory_limit'));
+            if ($memoryLimit > 0) {
+                $currentUsage = memory_get_usage(true);
+                $needed = $currentUsage + $estimatedBytes + 16777216; // 16MB safety buffer
+                if ($needed > $memoryLimit) {
+                    // Try to raise memory limit up to 1024M if possible
+                    $targetLimitMb = min(1024, max(256, (int) ceil($needed / 1048576) + 64));
+                    if ($targetLimitMb * 1048576 > $memoryLimit) {
+                        @ini_set('memory_limit', $targetLimitMb . 'M');
+                        $memoryLimit = $this->parseMemoryBytes((string) ini_get('memory_limit'));
+                    }
+
+                    if ($memoryLimit > 0 && ($currentUsage + $estimatedBytes + 8388608) > $memoryLimit) {
+                        $this->errors[] = 'Image requires too much memory to decompress (' . round($estimatedBytes / 1048576, 1) . 'MB): ' . $imagePath;
+                        $this->log('ERROR', 'Image decompression would exhaust memory limit', [
+                            'path' => $imagePath,
+                            'dimensions' => $preWidth . 'x' . $preHeight,
+                            'estimated_mb' => round($estimatedBytes / 1048576, 1),
+                            'current_usage_mb' => round($currentUsage / 1048576, 1),
+                            'memory_limit_mb' => round($memoryLimit / 1048576, 1),
+                        ]);
+                        return $this;
+                    }
+                }
+            }
+        }
+
         $this->image = imagecreatefromstring($imageData);
         if ($this->image === false) {
             $this->errors[] = 'Invalid image format or corrupted file: ' . $imagePath;
@@ -182,34 +253,6 @@ trait ImageTrait
         // Store original dimensions
         $this->originalWidth = imagesx($this->image);
         $this->originalHeight = imagesy($this->image);
-
-        // Validate dimensions if config is available
-        $maxWidth = $this->getConfigValue('maxWidth', 4096);
-        $maxHeight = $this->getConfigValue('maxHeight', 4096);
-        $minWidth = $this->getConfigValue('minWidth', 1);
-        $minHeight = $this->getConfigValue('minHeight', 1);
-
-        if ($this->originalWidth > $maxWidth || $this->originalHeight > $maxHeight) {
-            $this->errors[] = 'Image dimensions too large: ' . $this->originalWidth . 'x' . $this->originalHeight .
-                             ' (max: ' . $maxWidth . 'x' . $maxHeight . ')';
-            $this->log('ERROR', 'Image dimensions too large', [
-                'width' => $this->originalWidth,
-                'height' => $this->originalHeight,
-                'maxWidth' => $maxWidth,
-                'maxHeight' => $maxHeight
-            ]);
-        }
-
-        if ($this->originalWidth < $minWidth || $this->originalHeight < $minHeight) {
-            $this->errors[] = 'Image dimensions too small: ' . $this->originalWidth . 'x' . $this->originalHeight .
-                             ' (min: ' . $minWidth . 'x' . $minHeight . ')';
-            $this->log('ERROR', 'Image dimensions too small', [
-                'width' => $this->originalWidth,
-                'height' => $this->originalHeight,
-                'minWidth' => $minWidth,
-                'minHeight' => $minHeight
-            ]);
-        }
 
         $this->log('INFO', 'Image loaded successfully', [
             'path' => $imagePath,
@@ -580,6 +623,25 @@ trait ImageTrait
                 $this->errors[] = 'Unsupported image format for output: ' . $extension;
                 return false;
         }
+    }
+
+    /**
+     * Parses PHP memory_limit string (e.g. '128M', '1G', '-1') to integer bytes.
+     */
+    private function parseMemoryBytes(string $val): int
+    {
+        $val = trim($val);
+        if ($val === '' || $val === '-1') {
+            return -1;
+        }
+        $last = strtolower(substr($val, -1));
+        $num = (int) $val;
+        return match ($last) {
+            'g' => $num * 1024 * 1024 * 1024,
+            'm' => $num * 1024 * 1024,
+            'k' => $num * 1024,
+            default => $num,
+        };
     }
 
 }

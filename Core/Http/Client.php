@@ -87,6 +87,63 @@ class Client
     }
 
     /**
+     * Determines whether an IP address matches the trusted proxies list,
+     * supporting both exact IP strings and CIDR subnet notation (e.g. 10.0.0.0/8).
+     *
+     * @param string|null $ip The IP to check against trusted proxies.
+     * @return bool True if trusted, false otherwise.
+     */
+    public static function isTrustedProxy(?string $ip): bool
+    {
+        if ($ip === null || $ip === '' || empty(self::$trustedProxies)) {
+            return false;
+        }
+        foreach (self::$trustedProxies as $proxy) {
+            $proxy = trim((string) $proxy);
+            if ($proxy === '') continue;
+            if ($proxy === $ip) return true;
+            if (str_contains($proxy, '/') && self::ipMatchesCidr($ip, $proxy)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Checks if an IP address belongs to a given CIDR subnet.
+     * Supports both IPv4 and IPv6.
+     *
+     * @param string $ip The IP address (e.g. 10.244.1.5).
+     * @param string $cidr The CIDR subnet (e.g. 10.0.0.0/8 or fd00::/8).
+     * @return bool True if IP is in subnet, false otherwise.
+     */
+    public static function ipMatchesCidr(string $ip, string $cidr): bool
+    {
+        $parts = explode('/', $cidr, 2);
+        if (count($parts) !== 2) return false;
+        $subnet = trim($parts[0]);
+        $prefixStr = trim($parts[1]);
+        if (!is_numeric($prefixStr)) return false;
+        $prefix = (int) $prefixStr;
+        $ipBin = @inet_pton($ip);
+        $subnetBin = @inet_pton($subnet);
+        if ($ipBin === false || $subnetBin === false) return false;
+        $len = strlen($ipBin);
+        if ($len !== strlen($subnetBin)) return false;
+        $maxPrefix = $len * 8;
+        if ($prefix < 0 || $prefix > $maxPrefix) return false;
+        if ($prefix === 0) return true;
+        $fullBytes = intdiv($prefix, 8);
+        if ($fullBytes > 0 && substr($ipBin, 0, $fullBytes) !== substr($subnetBin, 0, $fullBytes)) return false;
+        $remBits = $prefix % 8;
+        if ($remBits > 0) {
+            $mask = ~((1 << (8 - $remBits)) - 1) & 0xFF;
+            $ipByte = ord($ipBin[$fullBytes]);
+            $subnetByte = ord($subnetBin[$fullBytes]);
+            if (($ipByte & $mask) !== ($subnetByte & $mask)) return false;
+        }
+        return true;
+    }
+
+    /**
      * Retrieves the real IP address of the client.
      *
      * By default always uses REMOTE_ADDR (the direct TCP peer) to prevent
@@ -105,7 +162,7 @@ class Client
 
         // Only honour forwarding headers when the direct connection arrives
         // from a known, configured trusted proxy.
-        if ($remoteAddr !== null && in_array($remoteAddr, self::$trustedProxies, true)) {
+        if ($remoteAddr !== null && self::isTrustedProxy($remoteAddr)) {
             $proxyHeaders = array_slice(self::IP_HEADERS, 0, -1); // exclude REMOTE_ADDR
             foreach ($proxyHeaders as $header) {
                 $ip = $this->extractIpFromHeader($header);

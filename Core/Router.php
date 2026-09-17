@@ -525,8 +525,10 @@ class Router
      */
     private function getUrl(): string
     {
-        $url = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
-        $url = ($url != '/' && $_SERVER['HTTP_HOST'] != 'localhost') ? rtrim($url, '/') : $url;
+        $rawUrl = parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
+        $url = is_string($rawUrl) ? $rawUrl : '/';
+        $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
+        $url = ($url !== '/' && $host !== 'localhost' && $host !== '') ? rtrim($url, '/') : $url;
         
         // Split the URL into segments by the slash character
         $segments = explode('/', $url);

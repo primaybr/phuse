@@ -47,6 +47,17 @@ class Config
     }
 
     /**
+     * Proxies direct property reads to the raw config array - lets code that
+     * only holds this service instance (never called get()) still read a
+     * single top-level key, e.g. `(new Config())->timezone`. Distinct from
+     * get()'s fully processed, recursively object-cast result.
+     */
+    public function __get(string $name): mixed
+    {
+        return $this->config[$name] ?? null;
+    }
+
+    /**
      * Get config data
      * 
      * @param array $data optional data to merge with config

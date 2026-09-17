@@ -205,6 +205,10 @@ class QueryCache
      */
     public function isCacheEnabled(): bool
     {
+        if (($_ENV['APP_ENV'] ?? '') === 'testing' || (getenv('APP_ENV') ?: '') === 'testing') {
+            return false;
+        }
+
         return $this->config['enabled'] ?? true;
     }
 

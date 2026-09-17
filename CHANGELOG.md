@@ -1,5 +1,202 @@
 # Changelog
 
+## v1.3.4 (2026-09-16)
+
+### Core — Sessions
+
+#### Fixed: Session Hijacking Protection Never Actually Triggered
+
+`Http\Session::validateSessionIntegrity()` compared the current request's user agent
+and IP against `$this->originalUserAgent`/`$this->originalIpAddress` - instance
+properties that only get populated inside the same request that first calls
+`initializeHijackingProtection()`. Since a brand-new `Session` object is constructed
+on every request, those properties were `null` on every request after the first,
+which hit an early `return true` ("skip validation") before the comparison could ever
+run. In effect, hijacking detection has never functioned in any consuming
+application. Fixed by reading the previously-stored values back out of `$_SESSION`
+(which persists across requests) instead of instance state. A detected user-agent
+mismatch no longer throws an uncaught `RuntimeException` (a 500 for the visitor)
+either - it now logs a warning, wipes the compromised session, regenerates the
+session ID, and reissues a clean guest session. An IP-address change is logged once
+and the stored value is now updated afterward, instead of re-logging on every
+subsequent request forever.
+
+#### Added: Pluggable Session Driver, Fixation Hardening, and a Postgres-Backed Store
+
+Session lifetime is now configurable via `SESSION_LIFETIME_SECONDS` (was a hardcoded
+24-minute constant), clamped to a sane range by a new `Http\SessionConfiguration`
+policy class. `session.use_strict_mode` is now enabled, rejecting client-supplied
+uninitialized session IDs (a standard session-fixation mitigation this framework
+previously lacked). The old save-path handling unconditionally treated
+`session.save_path` as a filesystem directory and could rewrite/clobber it - for a
+non-file `session.save_handler` (e.g. Redis) that ini value is a connection string,
+not a path, so this is now gated behind `SessionConfiguration::usesFilesystemHandler()`.
+A new `SESSION_DRIVER` env var selects the backing store (`files`, `redis`, or
+`database`); a production environment configured with a non-durable driver now fails
+fast with a `ConfigurationException` instead of silently running on ephemeral
+local-disk sessions. The `database` driver is backed by a new, dependency-free
+distributed session store built for horizontally-scaled deployments (multiple
+pods/workers sharing one Postgres database): `Http\SessionStore` (the storage
+contract), `Http\PostgresSessionStore` (implementation, using Postgres advisory
+locks for concurrency-safe read-modify-write across processes), and
+`Http\DatabaseSessionHandler` (adapts a `SessionStore` to PHP's native
+`SessionHandlerInterface`/`SessionUpdateTimestampHandlerInterface`, degrading to a
+session miss rather than a fatal error if the store fails).
+
+### Core — Database
+
+#### Fixed: Connections Never Recovered From a Dropped Server Connection
+
+`Database\Connection` had no way to detect or recover from a connection the
+database server itself closed (idle timeout, load-balancer reset, managed-Postgres
+maintenance) - any query after that point failed until the process restarted. Added
+`reconnect()`, `isAlive()` (a `SELECT 1` ping), and `isDisconnectError()` (recognizes
+standard MySQL/Postgres connection-lost SQLSTATEs and message patterns). `query()`
+and `execute()` now transparently reconnect and retry once on a detected disconnect,
+as long as the connection isn't mid-transaction (a dropped connection mid-transaction
+can't safely resume - that still surfaces as an error, correctly). `cancelTransaction()`
+no longer errors if the handler is already gone.
+
+`Database\ConnectionPool` used to validate every connection eagerly (an extra
+`SELECT 1` round-trip on every single check-in) yet still hand out a connection that
+died while idle in the pool between check-in and the next checkout. Validation is now
+lazy: check-in is cheap (just a last-used timestamp), and `getConnection()` validates
+on checkout, attempting a reconnect on a dead connection before discarding it -
+skipping the ping entirely if the connection was used within the last 15 seconds. The
+pool's default sizing changed from `min 2 / max 10` to `min 1 / max 50`, and the max
+is now overridable via `DB_POOL_MAX_CONNECTIONS`.
+
+#### Fixed: Bulk Batch Writes Left the Query Cache Stale
+
+`Model::insertBatch()`, `updateBatch()`, and `deleteBatch()` each committed their
+per-chunk transactions without ever calling `clearQueryCache()` afterward, unlike
+every single-row insert/update/delete path in the same class - a bulk write could
+leave stale pre-write rows readable through the model's query cache. All three now
+invalidate the cache after a successful chunk commit, matching the single-row paths.
+
+#### Fixed: Compiled SQL Could Have Escaped Quotes Silently Un-Escaped
+
+`Database\Builders\BuildersTrait::compile()` ran a blanket
+`str_replace("''", "'", $sql)` over the entire compiled query string before
+returning it - collapsing every literal doubled-single-quote anywhere in the SQL
+(inside a raw fragment, a subquery, or an intentionally-escaped string literal) down
+to one, which could corrupt query syntax or reintroduce an unescaped terminating
+quote. `compile()` now returns the SQL unmodified.
+
+#### Added: Postgres Sessions Pinned to UTC
+
+`Database\Drivers\PgSQL` now runs `SET TIME ZONE 'UTC'` immediately after connecting,
+so `NOW()`/`CURRENT_TIMESTAMP`-generated values have a known, consistent source
+timezone regardless of the target server's own configured timezone - previously that
+source was ambiguous and could legitimately differ between environments.
+
+### Core — HTTP
+
+#### Added: CIDR Support for Trusted Proxies
+
+`Http\Client`'s trusted-proxy list only matched an exact IP string. Added
+`isTrustedProxy()`/`ipMatchesCidr()` (IPv4 and IPv6, via `inet_pton` byte/bit-mask
+comparison) so a whole subnet (e.g. `10.0.0.0/8`) can be trusted at once - the
+realistic need for any containerized deployment where the proxy's IP varies within a
+pod-network CIDR rather than being one fixed address. Exact-IP entries still work
+unchanged.
+
+#### Fixed: `Response::json()` Could Silently Return an Empty Body
+
+`json_encode()` returns `false` - with no exception and no error - the instant any
+string in the payload contains invalid UTF-8 bytes, which `echo`'d as a silently
+empty response body. `Response::json()` now passes `JSON_INVALID_UTF8_SUBSTITUTE`
+(replaces invalid sequences instead of failing outright) and `JSON_UNESCAPED_SLASHES`
+(smaller, more readable output for any payload containing URLs).
+
+#### Added: Markdown Content Negotiation
+
+Public pages can now be served as `text/markdown` to a requester that explicitly asks
+for it (`Accept: text/markdown` with a positive quality value, per RFC 7231) - the
+emerging pattern for making a site's content directly readable by AI agents/LLM
+tooling without HTML markup in the way. New `Middleware\MarkdownNegotiationMiddleware`
+buffers the normal HTML response, and if the request qualifies
+(`Http\MarkdownNegotiation::isRequested()` - `GET` only, outside a small excluded-path
+list, correct `Accept` header), converts it via a new dependency-free
+`Utilities\Text\MarkdownConverter` (HTML-to-Markdown over `DOMDocument`: extracts
+`<title>`/meta description/OG-image into YAML frontmatter and any
+`application/ld+json` into a trailing fenced block, strips chrome elements, renders
+headings/lists/tables/code/links/images/inline emphasis with correct escaping) and
+swaps in Markdown-appropriate headers via `Http\MarkdownResponseTransformer` (content
+type, merged `Vary: Accept`, stale-header invalidation). Falls back to the original
+HTML untouched if the response isn't eligible for conversion.
+
+### Core — Routing & Bootstrapping
+
+#### Fixed: `Router::getUrl()` Could Warn or Fatal on a Malformed Request URI
+
+`parse_url()` can return `null` for a malformed URI, and passing that straight into
+`rtrim()` raises a deprecation warning under PHP 8.1+ (heading toward a hard
+`TypeError`); a missing `HTTP_HOST` (CLI, tests) produced an undefined-array-key
+notice besides. `getUrl()` now falls back to `/` for a non-string `parse_url()`
+result and treats a missing host as not `localhost`, with identical routing
+semantics otherwise.
+
+#### Fixed: The Fallback Autoloader Threw on a Class It Couldn't Resolve
+
+`Boot.php`'s `spl_autoload_register` callback threw a custom exception whenever it
+couldn't resolve a class by file path - but PHP calls every registered autoloader
+(Composer's, then this one) before giving up, so any legitimate `class_exists()` /
+`method_exists()` existence check on a genuinely-missing class crashed instead of
+returning `false`, defeating the point of an existence check. It now simply returns
+without requiring anything on a miss, letting PHP's own "Class not found" fatal (or a
+graceful `false`) proceed as intended.
+
+#### Added: `Config::__get()` and a Timezone Bootstrap Utility
+
+`Config` gained a `__get()` magic accessor so code holding only a `Config` service
+instance can read one top-level key directly (`(new Config())->timezone`) without
+going through the fuller, recursively object-cast `get()`. `Controller`'s
+baseUrl/imgUrl/assetsUrl resolution is now defensive against a missing/partial
+`site` config block (casts + null-safe `parse_url()` + sane fallbacks) instead of
+warning/erroring. A new `Bootstrap\TimezoneResolver` applies the app's runtime
+default timezone once per request - first from static config (works pre-install, no
+database needed), then overridden by a live admin-configurable settings value if
+present, degrading gracefully if that lookup isn't available.
+
+### Core — Utilities
+
+#### Fixed: Large Images Could Trigger an Uncatchable Out-of-Memory Fatal
+
+`Utilities\Image\ImageTrait` validated an image's dimensions only *after* calling
+`imagecreatefromstring()` - which had already allocated a full decompressed
+truecolor bitmap into memory. For a sufficiently large image that's an uncatchable,
+process-level PHP memory-exhaustion fatal, not a normal exception. Dimension and an
+estimated memory footprint (width × height × bytes-per-pixel, with headroom) are now
+checked via the cheap, header-only `getimagesizefromstring()` before the decode call,
+raising `memory_limit` up to a capped ceiling if needed or failing gracefully with a
+clear error if the image still won't fit.
+
+#### Fixed: Upload Failures Gave No Actionable Reason
+
+`Utilities\Upload\FileManipulatorTrait::moveFile()` reported a single generic
+"failed to move" message regardless of cause. It now inspects and reports the actual
+reason (temp file gone, destination directory missing/not writable, a PHP upload
+error code, an unreadable temp file). `ensureDirectoryExists()` no longer treats a
+`mkdir()`/`chmod()` race (another process creating/fixing the directory first) as
+fatal, and fails explicitly, rather than misleadingly, when the whole parent chain
+turns out to be unwritable (e.g. a root-owned mounted volume).
+
+#### Removed: Per-Request Disk Logging From Pagination
+
+`Utilities\Pagination\Pager`/`PagerConfig`/`PagerTrait` logged to a file on nearly
+every setter call and on `render()` - up to 5-6 `fopen`/`fwrite` calls per paginated
+page view, on a component exercised by nearly every request. That logging machinery
+(and its `enableLogging`/`logFileName` config) has been removed entirely.
+
+#### Added: `Str::displayDateTime()`
+
+Formats a UTC-sourced datetime string (e.g. a Postgres `NOW()`-generated value, now
+pinned to UTC per the `PgSQL` driver fix above) into the app's current default
+timezone. Deliberately not for a PHP-generated timestamp (`Core\Model`'s default),
+which is already in local time - the docblock calls this out explicitly to prevent a
+double-conversion bug.
+
 ## v1.3.3 (2026-08-11)
 
 ### Core — Database Cache

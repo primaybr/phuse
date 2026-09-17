@@ -39,24 +39,13 @@ spl_autoload_register(function ($namespace_class) {
         $autoloadExtensions = explode(',', spl_autoload_extensions());
     }
     $baseDir = dirname(__DIR__). DIRECTORY_SEPARATOR . str_replace('\\', DIRECTORY_SEPARATOR, $namespace_class);
-    $fileFound = false;
 
-    try {
-        foreach ($autoloadExtensions as $extension) {
-            $filePath = $baseDir . $extension;
-            if (file_exists($filePath)) {
-                require $filePath;
-                $fileFound = true;
-                break;
-            }
+    foreach ($autoloadExtensions as $extension) {
+        $filePath = $baseDir . $extension;
+        if (file_exists($filePath)) {
+            require $filePath;
+            return;
         }
-
-        if (!$fileFound) {
-            throw new Exception("Class not found: $namespace_class");
-        }
-    } catch (Exception $e) {
-        error_log("Autoload failed for class: $namespace_class - " . $e->getMessage());
-        throw $e;
     }
 });
 

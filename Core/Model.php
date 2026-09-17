@@ -643,6 +643,7 @@ class Model
                 if ($this->db->execute()) {
                     $results['success'] += count($chunk);
                     $this->commit();
+                    $this->clearQueryCache();
                 } else {
                     $this->rollback();
                     $results['errors'][] = 'Failed to insert chunk: ' . json_encode($chunk);
@@ -726,6 +727,7 @@ class Model
                 }
 
                 $this->commit();
+                $this->clearQueryCache();
             } catch (\Exception $e) {
                 $this->rollback();
                 $results['errors'][] = 'Exception in chunk: ' . $e->getMessage();
@@ -783,6 +785,7 @@ class Model
                 }
 
                 $this->commit();
+                $this->clearQueryCache();
             } catch (\Exception $e) {
                 $this->rollback();
                 $results['errors'][] = 'Exception in chunk: ' . $e->getMessage();

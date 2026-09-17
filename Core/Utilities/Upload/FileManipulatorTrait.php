@@ -45,12 +45,29 @@ trait FileManipulatorTrait
         // Move the uploaded file
         if (move_uploaded_file($file['tmp_name'], $destination)) {
             // Set proper permissions (readable and writable by owner, readable by others)
-            chmod($destination, 0644);
+            @chmod($destination, 0644);
             return true;
-        } else {
-            $this->error = 'Failed to move uploaded file to destination';
-            return false;
         }
+
+        $details = [];
+        if (!is_uploaded_file($file['tmp_name'])) {
+            $details[] = 'uploaded temp file is no longer present';
+        }
+        if (!is_dir($this->dir)) {
+            $details[] = 'upload directory missing';
+        }
+        if (!is_writable($this->dir)) {
+            $details[] = 'upload directory not writable';
+        }
+        if (!empty($file['error'])) {
+            $details[] = 'PHP upload error ' . $file['error'];
+        }
+        if (file_exists($file['tmp_name']) && !is_readable($file['tmp_name'])) {
+            $details[] = 'temp file is not readable';
+        }
+        $detailText = $details ? ' (' . implode('; ', $details) . ')' : '';
+        $this->error = 'Failed to move uploaded file to destination' . $detailText;
+        return false;
     }
 
     /**
@@ -156,16 +173,38 @@ trait FileManipulatorTrait
         $directory = dirname($destination);
 
         if (!is_dir($directory)) {
-            if (!mkdir($directory, 0755, true)) {
+            if (!mkdir($directory, 0755, true) && !is_dir($directory)) {
                 return false;
             }
         }
 
-        // Ensure directory is writable
+        // Ensure directory is writable. In container/Kubernetes environments the
+        // mounted upload volume may be owned by the non-root app user but still
+        // lack the expected mode bits, so try chmod() as a fallback when the
+        // directory exists but is not writable.
         if (!is_writable($directory)) {
-            if (!chmod($directory, 0755)) {
+            if (!chmod($directory, 0755) && !is_writable($directory)) {
                 return false;
             }
+        }
+
+        // If the parent chain is still not writable, fail explicitly so the
+        // caller can report a concrete filesystem issue instead of a generic
+        // move failure.
+        $path = $directory;
+        while ($path !== '/' && $path !== '.' && $path !== '') {
+            if (is_dir($path) && is_writable($path)) {
+                break;
+            }
+            $parent = dirname($path);
+            if ($parent === $path) {
+                break;
+            }
+            $path = $parent;
+        }
+
+        if ($path === '/' || $path === '.' || $path === '') {
+            return false;
         }
 
         return true;

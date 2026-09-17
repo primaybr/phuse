@@ -20,7 +20,6 @@ use InvalidArgumentException;
  * - URL generation with query parameters or custom patterns
  * - Comprehensive validation and error handling
  * - Accessibility features with ARIA labels
- * - Logging integration with Core\Log
  * - Memory efficient rendering
  *
  * Example usage:
@@ -98,27 +97,15 @@ class Pager implements PagerInterface
     {
         $errors = $this->validate();
         if (!empty($errors)) {
-            $this->log('ERROR', 'Pagination validation failed', ['errors' => $errors]);
             return $this->renderError($errors);
         }
 
         if (!$this->needsPagination()) {
-            $this->log('INFO', 'No pagination needed', [
-                'totalItems' => $this->totalItems,
-                'itemsPerPage' => $this->itemsPerPage
-            ]);
             return '';
         }
 
         $totalPages = $this->getTotalPages();
         $currentPage = $this->getCurrentPage();
-
-        $this->log('INFO', 'Rendering pagination', [
-            'totalItems' => $this->totalItems,
-            'itemsPerPage' => $this->itemsPerPage,
-            'currentPage' => $currentPage,
-            'totalPages' => $totalPages
-        ]);
 
         return $this->renderPagination($currentPage, $totalPages);
     }
